@@ -29,7 +29,6 @@ class ConnectedRealm(
     var realms: MutableList<Realm> = mutableListOf(),
 )
 
-// TODO: Remove. Just forcing the pipeline
 @Entity
 class AuctionHouseFileLog(
     @Id
