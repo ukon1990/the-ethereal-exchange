@@ -24,10 +24,10 @@ class AuctionHousePriceRepositoryTest : IntegrationTestBase() {
     lateinit var repository: AuctionHousePriceRepository
 
     @Autowired
-    lateinit var auctionStatsHourlyRepository: AuctionStatsHourlyRepository
+    lateinit var auctionStatsHourlyJDBCRepository: AuctionStatsHourlyJDBCRepository
 
     @Autowired
-    lateinit var hourlyPriceStatisticsService: HourlyPriceStatisticsService
+    lateinit var auctionStatsHourlyService: AuctionStatsHourlyService
 
     @Autowired
     lateinit var jdbcTemplate: JdbcTemplate
@@ -85,7 +85,7 @@ class AuctionHousePriceRepositoryTest : IntegrationTestBase() {
         seedConnectedRealm(1084)
         val date = LocalDate.of(2026, 4, 6)
 
-        auctionStatsHourlyRepository.upsertHour(
+        auctionStatsHourlyJDBCRepository.upsertHour(
             rows =
                 listOf(
                     HourlyStatsUpsertRow(
@@ -101,7 +101,7 @@ class AuctionHousePriceRepositoryTest : IntegrationTestBase() {
                 ),
             hour = 3,
         )
-        auctionStatsHourlyRepository.upsertHour(
+        auctionStatsHourlyJDBCRepository.upsertHour(
             rows =
                 listOf(
                     HourlyStatsUpsertRow(
@@ -141,7 +141,7 @@ class AuctionHousePriceRepositoryTest : IntegrationTestBase() {
         seedConnectedRealm(2084)
         val date = LocalDate.of(2026, 4, 7)
 
-        auctionStatsHourlyRepository.upsertHour(
+        auctionStatsHourlyJDBCRepository.upsertHour(
             rows =
                 listOf(
                     HourlyStatsUpsertRow(

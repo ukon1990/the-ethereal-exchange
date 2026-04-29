@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.JsonToken
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import net.jonasmf.auctionengine.dbo.rds.realm.ConnectedRealm
 import net.jonasmf.auctionengine.dto.auction.AuctionDTO
-import net.jonasmf.auctionengine.repository.rds.AuctionStatsHourlyRepository
+import net.jonasmf.auctionengine.repository.rds.AuctionStatsHourlyJDBCRepository
 import net.jonasmf.auctionengine.repository.rds.HourlyStatsUpsertRow
 import net.jonasmf.auctionengine.utility.AuctionVariantKeyUtility
 import net.jonasmf.auctionengine.utility.JvmRuntimeDiagnostics
@@ -22,10 +22,10 @@ data class HourlyPriceStatisticsSummary(
 )
 
 @Service
-class HourlyPriceStatisticsService(
-    val auctionStatsHourlyRepository: AuctionStatsHourlyRepository,
+class AuctionStatsHourlyService(
+    val auctionStatsHourlyJDBCRepository: AuctionStatsHourlyJDBCRepository,
 ) {
-    private val logger: Logger = LoggerFactory.getLogger(HourlyPriceStatisticsService::class.java)
+    private val logger: Logger = LoggerFactory.getLogger(AuctionStatsHourlyService::class.java)
     private val progressLogInterval = 100_000
 
     fun processHourlyPriceStatistics(
@@ -125,7 +125,7 @@ class HourlyPriceStatisticsService(
             hour,
             JvmRuntimeDiagnostics.snapshot(),
         )
-        val insertedRows = auctionStatsHourlyRepository.upsertHour(groupedRows, hour)
+        val insertedRows = auctionStatsHourlyJDBCRepository.upsertHour(groupedRows, hour)
         grouped.clear()
         logger.info(
             "Processed hourly auctions for realm {} with insertedRows={} groupedRows={} in {} ms {}",
