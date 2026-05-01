@@ -1,8 +1,8 @@
 package net.jonasmf.auctionengine.utility
 
-import net.jonasmf.auctionengine.dbo.rds.auction.AuctionStatsId
 import net.jonasmf.auctionengine.dbo.rds.auction.AuctionStatsDaily
 import net.jonasmf.auctionengine.dbo.rds.auction.AuctionStatsHourly
+import net.jonasmf.auctionengine.dbo.rds.auction.AuctionStatsId
 import net.jonasmf.auctionengine.dbo.rds.realm.AuctionHouse
 import net.jonasmf.auctionengine.dbo.rds.realm.ConnectedRealm
 import net.jonasmf.auctionengine.dto.auction.AuctionDTO
