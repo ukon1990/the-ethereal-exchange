@@ -32,7 +32,7 @@ class AuctionStatsDailyScheduleTest {
         )
 
     @Test
-    fun `updateDailyPriceStatistics processes configured regions using auction house timezone and starts null markers at 2026`() {
+    fun `updateDailyPriceStatistics uses timezone and starts null markers at 2026`() {
         val auctionHouseService = mockk<AuctionHouseService>()
         val auctionStatsDailyService = mockk<AuctionStatsDailyService>()
         val europeMarker = slot<Instant>()

@@ -46,10 +46,10 @@ class AuctionStatsDailyService(
             val updatedRows = auctionStatsDailyJDBCRepository.upsertDailyPriceStatistics(connectedRealmId, date)
             totalUpdatedRows += updatedRows
             val durationSeconds = (System.currentTimeMillis() - startTime) / 1000.0
+            val formattedDuration = "%.2f".format(durationSeconds)
             logger.info(
-                "Updated daily price statistics for connected realm: $connectedRealmId, date: $date, rows affected: $updatedRows, duration: ${"%.2f".format(
-                    durationSeconds,
-                )} seconds",
+                "Updated daily price statistics for connected realm: $connectedRealmId, date: $date, " +
+                    "rows affected: $updatedRows, duration: $formattedDuration seconds",
             )
         }
         return AuctionStatsDailyUpdateResult(dates, totalUpdatedRows)
