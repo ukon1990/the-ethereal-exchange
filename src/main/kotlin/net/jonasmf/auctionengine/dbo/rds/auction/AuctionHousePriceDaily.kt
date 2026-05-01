@@ -41,6 +41,8 @@ class AuctionHousePriceDaily(
     var medianPrice25: Long = 0,
     @Column(name = "median_price_75")
     var medianPrice75: Long = 0,
+    @Column(name = "max_price")
+    var maxPrice: Long = 0,
     @Column(name = "min_quantity")
     var minQuantity: Long = 0,
     @Column(name = "avg_quantity")
