@@ -9,6 +9,7 @@ import net.jonasmf.auctionengine.repository.rds.AuctionStatsHourlyJDBCRepository
 import net.jonasmf.auctionengine.repository.rds.HourlyStatsUpsertRow
 import net.jonasmf.auctionengine.utility.AuctionVariantKeyUtility
 import net.jonasmf.auctionengine.utility.JvmRuntimeDiagnostics
+import net.jonasmf.auctionengine.utility.resolveZone
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -61,16 +62,19 @@ class AuctionStatsHourlyService(
         iterateAuctions: (((AuctionDTO) -> Unit) -> Unit),
     ): HourlyPriceStatisticsSummary {
         val startTime = System.currentTimeMillis()
-        val hour = lastModified.hour
-        val date = lastModified.toLocalDate()
+        val zone = connectedRealm.resolveZone(defaultZone = lastModified.zone)
+        val localLastModified = lastModified.withZoneSameInstant(zone)
+        val hour = localLastModified.hour
+        val date = localLastModified.toLocalDate()
         val grouped = linkedMapOf<String, HourlyStatsUpsertRow>()
         var processedAuctions = 0
 
         logger.info(
-            "Starting hourly stats aggregation for realm {} with {} auctions at hour {} and {}",
+            "Starting hourly stats aggregation for realm {} with {} auctions at local time {} in zone {} and {}",
             connectedRealm.id,
             expectedAuctionCount ?: "streamed",
-            hour,
+            localLastModified,
+            zone,
             JvmRuntimeDiagnostics.snapshot(),
         )
 
@@ -119,10 +123,12 @@ class AuctionStatsHourlyService(
 
         val groupedRows = ArrayList(grouped.values)
         logger.info(
-            "Starting hourly stats upsert for realm {} with groupedRows={} at hour {} {}",
+            "Starting hourly stats upsert for realm {} with groupedRows={} at local date {} hour {} zone {} {}",
             connectedRealm.id,
             groupedRows.size,
+            date,
             hour,
+            zone,
             JvmRuntimeDiagnostics.snapshot(),
         )
         val insertedRows = auctionStatsHourlyJDBCRepository.upsertHour(groupedRows, hour)
