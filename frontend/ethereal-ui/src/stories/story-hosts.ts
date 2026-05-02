@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { JsonPipe } from '@angular/common';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 import {
   AdminEditableCellComponent,
+  CheckboxInputComponent,
   CharacterSummary,
   CurrencyAmount,
   CurrencyAmountComponent,
@@ -18,10 +21,12 @@ import {
   PillToggleComponent,
   QualityBadgeComponent,
   SearchInputComponent,
+  SelectInputComponent,
   SideNavComponent,
   SimpleChartPanelComponent,
   SymbolIconComponent,
   TableColumn,
+  TextInputComponent,
   TopNavComponent,
 } from '../public-api';
 
@@ -300,6 +305,84 @@ export class SimpleChartPanelStoryHostComponent {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminEditableCellStoryHostComponent {}
+
+@Component({
+  imports: [
+    AdminEditableCellComponent,
+    CheckboxInputComponent,
+    JsonPipe,
+    PillToggleComponent,
+    ReactiveFormsModule,
+    SearchInputComponent,
+    SelectInputComponent,
+    TextInputComponent,
+  ],
+  template: `
+    <form class="ee-glass grid w-[720px] gap-5 rounded-lg p-inner-padding" [formGroup]="form">
+      <ee-text-input
+        label="Item name"
+        placeholder="Dracothyst"
+        hint="Regular text input bound with formControlName."
+        formControlName="itemName"
+      />
+      <ee-search-input
+        label="Search market"
+        placeholder="Search items, reagents, or recipes..."
+        formControlName="search"
+      />
+      <ee-select-input
+        label="Profession"
+        placeholder="Choose profession"
+        [options]="professionOptions"
+        formControlName="profession"
+      />
+      <ee-checkbox-input
+        label="Only show profitable crafts"
+        hint="Boolean checkbox control."
+        formControlName="profitableOnly"
+      />
+      <ee-pill-toggle
+        label="Market scope"
+        [options]="scopeOptions"
+        activeId="realm"
+        formControlName="scope"
+      />
+      <div class="w-40">
+        <ee-admin-editable-cell
+          label="Yield override"
+          placeholder="1.00"
+          [highlighted]="true"
+          formControlName="yieldOverride"
+        />
+      </div>
+      <pre class="rounded border border-white/10 bg-black/50 p-4 ee-data text-outline">{{
+        form.getRawValue() | json
+      }}</pre>
+    </form>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ReactiveFormStoryHostComponent {
+  readonly form = new FormGroup({
+    itemName: new FormControl('Dracothyst', { nonNullable: true }),
+    search: new FormControl('Awakened', { nonNullable: true }),
+    profession: new FormControl('alchemy', { nonNullable: true }),
+    profitableOnly: new FormControl(true, { nonNullable: true }),
+    scope: new FormControl('realm', { nonNullable: true }),
+    yieldOverride: new FormControl('1.25', { nonNullable: true }),
+  });
+
+  readonly professionOptions = [
+    { id: 'alchemy', label: 'Alchemy' },
+    { id: 'blacksmithing', label: 'Blacksmithing' },
+    { id: 'enchanting', label: 'Enchanting' },
+  ];
+
+  readonly scopeOptions = [
+    { id: 'realm', label: 'Realm' },
+    { id: 'region', label: 'Region' },
+  ];
+}
 
 @Component({
   imports: [TopNavComponent],

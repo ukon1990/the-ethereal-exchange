@@ -10,42 +10,47 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
+export type TextInputType = 'text' | 'email' | 'password' | 'number' | 'search' | 'url';
+
 @Component({
-  selector: 'ee-admin-editable-cell',
+  selector: 'ee-text-input',
   imports: [A11yModule],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AdminEditableCellComponent),
+      useExisting: forwardRef(() => TextInputComponent),
       multi: true,
     },
   ],
   template: `
-    <label [class]="labelClass()">
-      <span class="sr-only">{{ label() }}</span>
+    <label class="block">
+      <span class="mb-2 block ee-label text-outline">{{ label() }}</span>
       <input
         cdkMonitorElementFocus
-        type="number"
-        class="w-full border-none bg-transparent p-1 text-center font-space-mono text-sm text-on-surface focus:outline-none"
-        [class.text-primary]="highlighted()"
-        [disabled]="isDisabled()"
+        [type]="type()"
+        class="w-full rounded-lg border border-white/10 bg-surface-container-highest px-4 py-3 font-inter text-sm text-on-surface placeholder:text-outline transition focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
         [attr.placeholder]="placeholder()"
+        [disabled]="isDisabled()"
         [value]="viewValue()"
         (blur)="markTouched()"
         (input)="updateValue(inputValue($event))"
       />
+      @if (hint()) {
+        <span class="mt-2 block ee-data text-outline">{{ hint() }}</span>
+      }
     </label>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AdminEditableCellComponent implements ControlValueAccessor {
-  readonly label = input.required<string>();
-  readonly value = input<number | string>('');
-  readonly placeholder = input('---');
-  readonly highlighted = input(false);
+export class TextInputComponent implements ControlValueAccessor {
+  readonly label = input('Label');
+  readonly placeholder = input('');
+  readonly hint = input('');
+  readonly type = input<TextInputType>('text');
+  readonly value = input('');
   readonly disabled = input(false);
   readonly valueChanged = output<string>();
-  protected readonly viewValue = signal<number | string>('');
+  protected readonly viewValue = signal('');
   protected readonly formDisabled = signal(false);
 
   private formBound = false;
@@ -61,7 +66,7 @@ export class AdminEditableCellComponent implements ControlValueAccessor {
     });
   }
 
-  writeValue(value: number | string | null): void {
+  writeValue(value: string | null): void {
     this.viewValue.set(value ?? '');
   }
 
@@ -94,10 +99,5 @@ export class AdminEditableCellComponent implements ControlValueAccessor {
     this.viewValue.set(value);
     this.valueChanged.emit(value);
     this.onChange(value);
-  }
-
-  protected labelClass(): string {
-    const border = this.highlighted() ? 'border-primary' : 'border-white/10';
-    return `block rounded border bg-black/50 transition focus-within:border-primary focus-within:shadow-[0_0_15px_rgba(236,185,19,0.45)] ${border}`;
   }
 }

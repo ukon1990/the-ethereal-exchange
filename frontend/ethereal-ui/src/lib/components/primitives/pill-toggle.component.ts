@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  forwardRef,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 export interface PillToggleOption {
   readonly id: string;
@@ -7,6 +16,13 @@ export interface PillToggleOption {
 
 @Component({
   selector: 'ee-pill-toggle',
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => PillToggleComponent),
+      multi: true,
+    },
+  ],
   template: `
     <div
       class="inline-flex rounded-lg border border-white/5 bg-surface-container-highest p-1"
@@ -17,8 +33,10 @@ export interface PillToggleOption {
         <button
           type="button"
           [class]="optionClass(option.id)"
-          [attr.aria-pressed]="option.id === activeId()"
-          (click)="selected.emit(option.id)"
+          [attr.aria-pressed]="option.id === selectedId()"
+          [disabled]="isDisabled()"
+          (blur)="markTouched()"
+          (click)="selectOption(option.id)"
         >
           {{ option.label }}
         </button>
@@ -27,16 +45,68 @@ export interface PillToggleOption {
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PillToggleComponent {
+export class PillToggleComponent implements ControlValueAccessor {
   readonly label = input('View mode');
   readonly options = input.required<readonly PillToggleOption[]>();
   readonly activeId = input.required<string>();
+  readonly disabled = input(false);
   readonly selected = output<string>();
+  protected readonly selectedId = signal('');
+  protected readonly formDisabled = signal(false);
+
+  private formBound = false;
+  private onChange: (value: string) => void = () => undefined;
+  private onTouched: () => void = () => undefined;
+
+  constructor() {
+    effect(() => {
+      const activeId = this.activeId();
+      if (!this.formBound) {
+        this.selectedId.set(activeId);
+      }
+    });
+  }
+
+  writeValue(value: string | null): void {
+    this.selectedId.set(value ?? this.activeId());
+  }
+
+  registerOnChange(onChange: (value: string) => void): void {
+    this.formBound = true;
+    this.onChange = onChange;
+  }
+
+  registerOnTouched(onTouched: () => void): void {
+    this.onTouched = onTouched;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.formDisabled.set(isDisabled);
+  }
 
   protected optionClass(optionId: string): string {
     const base = 'rounded px-3 py-1.5 ee-label transition';
-    return optionId === this.activeId()
+    return optionId === this.selectedId()
       ? `${base} bg-primary text-on-primary ee-arcane-glow`
       : `${base} text-on-surface-variant hover:bg-white/5 hover:text-on-surface`;
+  }
+
+  protected isDisabled(): boolean {
+    return this.disabled() || this.formDisabled();
+  }
+
+  protected markTouched(): void {
+    this.onTouched();
+  }
+
+  protected selectOption(optionId: string): void {
+    if (this.isDisabled()) {
+      return;
+    }
+
+    this.selectedId.set(optionId);
+    this.selected.emit(optionId);
+    this.onChange(optionId);
+    this.onTouched();
   }
 }
