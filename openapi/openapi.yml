@@ -1,0 +1,13 @@
+openapi: 3.0.3
+info:
+  title: WoW Auction Engine API
+  version: 0.0.1
+  description: Public API for WoW Auction Engine.
+servers:
+  - url: /api
+tags:
+  - name: Health
+    description: Runtime health endpoints.
+paths:
+  /health:
+    $ref: ./paths/health.yml

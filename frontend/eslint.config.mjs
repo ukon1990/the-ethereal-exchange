@@ -3,7 +3,13 @@ import tsParser from '@typescript-eslint/parser';
 
 export default [
   {
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'storybook-static/**'],
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'coverage/**',
+      'storybook-static/**',
+      'src/app/api/generated/**',
+    ],
   },
   {
     files: ['**/*.ts'],

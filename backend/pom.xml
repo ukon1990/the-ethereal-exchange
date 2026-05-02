@@ -43,6 +43,7 @@
         <ktlint.plugin.version>3.5.0</ktlint.plugin.version>
         <testcontainers.version>1.21.4</testcontainers.version>
         <exec.maven.plugin.version>3.6.1</exec.maven.plugin.version>
+        <openapi.generator.version>7.17.0</openapi.generator.version>
         <node.executable>node</node.executable>
         <refresh.fixtures.args/>
     </properties>
@@ -82,6 +83,10 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
@@ -228,6 +233,13 @@
                         <goals>
                             <goal>compile</goal>
                         </goals>
+                        <configuration>
+                            <!-- If sourceDirs sits in global plugin config, test-compile also uses main sources and tests never compile. -->
+                            <sourceDirs>
+                                <sourceDir>${project.basedir}/src/main/kotlin</sourceDir>
+                                <sourceDir>${project.build.directory}/generated-sources/openapi/src/main/kotlin</sourceDir>
+                            </sourceDirs>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>test-compile</id>
@@ -235,6 +247,12 @@
                         <goals>
                             <goal>test-compile</goal>
                         </goals>
+                        <configuration>
+                            <sourceDirs>
+                                <sourceDir>${project.basedir}/src/test/kotlin</sourceDir>
+                                <sourceDir>${project.basedir}/src/test/java</sourceDir>
+                            </sourceDirs>
+                        </configuration>
                     </execution>
                 </executions>
                 <dependencies>
@@ -251,11 +269,49 @@
                 </dependencies>
             </plugin>
             <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>${openapi.generator.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-openapi-server</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/../openapi/openapi.yml</inputSpec>
+                            <generatorName>kotlin-spring</generatorName>
+                            <output>${project.build.directory}/generated-sources/openapi</output>
+                            <apiPackage>net.jonasmf.auctionengine.generated.api</apiPackage>
+                            <modelPackage>net.jonasmf.auctionengine.generated.model</modelPackage>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <generateApiDocumentation>false</generateApiDocumentation>
+                            <generateModelDocumentation>false</generateModelDocumentation>
+                            <configOptions>
+                                <annotationLibrary>none</annotationLibrary>
+                                <documentationProvider>none</documentationProvider>
+                                <enumPropertyNaming>UPPERCASE</enumPropertyNaming>
+                                <interfaceOnly>true</interfaceOnly>
+                                <sourceFolder>src/main/kotlin</sourceFolder>
+                                <useSpringBoot3>true</useSpringBoot3>
+                                <useTags>true</useTags>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>com.github.gantsign.maven</groupId>
                 <artifactId>ktlint-maven-plugin</artifactId>
                 <version>${ktlint.version}</version>
                 <configuration>
                     <verbose>true</verbose>
+                    <!-- OpenAPI generator output does not match project ktlint rules; lint hand-written sources only. -->
+                    <sourcesExcludes>
+                        <sourcesExclude>net/jonasmf/auctionengine/generated/**</sourcesExclude>
+                    </sourcesExcludes>
                 </configuration>
                 <executions>
                     <execution>
