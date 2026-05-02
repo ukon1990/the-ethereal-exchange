@@ -17,40 +17,41 @@ It is not a Kubernetes or EKS deployment.
 - `infra/regions.json`: enabled regions and per-region overrides
 - `infra/cloudformation/app-region.yaml`: reusable per-region CloudFormation stack
 - `scripts/deploy/sync-ssm-parameters.sh`: writes runtime configuration to SSM Parameter Store
-- `scripts/deploy/restart-container.sh`: restarts the app container on the EC2 instance through SSM
-- `.github/workflows/backend-ci.yml`: verifies the backend and uploads the deployable `.war`
+- `scripts/deploy/restart-container.sh`: restarts backend and frontend containers on the EC2 instance through SSM
+- `.github/workflows/backend-ci.yml`: verifies backend/frontend changes and uploads deployable artifacts on `master`
 - `.github/workflows/deploy-production.yml`: orchestrates production deployment from `master`
-- `.github/workflows/reusable-build-image.yml`: builds the runtime image from the `.war` artifact
+- `.github/workflows/reusable-build-image.yml`: builds backend or frontend runtime images from deployable artifacts
 - `.github/workflows/reusable-deploy-region.yml`: deploys one region at a time
 
 ## What Happens On Push To `master`
 
-1. `Backend PR Checks` always starts with a lightweight change-classification job.
-2. If the commit changed backend-relevant files, the backend verify job runs Maven `verify` and uploads:
+1. `App PR Checks` always starts with a lightweight change-classification job.
+2. If the commit changed backend-relevant files, the backend verify job runs Maven `verify` and, on `master`, uploads:
    - coverage artifacts
    - the deployable `.war` artifact
-3. If the commit only changed clearly irrelevant files, the expensive backend job is skipped and the workflow still completes successfully.
-4. If `Backend PR Checks` finishes successfully on `master`, `Deploy Production` starts with the same conservative change classifier.
+3. If the commit changed frontend-relevant files, the frontend job runs Prettier, ESLint, tests, and production build, then uploads the compressed build artifact on `master`.
+4. If the commit only changed clearly irrelevant files, expensive verify jobs are skipped and the workflow still completes successfully.
+5. If `App PR Checks` finishes successfully on `master`, `Deploy Production` starts with the same conservative change classifier.
 5. The deploy workflow reads enabled regions from `infra/regions.json` only when deployment-relevant files changed.
 6. For each enabled region, sequentially:
    - app-only changes:
-     - push the Docker image to the region's ECR repository
-     - restart the EC2-hosted container through SSM
-     - verify the `/health` endpoint
+     - push changed service Docker images to their regional ECR repositories
+     - restart the EC2-hosted backend and/or frontend container through SSM
+     - verify `/api/health` for backend rollout and `/` for frontend rollout
    - infra-affecting changes:
      - sync runtime env vars into SSM Parameter Store
      - run `aws cloudformation deploy`
-     - push the Docker image to the region's ECR repository
-     - restart the EC2-hosted container through SSM
-     - verify the `/health` endpoint
+     - push service Docker images to regional ECR repositories
+     - restart both EC2-hosted containers through SSM
+     - verify `/api/health` and `/`
 
 The expensive jobs therefore show as `skipped` when a change is clearly irrelevant, and CloudFormation only runs when the stack or deploy contract changed.
 
 ## Health Check Contract
 
-The deploy workflow verifies each regional stack with `GET /health` after restart.
+The deploy workflow verifies backend rollout with `GET /api/health` through the frontend proxy and frontend rollout with `GET /`.
 
-Current `/health` behavior:
+Current `/api/health` behavior:
 
 - `204 No Content`: the app is running and no scheduled update batch appears stalled
 - `503 Service Unavailable`: the app is alive but believes an update batch has stopped making progress longer than the configured threshold
@@ -488,14 +489,14 @@ aws cloudformation describe-stacks \
   --output text
 ```
 
-Then call `/health` on that URL:
+Then call `/api/health` on that URL:
 
 ```bash
 curl -i "$(aws cloudformation describe-stacks \
   --region eu-west-1 \
   --stack-name wah-wow-auction-engine-prod-eu-west-1 \
   --query "Stacks[0].Outputs[?OutputKey=='AppBaseUrl'].OutputValue" \
-  --output text)/health"
+  --output text)/api/health"
 ```
 
 Interpretation:
@@ -681,9 +682,9 @@ The current deployment design avoids that by:
 - pushing the image to ECR separately
 - restarting the Docker container on the instance through SSM
 
-### `/health` stays unavailable after restart
+### `/api/health` stays unavailable after restart
 
-If the instance is reachable but deploy verification still fails on `/health`, treat it as an application stall rather than a simple network failure.
+If the instance is reachable but deploy verification still fails on `/api/health`, treat it as an application stall rather than a simple network failure.
 
 Recommended checks:
 
@@ -694,13 +695,13 @@ Recommended checks:
 
 ### Deploy Workflow Does Not Start
 
-`Deploy Production` only runs after `Backend PR Checks` succeeds on `master`.
+`Deploy Production` only runs after `App PR Checks` succeeds on `master`.
 
 Make sure:
 
 - the push actually reached `master`
-- `Backend PR Checks` finished successfully
-- the workflow name still matches `Backend PR Checks`
+- `App PR Checks` finished successfully
+- the workflow name still matches `App PR Checks`
 
 ### Docker Build Rebuilds The Entire App
 

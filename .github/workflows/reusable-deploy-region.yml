@@ -13,8 +13,12 @@ on:
       git_ref:
         required: true
         type: string
-      artifact_name:
-        required: true
+      backend_artifact_name:
+        required: false
+        type: string
+        default: ""
+      frontend_artifact_name:
+        required: false
         type: string
       image_tag:
         required: true
@@ -59,7 +63,11 @@ on:
         required: false
         type: boolean
         default: true
-      run_app_rollout:
+      run_backend_rollout:
+        required: false
+        type: boolean
+        default: true
+      run_frontend_rollout:
         required: false
         type: boolean
         default: true
@@ -98,12 +106,19 @@ jobs:
         with:
           ref: ${{ inputs.git_ref }}
 
-      - name: Download image artifact
-        if: ${{ inputs.run_app_rollout }}
+      - name: Download backend image artifact
+        if: ${{ inputs.run_backend_rollout }}
         uses: actions/download-artifact@v8
         with:
-          name: ${{ inputs.artifact_name }}
-          path: /tmp/image-artifact
+          name: ${{ inputs.backend_artifact_name }}
+          path: /tmp/backend-image-artifact
+
+      - name: Download frontend image artifact
+        if: ${{ inputs.run_frontend_rollout }}
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ inputs.frontend_artifact_name }}
+          path: /tmp/frontend-image-artifact
 
       - name: Bootstrap AWS session
         uses: ./.github/actions/aws-bootstrap
@@ -117,11 +132,15 @@ jobs:
         run: |
           set -euo pipefail
           account_id="$(aws sts get-caller-identity --query Account --output text)"
-          repository_uri="${account_id}.dkr.ecr.${AWS_REGION}.amazonaws.com/${APP_NAME}"
-          image_uri="${repository_uri}:${IMAGE_TAG}"
+          backend_repository_uri="${account_id}.dkr.ecr.${AWS_REGION}.amazonaws.com/${APP_NAME}"
+          frontend_repository_uri="${account_id}.dkr.ecr.${AWS_REGION}.amazonaws.com/${APP_NAME}-frontend"
+          backend_image_uri="${backend_repository_uri}:${IMAGE_TAG}"
+          frontend_image_uri="${frontend_repository_uri}:${IMAGE_TAG}"
           parameter_prefix="/${APP_NAME}/${ENVIRONMENT}/${AWS_REGION}"
-          echo "repository_uri=$repository_uri" >> "$GITHUB_OUTPUT"
-          echo "image_uri=$image_uri" >> "$GITHUB_OUTPUT"
+          echo "backend_repository_uri=$backend_repository_uri" >> "$GITHUB_OUTPUT"
+          echo "frontend_repository_uri=$frontend_repository_uri" >> "$GITHUB_OUTPUT"
+          echo "backend_image_uri=$backend_image_uri" >> "$GITHUB_OUTPUT"
+          echo "frontend_image_uri=$frontend_image_uri" >> "$GITHUB_OUTPUT"
           echo "parameter_prefix=$parameter_prefix" >> "$GITHUB_OUTPUT"
         env:
           APP_NAME: ${{ inputs.app_name }}
@@ -236,6 +255,8 @@ jobs:
               InstanceType="${INSTANCE_TYPE}" \
               InstanceEnabled="${INSTANCE_ENABLED}" \
               ContainerPort="${CONTAINER_PORT}" \
+              FrontendContainerPort="4000" \
+              FrontendHostPort="80" \
               HealthCheckPath="${HEALTH_CHECK_PATH}" \
               AllowedIngressCidr="${ALLOWED_INGRESS_CIDR}" \
               JvmMaxRamPercentage="${JVM_MAX_RAM_PERCENTAGE}" \
@@ -268,36 +289,53 @@ jobs:
           ALLOWED_INGRESS_CIDR: ${{ inputs.allowed_ingress_cidr }}
           JVM_MAX_RAM_PERCENTAGE: ${{ inputs.jvm_max_ram_percentage }}
           PARAMETER_PREFIX: ${{ steps.meta.outputs.parameter_prefix }}
-          IMAGE_URI: ${{ steps.meta.outputs.image_uri }}
+          BACKEND_IMAGE_URI: ${{ steps.meta.outputs.backend_image_uri }}
+          FRONTEND_IMAGE_URI: ${{ steps.meta.outputs.frontend_image_uri }}
           VPC_ID: ${{ steps.network.outputs.vpc_id }}
           SUBNET_ID: ${{ steps.network.outputs.subnet_id }}
 
       - name: Log in to Amazon ECR
-        if: ${{ inputs.run_app_rollout }}
+        if: ${{ inputs.run_backend_rollout || inputs.run_frontend_rollout }}
         uses: ./.github/actions/aws-bootstrap
         with:
           aws-role-arn: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ inputs.aws_region }}
           login-ecr: "true"
 
-      - name: Publish image to regional ECR
-        if: ${{ inputs.run_app_rollout }}
+      - name: Publish backend image to regional ECR
+        if: ${{ inputs.run_backend_rollout }}
         shell: bash
         run: |
           set -euo pipefail
-          docker load --input "/tmp/image-artifact/${ARTIFACT_NAME}.tar"
-          docker tag "localbuild:${IMAGE_TAG}" "${IMAGE_URI}"
-          docker tag "localbuild:${IMAGE_TAG}" "${REPOSITORY_URI}:master"
+          docker load --input "/tmp/backend-image-artifact/${ARTIFACT_NAME}.tar"
+          docker tag "localbuild:backend-${IMAGE_TAG}" "${IMAGE_URI}"
+          docker tag "localbuild:backend-${IMAGE_TAG}" "${REPOSITORY_URI}:master"
           docker push "${IMAGE_URI}"
           docker push "${REPOSITORY_URI}:master"
         env:
-          ARTIFACT_NAME: ${{ inputs.artifact_name }}
+          ARTIFACT_NAME: ${{ inputs.backend_artifact_name }}
           IMAGE_TAG: ${{ inputs.image_tag }}
-          IMAGE_URI: ${{ steps.meta.outputs.image_uri }}
-          REPOSITORY_URI: ${{ steps.meta.outputs.repository_uri }}
+          IMAGE_URI: ${{ steps.meta.outputs.backend_image_uri }}
+          REPOSITORY_URI: ${{ steps.meta.outputs.backend_repository_uri }}
+
+      - name: Publish frontend image to regional ECR
+        if: ${{ inputs.run_frontend_rollout }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker load --input "/tmp/frontend-image-artifact/${ARTIFACT_NAME}.tar"
+          docker tag "localbuild:frontend-${IMAGE_TAG}" "${IMAGE_URI}"
+          docker tag "localbuild:frontend-${IMAGE_TAG}" "${REPOSITORY_URI}:master"
+          docker push "${IMAGE_URI}"
+          docker push "${REPOSITORY_URI}:master"
+        env:
+          ARTIFACT_NAME: ${{ inputs.frontend_artifact_name }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          IMAGE_URI: ${{ steps.meta.outputs.frontend_image_uri }}
+          REPOSITORY_URI: ${{ steps.meta.outputs.frontend_repository_uri }}
 
       - name: Resolve instance and base URL
-        if: ${{ inputs.run_app_rollout }}
+        if: ${{ inputs.run_backend_rollout || inputs.run_frontend_rollout }}
         id: stack_outputs
         shell: bash
         run: |
@@ -311,7 +349,7 @@ jobs:
           STACK_NAME: ${{ inputs.stack_name }}
 
       - name: Wait for SSM registration after infra changes
-        if: ${{ inputs.run_app_rollout && inputs.run_infra_phase }}
+        if: ${{ (inputs.run_backend_rollout || inputs.run_frontend_rollout) && inputs.run_infra_phase }}
         shell: bash
         run: |
           set -euo pipefail
@@ -328,8 +366,8 @@ jobs:
           AWS_REGION: ${{ inputs.aws_region }}
           INSTANCE_ID: ${{ steps.stack_outputs.outputs.instance_id }}
 
-      - name: Restart container through SSM
-        if: ${{ inputs.run_app_rollout }}
+      - name: Restart containers through SSM
+        if: ${{ inputs.run_backend_rollout || inputs.run_frontend_rollout }}
         id: ssm
         shell: bash
         run: |
@@ -342,26 +380,51 @@ jobs:
 
           app_name = os.environ["APP_NAME"]
           aws_region = os.environ["AWS_REGION"]
-          image_uri = os.environ["IMAGE_URI"]
+          backend_image_uri = os.environ["BACKEND_IMAGE_URI"]
+          frontend_image_uri = os.environ["FRONTEND_IMAGE_URI"]
           container_port = os.environ["CONTAINER_PORT"]
           environment = os.environ["ENVIRONMENT"]
           script_b64 = os.environ["SCRIPT_B64"]
+          run_backend = os.environ["RUN_BACKEND_ROLLOUT"] == "true"
+          run_frontend = os.environ["RUN_FRONTEND_ROLLOUT"] == "true"
+
+          backend_name = f"{app_name}-backend"
+          frontend_name = f"{app_name}-frontend"
+          network_name = f"{app_name}-network"
 
           commands = [
               f"sudo /opt/{app_name}/bin/write-env-file.sh",
               f"echo {script_b64} | base64 -d | sudo tee /opt/{app_name}/bin/restart-container.sh > /dev/null",
               f"sudo chmod +x /opt/{app_name}/bin/restart-container.sh",
-              (
+              f"sudo docker network create {network_name} >/dev/null 2>&1 || true",
+          ]
+
+          if run_backend:
+              commands.append(
                   "sudo "
-                  f"APP_NAME={app_name} "
+                  f"APP_NAME={backend_name} "
                   f"AWS_REGION={aws_region} "
-                  f"IMAGE_URI={image_uri} "
+                  f"IMAGE_URI={backend_image_uri} "
                   f"ENV_FILE_PATH=/opt/{app_name}/config/app.env "
                   f"CONTAINER_PORT={container_port} "
+                  f"NETWORK_NAME={network_name} "
                   f"LOG_GROUP=/aws/ec2/{app_name}/{environment}/{aws_region} "
                   f"/opt/{app_name}/bin/restart-container.sh"
-              ),
-          ]
+              )
+
+          if run_frontend:
+              commands.append(
+                  "sudo "
+                  f"APP_NAME={frontend_name} "
+                  f"AWS_REGION={aws_region} "
+                  f"IMAGE_URI={frontend_image_uri} "
+                  "CONTAINER_PORT=4000 "
+                  "HOST_PORT=80 "
+                  f"NETWORK_NAME={network_name} "
+                  f"BACKEND_ORIGIN=http://{backend_name}:{container_port} "
+                  f"LOG_GROUP=/aws/ec2/{app_name}/{environment}/{aws_region} "
+                  f"/opt/{app_name}/bin/restart-container.sh"
+              )
           print(json.dumps({"commands": commands}))
           PY
           command_id="$(aws ssm send-command \
@@ -378,12 +441,15 @@ jobs:
           ENVIRONMENT: ${{ inputs.environment }}
           AWS_REGION: ${{ inputs.aws_region }}
           INSTANCE_ID: ${{ steps.stack_outputs.outputs.instance_id }}
-          IMAGE_URI: ${{ steps.meta.outputs.image_uri }}
+          BACKEND_IMAGE_URI: ${{ steps.meta.outputs.backend_image_uri }}
+          FRONTEND_IMAGE_URI: ${{ steps.meta.outputs.frontend_image_uri }}
           IMAGE_TAG: ${{ inputs.image_tag }}
           CONTAINER_PORT: ${{ inputs.container_port }}
+          RUN_BACKEND_ROLLOUT: ${{ inputs.run_backend_rollout }}
+          RUN_FRONTEND_ROLLOUT: ${{ inputs.run_frontend_rollout }}
 
       - name: Wait for SSM command success
-        if: ${{ inputs.run_app_rollout }}
+        if: ${{ inputs.run_backend_rollout || inputs.run_frontend_rollout }}
         shell: bash
         run: |
           set -euo pipefail
@@ -404,8 +470,8 @@ jobs:
           AWS_REGION: ${{ inputs.aws_region }}
           COMMAND_ID: ${{ steps.ssm.outputs.command_id }}
 
-      - name: Verify application health
-        if: ${{ inputs.run_app_rollout }}
+      - name: Verify backend health
+        if: ${{ inputs.run_backend_rollout }}
         shell: bash
         run: |
           set -euo pipefail
@@ -422,8 +488,24 @@ jobs:
           BASE_URL: ${{ steps.stack_outputs.outputs.base_url }}
           HEALTH_CHECK_PATH: ${{ inputs.health_check_path }}
 
+      - name: Verify frontend health
+        if: ${{ inputs.run_frontend_rollout }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for _ in $(seq 1 30); do
+            if curl --fail --silent --show-error --connect-timeout 5 --max-time 10 "$BASE_URL/" >/dev/null; then
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Frontend health check failed for ${BASE_URL}/" >&2
+          exit 1
+        env:
+          BASE_URL: ${{ steps.stack_outputs.outputs.base_url }}
+
       - name: Dump rollout diagnostics
-        if: ${{ failure() && inputs.run_app_rollout }}
+        if: ${{ failure() && (inputs.run_backend_rollout || inputs.run_frontend_rollout) }}
         shell: bash
         run: |
           set -uo pipefail
@@ -455,6 +537,7 @@ jobs:
               (
                   "sudo "
                   f"APP_NAME={app_name} "
+                  f"CONTAINER_NAMES={app_name}-backend,{app_name}-frontend "
                   f"ENV_FILE_PATH=/opt/{app_name}/config/app.env "
                   "/tmp/inspect-container-state.sh"
               ),

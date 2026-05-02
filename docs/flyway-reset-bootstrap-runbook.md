@@ -76,7 +76,7 @@ SHOW CREATE VIEW v_auction_house_prices;
 
 Application checks:
 
-- `GET /health` returns `204`.
+- `GET /api/health` returns `204`.
 - Scheduler starts and no migration/DDL errors appear in logs.
 
 ## 5) Rollback

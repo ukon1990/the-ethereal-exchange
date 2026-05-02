@@ -10,7 +10,7 @@ Backend service for ingesting, processing, and serving World of Warcraft auction
 - processes and aggregates auction statistics
 - stores data in MariaDB
 - uses DynamoDB for additional local and AWS-backed storage flows
-- exposes a health endpoint at `GET /health`
+- exposes API endpoints under `/api`, including health at `GET /api/health`
 - runs scheduled background sync jobs on startup
 
 ## Stack
@@ -19,6 +19,8 @@ Backend service for ingesting, processing, and serving World of Warcraft auction
 - Kotlin 2.3
 - Spring Boot 3.5
 - Maven Wrapper (`backend/mvnw`)
+- Angular SSR frontend in `frontend/`
+- Bun 1.3 for frontend package management
 - MariaDB
 - Floci for local AWS emulation (DynamoDB and S3)
 - Testcontainers for tests
@@ -104,13 +106,23 @@ cd backend && ./mvnw spring-boot:run
 When the app starts successfully:
 
 - the HTTP server is available on `http://localhost:8080`
-- the health endpoint is `http://localhost:8080/health`
+- the health endpoint is `http://localhost:8080/api/health`
 - scheduled jobs are enabled
 - Flyway applies schema migrations before the app is fully ready
 
+To run the frontend locally:
+
+```bash
+cd frontend
+bun install
+bun run start
+```
+
+The frontend dev server runs on `http://localhost:4200`. Production frontend deployment proxies `/api/**` to the backend container.
+
 ## Health Checks
 
-`GET /health` is a liveness-style endpoint for the web process and scheduler progress.
+`GET /api/health` is a liveness-style endpoint for the web process and scheduler progress.
 
 - returns `204 No Content` when the app is up and no scheduler batch appears stuck
 - returns `503 Service Unavailable` when a scheduled update batch has stopped making progress longer than the configured threshold
@@ -118,7 +130,7 @@ When the app starts successfully:
 
 The default stalled-update threshold is `PT20M` and is configured in [`backend/src/main/resources/application.yml`](backend/src/main/resources/application.yml) as `app.health.stuck-update-threshold`.
 
-This endpoint is intentionally stricter than a pure "process is running" check. A JVM that is alive but stuck in GC, CPU saturation, or a blocked update path should eventually fail `/health`.
+This endpoint is intentionally stricter than a pure "process is running" check. A JVM that is alive but stuck in GC, CPU saturation, or a blocked update path should eventually fail `/api/health`.
 
 ### 5. Stop local databases
 
@@ -164,7 +176,7 @@ The default local datasource configuration lives in [`backend/src/main/resources
 Other local runtime defaults:
 
 - scheduler enabled: `app.scheduling.enabled=true`
-- stalled update threshold for `/health`: `app.health.stuck-update-threshold=PT20M`
+- stalled update threshold for `/api/health`: `app.health.stuck-update-threshold=PT20M`
 
 Database schema authority:
 
@@ -308,10 +320,10 @@ The deployment path is designed for small regional EC2 instances running Docker,
 
 At a high level:
 
-- pushes to `master` run `Backend PR Checks`
-- the backend workflow first classifies changes and skips the expensive verify job when the change is clearly irrelevant
-- `Deploy Production` starts after a successful `master` backend run and uses the same conservative change classification
-- app-only changes do image build, ECR push, and SSM restart
+- pushes to `master` run `App PR Checks`
+- the app workflow first classifies changes and skips expensive backend/frontend verify jobs when the change is clearly irrelevant
+- `Deploy Production` starts after a successful `master` app run and uses the same conservative change classification
+- app-only changes build and push the changed service image, then restart the matching EC2 container through SSM
 - infra-affecting changes also run CloudFormation before the app rollout
 - clearly irrelevant changes leave the expensive jobs in a real `skipped` state
 - manual infrastructure-only syncs can be triggered with `.github/workflows/manual-infra-sync.yml`
@@ -373,7 +385,7 @@ Current local AWS integrations are:
 - DynamoDB through Floci + AWSpring `DynamoDbOperations`
 - S3 through Floci locally and the AWS SDK for Kotlin `S3Client`
 
-### `/health` returns `503`
+### `/api/health` returns `503`
 
 This now means the app believes a scheduled update batch has stalled longer than the configured threshold, not just that the HTTP server is down.
 

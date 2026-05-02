@@ -11,7 +11,7 @@ permissions:
 on:
   workflow_run:
     workflows:
-      - Backend PR Checks
+      - App PR Checks
     types:
       - completed
 
@@ -25,6 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       app_rollout_required: ${{ steps.classify.outputs.app_rollout_required }}
+      backend_rollout_required: ${{ steps.classify.outputs.backend_rollout_required }}
+      frontend_rollout_required: ${{ steps.classify.outputs.frontend_rollout_required }}
       infra_apply_required: ${{ steps.classify.outputs.infra_apply_required }}
       relevant_changed: ${{ steps.classify.outputs.relevant_changed }}
       git_ref: ${{ steps.config.outputs.git_ref }}
@@ -59,6 +61,8 @@ jobs:
           fi
           classification="$(python3 scripts/deploy/classify_changes.py < /tmp/changed-files.txt)"
           echo "app_rollout_required=$(python3 -c "import json,sys; print(str(json.load(sys.stdin)['app_rollout_required']).lower())" <<< "$classification")" >> "$GITHUB_OUTPUT"
+          echo "backend_rollout_required=$(python3 -c "import json,sys; print(str(json.load(sys.stdin)['backend_rollout_required']).lower())" <<< "$classification")" >> "$GITHUB_OUTPUT"
+          echo "frontend_rollout_required=$(python3 -c "import json,sys; print(str(json.load(sys.stdin)['frontend_rollout_required']).lower())" <<< "$classification")" >> "$GITHUB_OUTPUT"
           echo "infra_apply_required=$(python3 -c "import json,sys; print(str(json.load(sys.stdin)['infra_apply_required']).lower())" <<< "$classification")" >> "$GITHUB_OUTPUT"
           echo "relevant_changed=$(python3 -c "import json,sys; print(str(json.load(sys.stdin)['relevant_changed']).lower())" <<< "$classification")" >> "$GITHUB_OUTPUT"
 
@@ -98,23 +102,37 @@ jobs:
           matrix_json="$(python3 scripts/deploy/render_regions_matrix.py)"
           echo "matrix=$matrix_json" >> "$GITHUB_OUTPUT"
 
-  build-image:
+  build-backend-image:
     needs:
       - classify-changes
       - load-regions
-    if: ${{ needs.classify-changes.outputs.app_rollout_required == 'true' }}
+    if: ${{ needs.classify-changes.outputs.backend_rollout_required == 'true' }}
     uses: ./.github/workflows/reusable-build-image.yml
     with:
       git_ref: ${{ needs.classify-changes.outputs.git_ref }}
       workflow_run_id: ${{ needs.classify-changes.outputs.workflow_run_id }}
       image_tag: ${{ needs.classify-changes.outputs.image_tag }}
+      service: backend
+
+  build-frontend-image:
+    needs:
+      - classify-changes
+      - load-regions
+    if: ${{ needs.classify-changes.outputs.frontend_rollout_required == 'true' }}
+    uses: ./.github/workflows/reusable-build-image.yml
+    with:
+      git_ref: ${{ needs.classify-changes.outputs.git_ref }}
+      workflow_run_id: ${{ needs.classify-changes.outputs.workflow_run_id }}
+      image_tag: ${{ needs.classify-changes.outputs.image_tag }}
+      service: frontend
 
   deploy-region:
     needs:
       - classify-changes
       - load-regions
-      - build-image
-    if: ${{ needs.classify-changes.outputs.app_rollout_required == 'true' }}
+      - build-backend-image
+      - build-frontend-image
+    if: ${{ always() && needs.classify-changes.outputs.app_rollout_required == 'true' && !failure() && !cancelled() }}
     strategy:
       fail-fast: true
       max-parallel: 1
@@ -122,8 +140,9 @@ jobs:
     uses: ./.github/workflows/reusable-deploy-region.yml
     with:
       git_ref: ${{ needs.classify-changes.outputs.git_ref }}
-      artifact_name: ${{ needs.build-image.outputs.artifact_name }}
-      image_tag: ${{ needs.build-image.outputs.image_tag }}
+      backend_artifact_name: ${{ needs.build-backend-image.outputs.artifact_name }}
+      frontend_artifact_name: ${{ needs.build-frontend-image.outputs.artifact_name }}
+      image_tag: ${{ needs.classify-changes.outputs.image_tag }}
       app_name: ${{ needs.load-regions.outputs.app_name }}
       environment: ${{ needs.load-regions.outputs.environment }}
       project_tag: ${{ needs.load-regions.outputs.project_tag }}
@@ -137,5 +156,6 @@ jobs:
       instance_enabled: ${{ matrix.instance_enabled }}
       stack_name: ${{ matrix.stack_name }}
       run_infra_phase: ${{ needs.classify-changes.outputs.infra_apply_required == 'true' }}
-      run_app_rollout: true
+      run_backend_rollout: ${{ needs.classify-changes.outputs.backend_rollout_required == 'true' }}
+      run_frontend_rollout: ${{ needs.classify-changes.outputs.frontend_rollout_required == 'true' }}
     secrets: inherit
