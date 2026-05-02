@@ -7,7 +7,7 @@ import {
   SearchInputComponent,
   SideNavComponent,
   TopNavComponent,
-} from 'ethereal-ui';
+} from '@ui';
 
 import { MarketBrowserService } from '../../core/services/market-browser.service';
 

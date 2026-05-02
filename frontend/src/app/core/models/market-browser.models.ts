@@ -1,4 +1,4 @@
-import { CharacterSummary, FilterSection, MarketItemRow, NavItem, TableColumn } from 'ethereal-ui';
+import { CharacterSummary, FilterSection, MarketItemRow, NavItem, TableColumn } from '@ui';
 
 export interface MarketBrowserViewModel {
   readonly primaryNavItems: readonly NavItem[];
