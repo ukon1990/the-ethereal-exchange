@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 
-import { MarketTableComponent } from '../public-api';
-import { columns, rows } from './story-hosts';
+import { MarketTableComponent } from '../../../../public-api';
+import { columns, rows } from '../../../support/story-hosts';
 
 const meta: Meta<MarketTableComponent> = {
   title: 'Ethereal UI/Market/Table',

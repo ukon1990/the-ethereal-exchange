@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 
-import { IconButtonStoryHostComponent } from './story-hosts';
+import { IconButtonStoryHostComponent } from '../../support/story-hosts';
 
 const meta: Meta<IconButtonStoryHostComponent> = {
   title: 'Ethereal UI/Primitives',

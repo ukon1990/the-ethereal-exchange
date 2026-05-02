@@ -32,13 +32,18 @@ import { SymbolIconComponent } from './symbol-icon.component';
       <input
         cdkMonitorElementFocus
         type="search"
-        class="w-full rounded-lg border border-white/10 bg-surface-container-highest px-4 py-3 pl-12 font-inter text-sm text-on-surface placeholder:text-outline transition focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+        [class]="inputClass()"
+        [attr.aria-invalid]="invalid()"
         [attr.placeholder]="placeholder()"
         [disabled]="isDisabled()"
+        [required]="required()"
         [value]="viewValue()"
         (blur)="markTouched()"
         (input)="updateValue(inputValue($event))"
       />
+      @if (error()) {
+        <span class="mt-2 block ee-data text-error">{{ error() }}</span>
+      }
     </label>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -48,6 +53,9 @@ export class SearchInputComponent implements ControlValueAccessor {
   readonly placeholder = input('Search items, reagents, or recipes...');
   readonly value = input('');
   readonly disabled = input(false);
+  readonly required = input(false);
+  readonly invalid = input(false);
+  readonly error = input('');
   readonly valueChanged = output<string>();
   protected readonly viewValue = signal('');
   protected readonly formDisabled = signal(false);
@@ -88,6 +96,13 @@ export class SearchInputComponent implements ControlValueAccessor {
 
   protected isDisabled(): boolean {
     return this.disabled() || this.formDisabled();
+  }
+
+  protected inputClass(): string {
+    const border = this.invalid()
+      ? 'border-error focus:border-error focus:ring-error'
+      : 'border-white/10 focus:border-primary focus:ring-primary';
+    return `w-full rounded-lg border ${border} bg-surface-container-highest px-4 py-3 pl-12 font-inter text-sm text-on-surface placeholder:text-outline transition focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-50`;
   }
 
   protected markTouched(): void {

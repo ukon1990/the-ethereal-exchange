@@ -52,10 +52,18 @@ class ReactiveFormControlHostComponent {
   ];
 }
 
+@Component({
+  imports: [TextInputComponent],
+  template: `
+    <ee-text-input label="Email" error="Email is required." [invalid]="true" [required]="true" />
+  `,
+})
+class ErrorStateHostComponent {}
+
 describe('form controls', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ReactiveFormControlHostComponent],
+      imports: [ErrorStateHostComponent, ReactiveFormControlHostComponent],
     }).compileComponents();
   });
 
@@ -95,5 +103,17 @@ describe('form controls', () => {
     expect(host.checkboxControl.value).toBe(false);
     expect(host.scopeControl.value).toBe('region');
     expect(host.selectControl.value).toBe('enchanting');
+  });
+
+  it('renders required and invalid state for form controls', () => {
+    const fixture = TestBed.createComponent(ErrorStateHostComponent);
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const input = element.querySelector('input');
+
+    expect(input?.required).toBe(true);
+    expect(input?.getAttribute('aria-invalid')).toBe('true');
+    expect(element.textContent).toContain('Email is required.');
   });
 });

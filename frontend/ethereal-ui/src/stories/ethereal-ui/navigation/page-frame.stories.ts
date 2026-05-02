@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 
-import { PageFrameStoryHostComponent } from './story-hosts';
+import { PageFrameStoryHostComponent } from '../../support/story-hosts';
 
 const meta: Meta<PageFrameStoryHostComponent> = {
   title: 'Ethereal UI/Navigation',

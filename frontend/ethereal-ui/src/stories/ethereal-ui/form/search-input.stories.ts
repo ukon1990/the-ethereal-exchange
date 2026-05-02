@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 
-import { SearchInputComponent } from '../public-api';
+import { SearchInputComponent } from '../../../public-api';
 
 const meta: Meta<SearchInputComponent> = {
   title: 'Ethereal UI/Form',
@@ -17,6 +17,8 @@ const meta: Meta<SearchInputComponent> = {
   },
   argTypes: {
     disabled: { control: 'boolean' },
+    required: { control: 'boolean' },
+    invalid: { control: 'boolean' },
     valueChanged: { action: 'valueChanged' },
   },
 };
@@ -29,5 +31,20 @@ export const SearchInput: StoryObj<SearchInputComponent> = {
     placeholder: 'Search items, reagents, or recipes...',
     value: '',
     disabled: false,
+    required: false,
+    invalid: false,
+    error: '',
+  },
+};
+
+export const SearchInputErrorState: StoryObj<SearchInputComponent> = {
+  args: {
+    label: 'Search market',
+    placeholder: 'Search items, reagents, or recipes...',
+    value: '',
+    disabled: false,
+    required: true,
+    invalid: true,
+    error: 'Enter at least 3 characters.',
   },
 };

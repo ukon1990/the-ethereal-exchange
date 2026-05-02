@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 
-import { QualityBadgeStoryHostComponent } from './story-hosts';
+import { QualityBadgeStoryHostComponent } from '../../support/story-hosts';
 
 const meta: Meta<QualityBadgeStoryHostComponent> = {
   title: 'Ethereal UI/Primitives',

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 
-import { AdminEditableCellComponent } from '../public-api';
+import { AdminEditableCellComponent } from '../../../public-api';
 
 const meta: Meta<AdminEditableCellComponent> = {
   title: 'Ethereal UI/Form',
@@ -18,6 +18,8 @@ const meta: Meta<AdminEditableCellComponent> = {
   argTypes: {
     highlighted: { control: 'boolean' },
     disabled: { control: 'boolean' },
+    required: { control: 'boolean' },
+    invalid: { control: 'boolean' },
     valueChanged: { action: 'valueChanged' },
   },
 };
@@ -31,5 +33,21 @@ export const AdminEditableCell: StoryObj<AdminEditableCellComponent> = {
     placeholder: '1.00',
     highlighted: true,
     disabled: false,
+    required: false,
+    invalid: false,
+    error: '',
+  },
+};
+
+export const AdminEditableCellErrorState: StoryObj<AdminEditableCellComponent> = {
+  args: {
+    label: 'Yield override',
+    value: '',
+    placeholder: '1.00',
+    highlighted: false,
+    disabled: false,
+    required: true,
+    invalid: true,
+    error: 'Required.',
   },
 };

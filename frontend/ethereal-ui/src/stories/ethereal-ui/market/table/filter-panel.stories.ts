@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 
-import { FilterPanelStoryHostComponent } from './story-hosts';
+import { FilterPanelStoryHostComponent } from '../../../support/story-hosts';
 
 const meta: Meta<FilterPanelStoryHostComponent> = {
   title: 'Ethereal UI/Market/Table',

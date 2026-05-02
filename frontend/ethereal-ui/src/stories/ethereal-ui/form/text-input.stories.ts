@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 
-import { TextInputComponent } from '../public-api';
+import { TextInputComponent } from '../../../public-api';
 
 const meta: Meta<TextInputComponent> = {
   title: 'Ethereal UI/Form',
@@ -21,6 +21,8 @@ const meta: Meta<TextInputComponent> = {
       options: ['text', 'email', 'password', 'number', 'search', 'url'],
     },
     disabled: { control: 'boolean' },
+    required: { control: 'boolean' },
+    invalid: { control: 'boolean' },
     valueChanged: { action: 'valueChanged' },
   },
 };
@@ -35,5 +37,22 @@ export const TextInput: StoryObj<TextInputComponent> = {
     type: 'text',
     value: 'Awakened Order',
     disabled: false,
+    required: false,
+    invalid: false,
+    error: '',
+  },
+};
+
+export const TextInputErrorState: StoryObj<TextInputComponent> = {
+  args: {
+    label: 'Email address',
+    placeholder: 'player@example.com',
+    hint: 'Used by login and account forms.',
+    type: 'email',
+    value: '',
+    disabled: false,
+    required: true,
+    invalid: true,
+    error: 'Email address is required.',
   },
 };

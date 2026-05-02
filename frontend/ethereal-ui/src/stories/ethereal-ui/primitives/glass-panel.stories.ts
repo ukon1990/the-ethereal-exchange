@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 
-import { GlassPanelStoryHostComponent } from './story-hosts';
+import { GlassPanelStoryHostComponent } from '../../support/story-hosts';
 
 const meta: Meta<GlassPanelStoryHostComponent> = {
   title: 'Ethereal UI/Primitives',

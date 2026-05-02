@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 
-import { MarketBrowserStoryHostComponent } from './story-hosts';
+import { MarketBrowserStoryHostComponent } from '../../support/story-hosts';
 
 const meta: Meta<MarketBrowserStoryHostComponent> = {
   title: 'Ethereal UI/Compositions/Market Browser',

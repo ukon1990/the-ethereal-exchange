@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 
-import { ItemTooltipCardStoryHostComponent } from './story-hosts';
+import { ItemTooltipCardStoryHostComponent } from '../../../support/story-hosts';
 
 const meta: Meta<ItemTooltipCardStoryHostComponent> = {
   title: 'Ethereal UI/Market/Table',

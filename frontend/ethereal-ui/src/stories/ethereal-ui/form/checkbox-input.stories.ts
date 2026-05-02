@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 
-import { CheckboxInputComponent } from '../public-api';
+import { CheckboxInputComponent } from '../../../public-api';
 
 const meta: Meta<CheckboxInputComponent> = {
   title: 'Ethereal UI/Form',
@@ -18,6 +18,8 @@ const meta: Meta<CheckboxInputComponent> = {
   argTypes: {
     checked: { control: 'boolean' },
     disabled: { control: 'boolean' },
+    required: { control: 'boolean' },
+    invalid: { control: 'boolean' },
     checkedChanged: { action: 'checkedChanged' },
   },
 };
@@ -30,5 +32,20 @@ export const CheckboxInput: StoryObj<CheckboxInputComponent> = {
     hint: 'Include items where expected profit is positive.',
     checked: true,
     disabled: false,
+    required: false,
+    invalid: false,
+    error: '',
+  },
+};
+
+export const CheckboxInputErrorState: StoryObj<CheckboxInputComponent> = {
+  args: {
+    label: 'Accept terms',
+    hint: 'Required before creating an account.',
+    checked: false,
+    disabled: false,
+    required: true,
+    invalid: true,
+    error: 'This checkbox must be selected.',
   },
 };

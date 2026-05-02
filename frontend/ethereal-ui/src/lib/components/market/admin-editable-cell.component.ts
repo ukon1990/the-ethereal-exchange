@@ -26,15 +26,20 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
       <input
         cdkMonitorElementFocus
         type="number"
-        class="w-full border-none bg-transparent p-1 text-center font-space-mono text-sm text-on-surface focus:outline-none"
+        class="w-full border-none bg-transparent p-1 text-center font-space-mono text-sm text-on-surface focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
         [class.text-primary]="highlighted()"
+        [attr.aria-invalid]="invalid()"
         [disabled]="isDisabled()"
         [attr.placeholder]="placeholder()"
+        [required]="required()"
         [value]="viewValue()"
         (blur)="markTouched()"
         (input)="updateValue(inputValue($event))"
       />
     </label>
+    @if (error()) {
+      <span class="mt-1 block ee-data text-error">{{ error() }}</span>
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -44,6 +49,9 @@ export class AdminEditableCellComponent implements ControlValueAccessor {
   readonly placeholder = input('---');
   readonly highlighted = input(false);
   readonly disabled = input(false);
+  readonly required = input(false);
+  readonly invalid = input(false);
+  readonly error = input('');
   readonly valueChanged = output<string>();
   protected readonly viewValue = signal<number | string>('');
   protected readonly formDisabled = signal(false);
@@ -97,7 +105,11 @@ export class AdminEditableCellComponent implements ControlValueAccessor {
   }
 
   protected labelClass(): string {
-    const border = this.highlighted() ? 'border-primary' : 'border-white/10';
+    const border = this.invalid()
+      ? 'border-error'
+      : this.highlighted()
+        ? 'border-primary'
+        : 'border-white/10';
     return `block rounded border bg-black/50 transition focus-within:border-primary focus-within:shadow-[0_0_15px_rgba(236,185,19,0.45)] ${border}`;
   }
 }

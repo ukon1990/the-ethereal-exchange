@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 
-import { CurrencyAmountStoryHostComponent } from './story-hosts';
+import { CurrencyAmountStoryHostComponent } from '../../support/story-hosts';
 
 const meta: Meta<CurrencyAmountStoryHostComponent> = {
   title: 'Ethereal UI/Primitives',

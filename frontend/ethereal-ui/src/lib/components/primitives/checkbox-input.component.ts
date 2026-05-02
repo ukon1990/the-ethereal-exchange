@@ -21,25 +21,35 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
     },
   ],
   template: `
-    <label
-      class="flex cursor-pointer items-start gap-3 rounded-lg border border-white/10 bg-surface-container-highest p-3 transition hover:border-primary/40 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50"
-    >
-      <input
-        cdkMonitorElementFocus
-        type="checkbox"
-        class="mt-0.5 h-4 w-4 rounded border-white/20 bg-surface text-primary accent-primary"
-        [checked]="checkedValue()"
-        [disabled]="isDisabled()"
-        (blur)="markTouched()"
-        (change)="updateValue(checkboxValue($event))"
-      />
-      <span>
-        <span class="block ee-label text-on-surface">{{ label() }}</span>
-        @if (hint()) {
-          <span class="mt-1 block ee-data text-outline">{{ hint() }}</span>
-        }
-      </span>
-    </label>
+    <div>
+      <label [class]="labelClass()">
+        <input
+          cdkMonitorElementFocus
+          type="checkbox"
+          class="mt-0.5 h-4 w-4 rounded border-white/20 bg-surface text-primary accent-primary"
+          [attr.aria-invalid]="invalid()"
+          [checked]="checkedValue()"
+          [disabled]="isDisabled()"
+          [required]="required()"
+          (blur)="markTouched()"
+          (change)="updateValue(checkboxValue($event))"
+        />
+        <span>
+          <span class="block ee-label text-on-surface">
+            {{ label() }}
+            @if (required()) {
+              <span class="text-error">*</span>
+            }
+          </span>
+          @if (hint()) {
+            <span class="mt-1 block ee-data text-outline">{{ hint() }}</span>
+          }
+        </span>
+      </label>
+      @if (error()) {
+        <span class="mt-2 block ee-data text-error">{{ error() }}</span>
+      }
+    </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -48,6 +58,9 @@ export class CheckboxInputComponent implements ControlValueAccessor {
   readonly hint = input('');
   readonly checked = input(false);
   readonly disabled = input(false);
+  readonly required = input(false);
+  readonly invalid = input(false);
+  readonly error = input('');
   readonly checkedChanged = output<boolean>();
   protected readonly checkedValue = signal(false);
   protected readonly formDisabled = signal(false);
@@ -88,6 +101,13 @@ export class CheckboxInputComponent implements ControlValueAccessor {
 
   protected isDisabled(): boolean {
     return this.disabled() || this.formDisabled();
+  }
+
+  protected labelClass(): string {
+    const border = this.invalid()
+      ? 'border-error hover:border-error'
+      : 'border-white/10 hover:border-primary/40';
+    return `flex cursor-pointer items-start gap-3 rounded-lg border ${border} bg-surface-container-highest p-3 transition has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50`;
   }
 
   protected markTouched(): void {

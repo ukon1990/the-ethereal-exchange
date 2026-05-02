@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 
-import { SimpleChartPanelStoryHostComponent } from './story-hosts';
+import { SimpleChartPanelStoryHostComponent } from '../../../support/story-hosts';
 
 const meta: Meta<SimpleChartPanelStoryHostComponent> = {
   title: 'Ethereal UI/Market/Table',

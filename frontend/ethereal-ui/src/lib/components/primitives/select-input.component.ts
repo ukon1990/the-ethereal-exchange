@@ -28,11 +28,18 @@ export interface SelectInputOption {
   ],
   template: `
     <label class="block">
-      <span class="mb-2 block ee-label text-outline">{{ label() }}</span>
+      <span class="mb-2 block ee-label text-outline">
+        {{ label() }}
+        @if (required()) {
+          <span class="text-error">*</span>
+        }
+      </span>
       <select
         cdkMonitorElementFocus
-        class="w-full rounded-lg border border-white/10 bg-surface-container-highest px-4 py-3 font-inter text-sm text-on-surface transition focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+        [class]="selectClass()"
+        [attr.aria-invalid]="invalid()"
         [disabled]="isDisabled()"
+        [required]="required()"
         [value]="selectedValue()"
         (blur)="markTouched()"
         (change)="updateValue(selectValue($event))"
@@ -46,6 +53,9 @@ export interface SelectInputOption {
           </option>
         }
       </select>
+      @if (error()) {
+        <span class="mt-2 block ee-data text-error">{{ error() }}</span>
+      }
       @if (hint()) {
         <span class="mt-2 block ee-data text-outline">{{ hint() }}</span>
       }
@@ -60,6 +70,9 @@ export class SelectInputComponent implements ControlValueAccessor {
   readonly options = input<readonly SelectInputOption[]>([]);
   readonly value = input('');
   readonly disabled = input(false);
+  readonly required = input(false);
+  readonly invalid = input(false);
+  readonly error = input('');
   readonly valueChanged = output<string>();
   protected readonly selectedValue = signal('');
   protected readonly formDisabled = signal(false);
@@ -100,6 +113,13 @@ export class SelectInputComponent implements ControlValueAccessor {
 
   protected isDisabled(): boolean {
     return this.disabled() || this.formDisabled();
+  }
+
+  protected selectClass(): string {
+    const border = this.invalid()
+      ? 'border-error focus:border-error focus:ring-error'
+      : 'border-white/10 focus:border-primary focus:ring-primary';
+    return `w-full rounded-lg border ${border} bg-surface-container-highest px-4 py-3 font-inter text-sm text-on-surface transition focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-50`;
   }
 
   protected markTouched(): void {

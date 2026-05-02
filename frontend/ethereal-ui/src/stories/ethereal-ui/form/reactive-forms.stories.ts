@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 
-import { ReactiveFormStoryHostComponent } from './story-hosts';
+import { ReactiveFormStoryHostComponent } from '../../support/story-hosts';
 
 const meta: Meta<ReactiveFormStoryHostComponent> = {
   title: 'Ethereal UI/Form',

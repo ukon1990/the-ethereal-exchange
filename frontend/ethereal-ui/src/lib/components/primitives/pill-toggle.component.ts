@@ -24,22 +24,29 @@ export interface PillToggleOption {
     },
   ],
   template: `
-    <div
-      class="inline-flex rounded-lg border border-white/5 bg-surface-container-highest p-1"
-      role="group"
-      [attr.aria-label]="label()"
-    >
-      @for (option of options(); track option.id) {
-        <button
-          type="button"
-          [class]="optionClass(option.id)"
-          [attr.aria-pressed]="option.id === selectedId()"
-          [disabled]="isDisabled()"
-          (blur)="markTouched()"
-          (click)="selectOption(option.id)"
-        >
-          {{ option.label }}
-        </button>
+    <div>
+      <div
+        [class]="groupClass()"
+        role="group"
+        [attr.aria-invalid]="invalid()"
+        [attr.aria-label]="label()"
+        [attr.aria-required]="required()"
+      >
+        @for (option of options(); track option.id) {
+          <button
+            type="button"
+            [class]="optionClass(option.id)"
+            [attr.aria-pressed]="option.id === selectedId()"
+            [disabled]="isDisabled()"
+            (blur)="markTouched()"
+            (click)="selectOption(option.id)"
+          >
+            {{ option.label }}
+          </button>
+        }
+      </div>
+      @if (error()) {
+        <span class="mt-2 block ee-data text-error">{{ error() }}</span>
       }
     </div>
   `,
@@ -50,6 +57,9 @@ export class PillToggleComponent implements ControlValueAccessor {
   readonly options = input.required<readonly PillToggleOption[]>();
   readonly activeId = input.required<string>();
   readonly disabled = input(false);
+  readonly required = input(false);
+  readonly invalid = input(false);
+  readonly error = input('');
   readonly selected = output<string>();
   protected readonly selectedId = signal('');
   protected readonly formDisabled = signal(false);
@@ -93,6 +103,11 @@ export class PillToggleComponent implements ControlValueAccessor {
 
   protected isDisabled(): boolean {
     return this.disabled() || this.formDisabled();
+  }
+
+  protected groupClass(): string {
+    const border = this.invalid() ? 'border-error' : 'border-white/5';
+    return `inline-flex rounded-lg border ${border} bg-surface-container-highest p-1`;
   }
 
   protected markTouched(): void {

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 
-import { SymbolIconGridStoryHostComponent } from './story-hosts';
+import { SymbolIconGridStoryHostComponent } from '../../support/story-hosts';
 
 const meta: Meta<SymbolIconGridStoryHostComponent> = {
   title: 'Ethereal UI/Primitives',

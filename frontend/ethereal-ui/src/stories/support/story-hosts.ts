@@ -28,7 +28,7 @@ import {
   TableColumn,
   TextInputComponent,
   TopNavComponent,
-} from '../public-api';
+} from '../../public-api';
 
 export const primaryItems: readonly NavItem[] = [
   { id: 'scrying-pool', label: 'Scrying Pool', icon: 'query_stats' },
