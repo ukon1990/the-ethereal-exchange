@@ -1,21 +1,18 @@
 package net.jonasmf.auctionengine.controller
 
+import net.jonasmf.auctionengine.generated.api.HealthApi
 import net.jonasmf.auctionengine.service.RuntimeHealthTracker
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController()
-@RequestMapping("/health")
 class HealthController(
     private val runtimeHealthTracker: RuntimeHealthTracker,
-) {
+) : HealthApi {
     private val logger = LoggerFactory.getLogger(HealthController::class.java)
 
-    @GetMapping
-    fun health(): ResponseEntity<Void> {
+    override fun health(): ResponseEntity<Unit> {
         val snapshot = runtimeHealthTracker.snapshot()
         return if (snapshot.healthy) {
             ResponseEntity.noContent().build()
