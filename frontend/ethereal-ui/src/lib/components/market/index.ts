@@ -3,4 +3,4 @@ export * from './filter-panel.component';
 export * from './item-stat-card.component';
 export * from './item-tooltip-card.component';
 export * from './market-table.component';
-export * from './simple-chart-panel.component';
+export * from './chart-panel.component';

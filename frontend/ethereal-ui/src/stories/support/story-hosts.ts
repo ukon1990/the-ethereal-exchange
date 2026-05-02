@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { JsonPipe } from '@angular/common';
+import { JsonPipe, KeyValuePipe } from '@angular/common';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 import {
@@ -23,7 +23,8 @@ import {
   SearchInputComponent,
   SelectInputComponent,
   SideNavComponent,
-  SimpleChartPanelComponent,
+  ChartPanelComponent,
+  ChartSeries,
   SymbolIconComponent,
   TableColumn,
   TextInputComponent,
@@ -274,25 +275,62 @@ export class ItemTooltipCardStoryHostComponent {
 }
 
 @Component({
-  imports: [SimpleChartPanelComponent],
+  imports: [ChartPanelComponent, KeyValuePipe],
   template: `
-    <div class="w-[720px]">
-      <ee-simple-chart-panel title="14-Day Price History" rangeLabel="Realm" [points]="points" />
+    <ng-template #chartTip let-ctx>
+      <div
+        class="ee-glass rounded-md border border-white/15 bg-surface-container/95 px-3 py-2 text-left text-xs text-on-surface shadow-lg backdrop-blur-md"
+      >
+        <div class="ee-label text-outline mb-1.5">Bucket {{ ctx.categoryIndex }}</div>
+        <div class="font-space-mono text-[11px] text-on-surface-variant">x = {{ ctx.x }}</div>
+        @for (kv of ctx.valuesBySeriesId | keyvalue; track kv.key) {
+          <div class="mt-1 flex justify-between gap-4 font-space-mono text-[11px]">
+            <span class="text-outline">{{ kv.key }}</span>
+            <span class="text-on-surface">{{ kv.value ?? '—' }}</span>
+          </div>
+        }
+      </div>
+    </ng-template>
+    <div class="w-full max-w-3xl min-w-0">
+      <ee-chart-panel
+        title="Market snapshot"
+        rangeLabel="Last 30 slots"
+        [series]="chartSeries"
+        [minPixelsPerCategory]="12"
+        [minChartWidthPx]="280"
+        [tooltipTemplate]="chartTip"
+      />
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SimpleChartPanelStoryHostComponent {
-  readonly points = [
-    { x: 0, y: 2100 },
-    { x: 10, y: 2050 },
-    { x: 20, y: 2300 },
-    { x: 35, y: 2200 },
-    { x: 50, y: 2600 },
-    { x: 70, y: 2450 },
-    { x: 85, y: 2750 },
-    { x: 100, y: 2900 },
-  ];
+export class ChartPanelStoryHostComponent {
+  readonly chartSeries: readonly ChartSeries[] = (() => {
+    const xs = Array.from({ length: 30 }, (_, i) => i);
+    return [
+      {
+        id: 'price',
+        kind: 'line' as const,
+        yScaleKey: 'gold',
+        color: 'primary-container' as const,
+        points: xs.map((x, i) => ({ x, y: 2100 + i * 18 + (i % 5) * 12 })),
+      },
+      {
+        id: 'quantity',
+        kind: 'column' as const,
+        yScaleKey: 'qty',
+        color: 'tertiary-container' as const,
+        points: xs.map((x, i) => ({ x, y: 40 + i * 3 + (i % 4) * 8 })),
+      },
+      {
+        id: 'roi',
+        kind: 'line' as const,
+        yScaleKey: 'roi',
+        color: 'secondary' as const,
+        points: xs.map((x, i) => ({ x, y: 10 + (i % 6) * 1.1 + (i % 3) * 0.4 })),
+      },
+    ];
+  })();
 }
 
 @Component({
