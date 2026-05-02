@@ -10,7 +10,7 @@ Backend service for ingesting, processing, and serving World of Warcraft auction
 - processes and aggregates auction statistics
 - stores data in MariaDB
 - uses DynamoDB for additional local and AWS-backed storage flows
-- exposes a health endpoint at `GET /health`
+- exposes API endpoints under `/api`, including health at `GET /api/health`
 - runs scheduled background sync jobs on startup
 
 ## Stack
@@ -18,7 +18,9 @@ Backend service for ingesting, processing, and serving World of Warcraft auction
 - Java 25
 - Kotlin 2.3
 - Spring Boot 3.5
-- Maven Wrapper (`./mvnw`)
+- Maven Wrapper (`backend/mvnw`)
+- Angular SSR frontend in `frontend/`
+- Bun 1.3 for frontend package management
 - MariaDB
 - Floci for local AWS emulation (DynamoDB and S3)
 - Testcontainers for tests
@@ -37,14 +39,14 @@ You do not need a separate Maven install. Use the checked-in Maven wrapper.
 Copy the template and fill in the Blizzard credentials:
 
 ```bash
-cp .env.example .env.local
+cp backend/.env.example backend/.env.local
 ```
 
 Then load it into your shell:
 
 ```bash
 set -a
-source .env.local
+source backend/.env.local
 set +a
 ```
 
@@ -98,27 +100,37 @@ The MariaDB container creates the `dbo` database automatically from [`docker/ini
 ### 4. Run the application
 
 ```bash
-./mvnw spring-boot:run
+cd backend && ./mvnw spring-boot:run
 ```
 
 When the app starts successfully:
 
 - the HTTP server is available on `http://localhost:8080`
-- the health endpoint is `http://localhost:8080/health`
+- the health endpoint is `http://localhost:8080/api/health`
 - scheduled jobs are enabled
 - Flyway applies schema migrations before the app is fully ready
 
+To run the frontend locally:
+
+```bash
+cd frontend
+bun install
+bun run start
+```
+
+The frontend dev server runs on `http://localhost:4200`. Production frontend deployment proxies `/api/**` to the backend container.
+
 ## Health Checks
 
-`GET /health` is a liveness-style endpoint for the web process and scheduler progress.
+`GET /api/health` is a liveness-style endpoint for the web process and scheduler progress.
 
 - returns `204 No Content` when the app is up and no scheduler batch appears stuck
 - returns `503 Service Unavailable` when a scheduled update batch has stopped making progress longer than the configured threshold
 - returns a bare `503` to callers; detailed unhealthy reasons are only written to server logs
 
-The default stalled-update threshold is `PT20M` and is configured in [`src/main/resources/application.yml`](src/main/resources/application.yml) as `app.health.stuck-update-threshold`.
+The default stalled-update threshold is `PT20M` and is configured in [`backend/src/main/resources/application.yml`](backend/src/main/resources/application.yml) as `app.health.stuck-update-threshold`.
 
-This endpoint is intentionally stricter than a pure "process is running" check. A JVM that is alive but stuck in GC, CPU saturation, or a blocked update path should eventually fail `/health`.
+This endpoint is intentionally stricter than a pure "process is running" check. A JVM that is alive but stuck in GC, CPU saturation, or a blocked update path should eventually fail `/api/health`.
 
 ### 5. Stop local databases
 
@@ -143,14 +155,14 @@ docker compose -f docker-compose-db.yml down
 
 ### Production-only overrides
 
-These are only needed for the `production` Spring profile because [`src/main/resources/application.production.yml`](src/main/resources/application.production.yml) overrides the datasource credentials:
+These are only needed for the `production` Spring profile because [`backend/src/main/resources/application.production.yml`](backend/src/main/resources/application.production.yml) overrides the datasource credentials:
 
 - `AUCTION_ENGINE_DB_USERNAME`
 - `AUCTION_ENGINE_DB_PASSWORD`
 
 ## Local Configuration Defaults
 
-The default local datasource configuration lives in [`src/main/resources/application.yml`](src/main/resources/application.yml):
+The default local datasource configuration lives in [`backend/src/main/resources/application.yml`](backend/src/main/resources/application.yml):
 
 - MariaDB URL: `jdbc:mariadb://localhost:59000/dbo`
 - MariaDB username: `root`
@@ -164,13 +176,13 @@ The default local datasource configuration lives in [`src/main/resources/applica
 Other local runtime defaults:
 
 - scheduler enabled: `app.scheduling.enabled=true`
-- stalled update threshold for `/health`: `app.health.stuck-update-threshold=PT20M`
+- stalled update threshold for `/api/health`: `app.health.stuck-update-threshold=PT20M`
 
 Database schema authority:
 
 - Flyway is the only schema-mutation authority.
 - Hibernate runs with `ddl-auto=validate`.
-- The bootstrap baseline is `src/main/resources/db/migration/V1__bootstrap_schema.sql`.
+- The bootstrap baseline is `backend/src/main/resources/db/migration/V1__bootstrap_schema.sql`.
 
 That means a new developer normally does not need to set any database environment variables for local work.
 
@@ -194,13 +206,13 @@ Current production layout:
 Run the full test suite with:
 
 ```bash
-./mvnw test
+cd backend && ./mvnw test
 ```
 
 Useful detail for onboarding:
 
 - tests run with the `test` Spring profile
-- Blizzard credentials are stubbed in [`src/main/resources/application.test.yml`](src/main/resources/application.test.yml)
+- Blizzard credentials are stubbed in [`backend/src/main/resources/application.test.yml`](backend/src/main/resources/application.test.yml)
 - MariaDB runs through Testcontainers
 - DynamoDB and S3 are provided through Floci-backed Testcontainers in integration tests
 - Docker Desktop or another working Docker daemon must be running for tests to pass
@@ -208,16 +220,16 @@ Useful detail for onboarding:
 
 ## Profession/Recipe Test Fixtures
 
-Profession and recipe integration fixtures now use a structured layout under [`src/test/resources/blizzard`](src/test/resources/blizzard):
+Profession and recipe integration fixtures now use a structured layout under [`backend/src/test/resources/blizzard`](backend/src/test/resources/blizzard):
 
-- [`src/test/resources/blizzard/profession/index-response.json`](src/test/resources/blizzard/profession/index-response.json)
-- [`src/test/resources/blizzard/profession`](src/test/resources/blizzard/profession) for mirrored `profession/*` payloads
-- [`src/test/resources/blizzard/recipe`](src/test/resources/blizzard/recipe) for mirrored `recipe/*` payloads
-- [`src/test/resources/blizzard/item`](src/test/resources/blizzard/item) for recipe-linked item payloads
-- [`src/test/resources/blizzard/modified-crafting`](src/test/resources/blizzard/modified-crafting) for linked modified crafting metadata
-- [`src/test/resources/blizzard/profession-recipe-sample-manifest.json`](src/test/resources/blizzard/profession-recipe-sample-manifest.json) describing sampled tiers and recipe IDs
+- [`backend/src/test/resources/blizzard/profession/index-response.json`](backend/src/test/resources/blizzard/profession/index-response.json)
+- [`backend/src/test/resources/blizzard/profession`](backend/src/test/resources/blizzard/profession) for mirrored `profession/*` payloads
+- [`backend/src/test/resources/blizzard/recipe`](backend/src/test/resources/blizzard/recipe) for mirrored `recipe/*` payloads
+- [`backend/src/test/resources/blizzard/item`](backend/src/test/resources/blizzard/item) for recipe-linked item payloads
+- [`backend/src/test/resources/blizzard/modified-crafting`](backend/src/test/resources/blizzard/modified-crafting) for linked modified crafting metadata
+- [`backend/src/test/resources/blizzard/profession-recipe-sample-manifest.json`](backend/src/test/resources/blizzard/profession-recipe-sample-manifest.json) describing sampled tiers and recipe IDs
 
-The fixture refresher mirrors normalized Blizzard Game Data API paths under `src/test/resources/blizzard`, so examples now look like:
+The fixture refresher mirrors normalized Blizzard Game Data API paths under `backend/src/test/resources/blizzard`, so examples now look like:
 
 - `profession/164-response.json`
 - `profession/164/skill-tier/2907-response.json`
@@ -234,13 +246,13 @@ Current sample policy:
 Refresh the checked-in Blizzard fixtures from the project root with:
 
 ```bash
-./mvnw exec:exec@refresh-fixtures
+cd backend && ./mvnw exec:exec@refresh-fixtures
 ```
 
 Pass script flags through Maven with `-Drefresh.fixtures.args=...`, for example:
 
 ```bash
-./mvnw exec:exec@refresh-fixtures '-Drefresh.fixtures.args=--dry-run --profession-id 164'
+cd backend && ./mvnw exec:exec@refresh-fixtures '-Drefresh.fixtures.args=--dry-run --profession-id 164'
 ```
 
 This command requires a local `node` binary. Override it with `-Dnode.executable=/path/to/node` if your shell does not expose `node` on `PATH`.
@@ -250,19 +262,19 @@ This command requires a local `node` binary. Override it with `-Dnode.executable
 Run the app:
 
 ```bash
-./mvnw spring-boot:run
+cd backend && ./mvnw spring-boot:run
 ```
 
 Run tests:
 
 ```bash
-./mvnw test
+cd backend && ./mvnw test
 ```
 
 Run the verification lifecycle:
 
 ```bash
-./mvnw verify
+cd backend && ./mvnw verify
 ```
 
 Enable the repo-managed pre-commit hook:
@@ -290,7 +302,7 @@ The pre-commit hook runs `ktlint:format`, re-stages any staged Kotlin autofixes,
 Format Kotlin sources:
 
 ```bash
-./mvnw ktlint:format
+cd backend && ./mvnw ktlint:format
 ```
 
 ## Documentation
@@ -308,10 +320,10 @@ The deployment path is designed for small regional EC2 instances running Docker,
 
 At a high level:
 
-- pushes to `master` run `Backend PR Checks`
-- the backend workflow first classifies changes and skips the expensive verify job when the change is clearly irrelevant
-- `Deploy Production` starts after a successful `master` backend run and uses the same conservative change classification
-- app-only changes do image build, ECR push, and SSM restart
+- pushes to `master` run `App PR Checks`
+- the app workflow first classifies changes and skips expensive backend/frontend verify jobs when the change is clearly irrelevant
+- `Deploy Production` starts after a successful `master` app run and uses the same conservative change classification
+- app-only changes build and push the changed service image, then restart the matching EC2 container through SSM
 - infra-affecting changes also run CloudFormation before the app rollout
 - clearly irrelevant changes leave the expensive jobs in a real `skipped` state
 - manual infrastructure-only syncs can be triggered with `.github/workflows/manual-infra-sync.yml`
@@ -320,7 +332,7 @@ Forks can use the same flow, but must create their own AWS IAM role, GitHub secr
 
 ## Project Structure
 
-Main application code lives under [`src/main/kotlin/net/jonasmf/auctionengine`](src/main/kotlin/net/jonasmf/auctionengine):
+Main application code lives under [`backend/src/main/kotlin/net/jonasmf/auctionengine`](backend/src/main/kotlin/net/jonasmf/auctionengine):
 
 - `config/`: Spring configuration and external service wiring
 - `integration/`: Blizzard API integrations
@@ -331,15 +343,15 @@ Main application code lives under [`src/main/kotlin/net/jonasmf/auctionengine`](
 
 Resources:
 
-- [`src/main/resources/application.yml`](src/main/resources/application.yml)
-- [`src/main/resources/application.test.yml`](src/main/resources/application.test.yml)
-- [`src/main/resources/application.production.yml`](src/main/resources/application.production.yml)
+- [`backend/src/main/resources/application.yml`](backend/src/main/resources/application.yml)
+- [`backend/src/main/resources/application.test.yml`](backend/src/main/resources/application.test.yml)
+- [`backend/src/main/resources/application.production.yml`](backend/src/main/resources/application.production.yml)
 
 ## Troubleshooting
 
 ### Application fails on missing placeholders
 
-Make sure you loaded `.env.local` into the same shell where you run `./mvnw spring-boot:run`.
+Make sure you loaded `backend/.env.local` into the same shell where you run `cd backend && ./mvnw spring-boot:run`.
 
 ### MariaDB connection refused
 
@@ -373,7 +385,7 @@ Current local AWS integrations are:
 - DynamoDB through Floci + AWSpring `DynamoDbOperations`
 - S3 through Floci locally and the AWS SDK for Kotlin `S3Client`
 
-### `/health` returns `503`
+### `/api/health` returns `503`
 
 This now means the app believes a scheduled update batch has stalled longer than the configured threshold, not just that the HTTP server is down.
 

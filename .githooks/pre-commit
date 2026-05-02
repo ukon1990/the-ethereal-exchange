@@ -9,50 +9,68 @@ fi
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$repo_root"
 
-if [ -f "./mvnw" ]; then
+backend_dir="backend"
+frontend_dir="frontend"
+
+if [ -f "${backend_dir}/mvnw" ]; then
   run_maven() {
-    sh "./mvnw" "$@"
+    (cd "$backend_dir" && sh "./mvnw" "$@")
   }
-elif [ -f "./mvnw.cmd" ]; then
+elif [ -f "${backend_dir}/mvnw.cmd" ]; then
   run_maven() {
-    cmd.exe //c mvnw.cmd "$@"
+    (cd "$backend_dir" && cmd.exe //c mvnw.cmd "$@")
   }
 else
-  echo "pre-commit: Maven wrapper not found. Expected ./mvnw or ./mvnw.cmd" >&2
+  echo "pre-commit: Maven wrapper not found. Expected ${backend_dir}/mvnw or ${backend_dir}/mvnw.cmd" >&2
   exit 1
 fi
 
 has_kotlin_files=0
+has_frontend_files=0
 staged_kotlin_files=()
 
 while IFS= read -r -d '' file; do
-  if [[ "$file" == src/main/kotlin/* && "$file" == *.kt ]]; then
+  if [[ "$file" == "${backend_dir}/src/main/kotlin/"* && "$file" == *.kt ]]; then
     staged_kotlin_files+=("$file")
     has_kotlin_files=1
-  elif [[ "$file" == src/test/kotlin/* && "$file" == *.kt ]]; then
+  elif [[ "$file" == "${backend_dir}/src/test/kotlin/"* && "$file" == *.kt ]]; then
     staged_kotlin_files+=("$file")
     has_kotlin_files=1
-  elif [[ "$file" == *.kts ]]; then
+  elif [[ "$file" == "${backend_dir}/"* && "$file" == *.kts ]]; then
     staged_kotlin_files+=("$file")
     has_kotlin_files=1
+  fi
+  if [[ "$file" == "${frontend_dir}/"* ]]; then
+    has_frontend_files=1
   fi
 done < <(git diff --cached --name-only --diff-filter=ACMR -z)
 
-if [ "$has_kotlin_files" -eq 0 ]; then
-  exit 0
+if [ "$has_kotlin_files" -eq 1 ]; then
+  echo "pre-commit: formatting staged Kotlin files with ktlint"
+  run_maven "-q" "ktlint:format"
+
+  for file in "${staged_kotlin_files[@]}"; do
+    if [ -f "$file" ]; then
+      git add -- "$file"
+    fi
+  done
+
+  echo "pre-commit: lint-checking Kotlin sources with ktlint"
+  if ! run_maven "-q" "ktlint:check"; then
+    echo "pre-commit: ktlint reported remaining violations. Review the output above and amend the staged changes." >&2
+    exit 1
+  fi
 fi
 
-echo "pre-commit: formatting staged Kotlin files with ktlint"
-run_maven "-q" "ktlint:format"
-
-for file in "${staged_kotlin_files[@]}"; do
-  if [ -f "$file" ]; then
-    git add -- "$file"
+if [ "$has_frontend_files" -eq 1 ]; then
+  if ! command -v bun >/dev/null 2>&1; then
+    echo "pre-commit: bun is required for frontend checks but was not found." >&2
+    exit 1
   fi
-done
 
-echo "pre-commit: lint-checking Kotlin sources with ktlint"
-if ! run_maven "-q" "ktlint:check"; then
-  echo "pre-commit: ktlint reported remaining violations. Review the output above and amend the staged changes." >&2
-  exit 1
+  echo "pre-commit: checking frontend formatting"
+  (cd "$frontend_dir" && bun run format:check)
+
+  echo "pre-commit: lint-checking frontend sources"
+  (cd "$frontend_dir" && bun run lint)
 fi

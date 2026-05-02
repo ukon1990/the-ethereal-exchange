@@ -1,4 +1,4 @@
-name: Backend PR Checks
+name: App PR Checks
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       backend_verify_required: ${{ steps.classify.outputs.backend_verify_required }}
+      frontend_verify_required: ${{ steps.classify.outputs.frontend_verify_required }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -49,8 +50,9 @@ jobs:
             echo "Base commit $base_sha is not available in this checkout; falling back to full repository classification." >&2
             git ls-tree -r --name-only "$head_sha" > /tmp/changed-files.txt
           fi
-          classification="$(python scripts/deploy/classify_changes.py < /tmp/changed-files.txt)"
-          echo "backend_verify_required=$(python -c "import json,sys; print(str(json.load(sys.stdin)['backend_verify_required']).lower())" <<< "$classification")" >> "$GITHUB_OUTPUT"
+          classification="$(python3 scripts/deploy/classify_changes.py < /tmp/changed-files.txt)"
+          echo "backend_verify_required=$(python3 -c "import json,sys; print(str(json.load(sys.stdin)['backend_verify_required']).lower())" <<< "$classification")" >> "$GITHUB_OUTPUT"
+          echo "frontend_verify_required=$(python3 -c "import json,sys; print(str(json.load(sys.stdin)['frontend_verify_required']).lower())" <<< "$classification")" >> "$GITHUB_OUTPUT"
 
   backend-build-and-test:
     name: Backend Style, Build, and Test
@@ -68,21 +70,23 @@ jobs:
           distribution: temurin
           java-version: "25"
           cache: maven
+          cache-dependency-path: backend/pom.xml
 
       - name: Ensure Maven wrapper is executable
-        run: chmod +x ./mvnw
+        run: chmod +x backend/mvnw
 
       - name: Enforce Flyway schema guardrails
         run: ./scripts/ci/check-flyway-guardrails.sh
 
       - name: Verify backend
+        working-directory: backend
         run: ./mvnw -B -ntp -Dkotlin.compiler.daemon=false verify
 
       - name: Print backend coverage summary
         shell: bash
         run: |
           set -euo pipefail
-          report="target/site/jacoco/jacoco.xml"
+          report="backend/target/site/jacoco/jacoco.xml"
           if [[ ! -f "$report" ]]; then
             echo "Coverage report not found at $report"
             exit 1
@@ -90,7 +94,7 @@ jobs:
 
           python3 - <<'PY'
           import xml.etree.ElementTree as ET
-          report = ET.parse("target/site/jacoco/jacoco.xml")
+          report = ET.parse("backend/target/site/jacoco/jacoco.xml")
           root = report.getroot()
           line = next((c for c in root.findall("counter") if c.get("type") == "LINE"), None)
           if line is None:
@@ -107,13 +111,67 @@ jobs:
         with:
           name: backend-coverage-report
           path: |
-            target/site/jacoco/jacoco.xml
-            target/site/jacoco
+            backend/target/site/jacoco/jacoco.xml
+            backend/target/site/jacoco
           if-no-files-found: error
 
       - name: Upload deployable WAR artifact
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
         uses: actions/upload-artifact@v7
         with:
           name: backend-war
-          path: target/*.war
+          path: backend/target/*.war
+          if-no-files-found: error
+
+  frontend-build-and-test:
+    name: Frontend Style, Build, and Test
+    needs: classify-changes
+    if: ${{ needs.classify-changes.outputs.frontend_verify_required == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.3
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Check frontend formatting
+        working-directory: frontend
+        run: bun run format:check
+
+      - name: Lint frontend
+        working-directory: frontend
+        run: bun run lint
+
+      - name: Test frontend
+        working-directory: frontend
+        run: bun run test:ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: bun run build
+
+      - name: Package frontend build artifact
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        working-directory: frontend
+        run: tar -czf app-dist.tar.gz -C dist .
+
+      - name: Upload deployable frontend artifact
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-dist
+          path: frontend/app-dist.tar.gz
           if-no-files-found: error

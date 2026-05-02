@@ -13,11 +13,25 @@ for var_name in "${required_vars[@]}"; do
 done
 
 ENV_FILE_PATH="${ENV_FILE_PATH:-/opt/${APP_NAME}/config/app.env}"
+if [[ -n "${CONTAINER_NAMES:-}" ]]; then
+  IFS=',' read -r -a container_names <<< "$CONTAINER_NAMES"
+else
+  container_names=("$APP_NAME" "${APP_NAME}-backend" "${APP_NAME}-frontend")
+fi
 
 echo "== docker ps =="
-docker ps -a --filter "name=^/${APP_NAME}$" --no-trunc
+docker ps -a --no-trunc
 
-container_id="$(docker ps -aq --filter "name=^/${APP_NAME}$" | head -n 1)"
+container_name=""
+container_id=""
+for name in "${container_names[@]}"; do
+  candidate_id="$(docker ps -aq --filter "name=^/${name}$" | head -n 1)"
+  if [[ -n "$candidate_id" ]]; then
+    container_name="$name"
+    container_id="$candidate_id"
+    break
+  fi
+done
 if [[ -z "$container_id" ]]; then
   echo "CONTAINER_STATE=missing"
   exit 1
@@ -27,11 +41,12 @@ container_state="$(docker inspect --format '{{.State.Status}}' "$container_id")"
 container_exit_code="$(docker inspect --format '{{.State.ExitCode}}' "$container_id")"
 
 echo "CONTAINER_ID=$container_id"
+echo "CONTAINER_NAME=$container_name"
 echo "CONTAINER_STATE=$container_state"
 echo "CONTAINER_EXIT_CODE=$container_exit_code"
 
 echo "== container logs =="
-docker logs --tail 500 "$APP_NAME" || true
+docker logs --tail 500 "$container_name" || true
 
 echo "== docker stats =="
 docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}" || true

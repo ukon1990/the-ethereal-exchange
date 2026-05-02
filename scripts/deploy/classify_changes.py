@@ -12,23 +12,49 @@ def main() -> int:
     changed_files = [line.strip().replace("\\", "/") for line in sys.stdin if line.strip()]
 
     backend_patterns = [
-        "src/**",
-        "pom.xml",
-        "mvnw",
-        ".mvn/**",
-        "Dockerfile",
-        "src/main/resources/**",
-        "src/test/**",
+        "backend/src/**",
+        "backend/pom.xml",
+        "backend/mvnw",
+        "backend/mvnw.cmd",
+        "backend/.mvn/**",
+        "backend/Dockerfile",
+        "backend/src/main/resources/**",
+        "backend/src/test/**",
         ".github/workflows/backend-ci.yml",
         ".github/actions/**",
     ]
-    runtime_patterns = [
-        "src/main/**",
-        "src/main/resources/**",
-        "pom.xml",
-        "mvnw",
-        ".mvn/**",
-        "Dockerfile",
+    frontend_patterns = [
+        "frontend/src/**",
+        "frontend/public/**",
+        "frontend/package.json",
+        "frontend/bun.lock",
+        "frontend/angular.json",
+        "frontend/tsconfig*.json",
+        "frontend/.prettierrc",
+        "frontend/.postcssrc.json",
+        "frontend/eslint.config.*",
+        "frontend/Dockerfile",
+        ".github/workflows/backend-ci.yml",
+        ".github/actions/**",
+    ]
+    backend_runtime_patterns = [
+        "backend/src/main/**",
+        "backend/src/main/resources/**",
+        "backend/pom.xml",
+        "backend/mvnw",
+        "backend/mvnw.cmd",
+        "backend/.mvn/**",
+        "backend/Dockerfile",
+    ]
+    frontend_runtime_patterns = [
+        "frontend/src/**",
+        "frontend/public/**",
+        "frontend/package.json",
+        "frontend/bun.lock",
+        "frontend/angular.json",
+        "frontend/tsconfig*.json",
+        "frontend/.postcssrc.json",
+        "frontend/Dockerfile",
     ]
     deploy_patterns = [
         ".github/workflows/deploy-production.yml",
@@ -61,20 +87,27 @@ def main() -> int:
                 ".idea/**",
             ],
         )
-        and not matches(path, backend_patterns + deploy_patterns + infra_patterns)
+        and not matches(path, backend_patterns + frontend_patterns + deploy_patterns + infra_patterns)
         for path in changed_files
     )
 
     backend_verify_required = any(matches(path, backend_patterns) for path in changed_files)
+    frontend_verify_required = any(matches(path, frontend_patterns) for path in changed_files)
     infra_apply_required = any(matches(path, infra_patterns) for path in changed_files)
-    runtime_changed = any(matches(path, runtime_patterns) for path in changed_files)
+    backend_runtime_changed = any(matches(path, backend_runtime_patterns) for path in changed_files)
+    frontend_runtime_changed = any(matches(path, frontend_runtime_patterns) for path in changed_files)
     deploy_changed = any(matches(path, deploy_patterns) for path in changed_files)
-    app_rollout_required = runtime_changed or deploy_changed or infra_apply_required
-    relevant_changed = backend_verify_required or app_rollout_required or infra_apply_required
+    backend_rollout_required = backend_runtime_changed or deploy_changed or infra_apply_required
+    frontend_rollout_required = frontend_runtime_changed or deploy_changed or infra_apply_required
+    app_rollout_required = backend_rollout_required or frontend_rollout_required
+    relevant_changed = backend_verify_required or frontend_verify_required or app_rollout_required or infra_apply_required
 
     result = {
         "changed_files": changed_files,
         "backend_verify_required": backend_verify_required,
+        "frontend_verify_required": frontend_verify_required,
+        "backend_rollout_required": backend_rollout_required,
+        "frontend_rollout_required": frontend_rollout_required,
         "app_rollout_required": app_rollout_required,
         "infra_apply_required": infra_apply_required,
         "relevant_changed": relevant_changed,

@@ -29,6 +29,10 @@ spring:
         jdbc:
           batch_size: 200
 
+server:
+  servlet:
+    context-path: /api
+
 app:
   scheduling:
     enabled: true

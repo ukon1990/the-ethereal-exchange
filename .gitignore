@@ -1,6 +1,12 @@
 HELP.md
 target/
+backend/app.war
+frontend/app-dist.tar.gz
+frontend/dist/
+frontend/.angular/
+frontend/coverage/
 !.mvn/wrapper/maven-wrapper.jar
+!backend/.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 

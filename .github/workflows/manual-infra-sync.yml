@@ -60,9 +60,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          app_name="$(python -c "import json; print(json.load(open('infra/regions.json'))['app_name'])")"
-          environment="$(python -c "import json; print(json.load(open('infra/regions.json'))['environment'])")"
-          project_tag="$(python -c "import json; print(json.load(open('infra/regions.json'))['project_tag'])")"
+          app_name="$(python3 -c "import json; print(json.load(open('infra/regions.json'))['app_name'])")"
+          environment="$(python3 -c "import json; print(json.load(open('infra/regions.json'))['environment'])")"
+          project_tag="$(python3 -c "import json; print(json.load(open('infra/regions.json'))['project_tag'])")"
           echo "app_name=$app_name" >> "$GITHUB_OUTPUT"
           echo "environment=$environment" >> "$GITHUB_OUTPUT"
           echo "project_tag=$project_tag" >> "$GITHUB_OUTPUT"
@@ -72,17 +72,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          matrix_json="$(python scripts/deploy/render_regions_matrix.py)"
+          matrix_json="$(python3 scripts/deploy/render_regions_matrix.py)"
           if [[ "${TARGET_REGION}" == "all" ]]; then
             echo "matrix=$matrix_json" >> "$GITHUB_OUTPUT"
           else
-            filtered="$(python -c "import json,sys; data=json.loads(sys.stdin.read()); data['include']=[item for item in data['include'] if item['aws_region']=='${TARGET_REGION}']; print(json.dumps(data))" <<< "$matrix_json")"
+            filtered="$(python3 -c "import json,sys; data=json.loads(sys.stdin.read()); data['include']=[item for item in data['include'] if item['aws_region']=='${TARGET_REGION}']; print(json.dumps(data))" <<< "$matrix_json")"
             echo "matrix=$filtered" >> "$GITHUB_OUTPUT"
           fi
         env:
           TARGET_REGION: ${{ inputs.region }}
 
-  build-image:
+  build-backend-image:
     needs: load-regions
     if: ${{ inputs.run_app_rollout }}
     uses: ./.github/workflows/reusable-build-image.yml
@@ -90,12 +90,24 @@ jobs:
       git_ref: ${{ needs.load-regions.outputs.git_ref }}
       workflow_run_id: ""
       image_tag: ${{ needs.load-regions.outputs.git_ref }}
+      service: backend
+
+  build-frontend-image:
+    needs: load-regions
+    if: ${{ inputs.run_app_rollout }}
+    uses: ./.github/workflows/reusable-build-image.yml
+    with:
+      git_ref: ${{ needs.load-regions.outputs.git_ref }}
+      workflow_run_id: ""
+      image_tag: ${{ needs.load-regions.outputs.git_ref }}
+      service: frontend
 
   deploy-region:
     needs:
       - load-regions
-      - build-image
-    if: ${{ always() && (inputs.run_app_rollout == false || needs.build-image.result == 'success') }}
+      - build-backend-image
+      - build-frontend-image
+    if: ${{ always() && (inputs.run_app_rollout == false || (needs.build-backend-image.result == 'success' && needs.build-frontend-image.result == 'success')) }}
     strategy:
       fail-fast: true
       max-parallel: 1
@@ -103,8 +115,9 @@ jobs:
     uses: ./.github/workflows/reusable-deploy-region.yml
     with:
       git_ref: ${{ needs.load-regions.outputs.git_ref }}
-      artifact_name: ${{ inputs.run_app_rollout && needs.build-image.outputs.artifact_name || 'unused-artifact' }}
-      image_tag: ${{ inputs.run_app_rollout && needs.build-image.outputs.image_tag || needs.load-regions.outputs.git_ref }}
+      backend_artifact_name: ${{ inputs.run_app_rollout && needs.build-backend-image.outputs.artifact_name || '' }}
+      frontend_artifact_name: ${{ inputs.run_app_rollout && needs.build-frontend-image.outputs.artifact_name || '' }}
+      image_tag: ${{ needs.load-regions.outputs.git_ref }}
       app_name: ${{ needs.load-regions.outputs.app_name }}
       environment: ${{ needs.load-regions.outputs.environment }}
       project_tag: ${{ needs.load-regions.outputs.project_tag }}
@@ -118,5 +131,6 @@ jobs:
       instance_enabled: ${{ matrix.instance_enabled }}
       stack_name: ${{ matrix.stack_name }}
       run_infra_phase: true
-      run_app_rollout: ${{ inputs.run_app_rollout }}
+      run_backend_rollout: ${{ inputs.run_app_rollout }}
+      run_frontend_rollout: ${{ inputs.run_app_rollout }}
     secrets: inherit
