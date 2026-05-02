@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { JsonPipe, KeyValuePipe } from '@angular/common';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 
@@ -424,26 +424,64 @@ export class ReactiveFormStoryHostComponent {
 
 @Component({
   imports: [TopNavComponent],
-  template: `<ee-top-nav [items]="items" activeId="market-browser" [character]="character" />`,
+  template: `
+    <ee-top-nav
+      [items]="items"
+      activeId="market-browser"
+      [character]="character"
+      [mobileDrawerOpen]="mobileNavOpen()"
+      (toggleMobileDrawer)="toggleMobileNav()"
+    />
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TopNavigationStoryHostComponent {
   readonly items = primaryItems;
   readonly character = character;
+  protected readonly mobileNavOpen = signal(false);
+
+  protected toggleMobileNav(): void {
+    this.mobileNavOpen.update((open) => !open);
+  }
 }
 
 @Component({
   imports: [SideNavComponent],
   template: `
-    <div class="flex h-[500px]">
-      <ee-side-nav [items]="items" activeId="blacksmithing" [character]="character" />
+    <div class="flex h-[560px] flex-col bg-background text-on-surface">
+      <p class="p-2 ee-label text-outline md:hidden">
+        Narrow the viewport (&lt;768px) to test the drawer; use the control below to open it.
+      </p>
+      <button
+        type="button"
+        class="mx-2 mb-2 rounded border border-outline/30 px-3 py-2 ee-label text-on-surface md:hidden"
+        (click)="mobileNavOpen.set(true)"
+      >
+        Open navigation drawer
+      </button>
+      <div class="flex min-h-0 flex-1">
+        <ee-side-nav
+          [items]="items"
+          activeId="blacksmithing"
+          [character]="character"
+          [primaryNavItems]="primaryItems"
+          activePrimaryId="market-browser"
+          [mobileOpen]="mobileNavOpen()"
+          (mobileOpenChange)="mobileNavOpen.set($event)"
+        />
+        <div class="ee-glass m-4 hidden min-w-0 flex-1 rounded-lg p-4 md:block">
+          Main content (desktop)
+        </div>
+      </div>
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SideNavigationStoryHostComponent {
   readonly items = professionItems;
+  readonly primaryItems = primaryItems;
   readonly character = character;
+  protected readonly mobileNavOpen = signal(false);
 }
 
 @Component({
@@ -471,9 +509,23 @@ export class PageFrameStoryHostComponent {}
   ],
   template: `
     <div class="flex h-screen flex-col overflow-hidden bg-background text-on-surface">
-      <ee-top-nav [items]="primaryItems" activeId="market-browser" [character]="character" />
+      <ee-top-nav
+        [items]="primaryItems"
+        activeId="market-browser"
+        [character]="character"
+        [mobileDrawerOpen]="mobileNavOpen()"
+        (toggleMobileDrawer)="toggleMobileNav()"
+      />
       <div class="flex min-h-0 flex-1">
-        <ee-side-nav [items]="professionItems" activeId="blacksmithing" [character]="character" />
+        <ee-side-nav
+          [items]="professionItems"
+          activeId="blacksmithing"
+          [character]="character"
+          [primaryNavItems]="primaryItems"
+          activePrimaryId="market-browser"
+          [mobileOpen]="mobileNavOpen()"
+          (mobileOpenChange)="mobileNavOpen.set($event)"
+        />
         <ee-page-frame title="Market Browser" eyebrow="Exchange Intelligence">
           <ee-search-input />
           <div class="flex min-h-0 flex-1 gap-element-gap overflow-hidden">
@@ -497,4 +549,9 @@ export class MarketBrowserStoryHostComponent {
   readonly filters = filters;
   readonly columns = columns;
   readonly rows = rows;
+  protected readonly mobileNavOpen = signal(false);
+
+  protected toggleMobileNav(): void {
+    this.mobileNavOpen.update((open) => !open);
+  }
 }

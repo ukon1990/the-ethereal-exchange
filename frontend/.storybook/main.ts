@@ -7,9 +7,11 @@ const config: StorybookConfig = {
   previewHead: (head) => `${head}
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
 <style>
-  /* Primary aside and top nav links use hidden md:flex; force visible in the workshop iframe */
-  ee-side-nav aside,
-  ee-top-nav nav { display: flex !important; }
+  /* Desktop workshop: keep inline rail + primary tabs visible; mobile viewports keep real responsive behavior */
+  @media (min-width: 768px) {
+    ee-side-nav aside,
+    ee-top-nav nav { display: flex !important; }
+  }
 </style>`,
   framework: {
     name: '@analogjs/storybook-angular',

@@ -13,3 +13,11 @@ const meta: Meta<MarketBrowserStoryHostComponent> = {
 export default meta;
 
 export const Default: StoryObj<MarketBrowserStoryHostComponent> = {};
+
+export const Mobile: StoryObj<MarketBrowserStoryHostComponent> = {
+  parameters: {
+    viewport: {
+      defaultViewport: 'mobile1',
+    },
+  },
+};

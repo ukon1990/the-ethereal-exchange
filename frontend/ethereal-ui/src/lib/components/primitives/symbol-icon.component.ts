@@ -12,6 +12,8 @@ export type SymbolIconName =
   | 'filter_alt'
   | 'help'
   | 'inventory_2'
+  | 'close'
+  | 'menu'
   | 'magic_button'
   | 'person'
   | 'query_stats'
@@ -78,6 +80,12 @@ export type SymbolIconName =
         @case ('inventory_2') {
           <path d="M4 8h16v11H4V8Z" />
           <path d="M6 4h12l2 4H4l2-4ZM9 12h6" />
+        }
+        @case ('close') {
+          <path d="M18 6 6 18M6 6l12 12" />
+        }
+        @case ('menu') {
+          <path d="M4 7h16M4 12h16M4 17h16" />
         }
         @case ('magic_button') {
           <path d="m4 20 11-11" />

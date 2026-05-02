@@ -11,3 +11,12 @@ const meta: Meta<SideNavigationStoryHostComponent> = {
 export default meta;
 
 export const SideNavigation: StoryObj<SideNavigationStoryHostComponent> = {};
+
+/** Resize the preview to &lt;768px width or use this preset to exercise the drawer. */
+export const SideNavigationMobile: StoryObj<SideNavigationStoryHostComponent> = {
+  parameters: {
+    viewport: {
+      defaultViewport: 'mobile1',
+    },
+  },
+};

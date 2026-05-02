@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 
 import {
   FilterPanelComponent,
@@ -27,12 +27,21 @@ import { MarketBrowserService } from '../../core/services/market-browser.service
         [items]="viewModel().primaryNavItems"
         [activeId]="viewModel().activePrimaryNavId"
         [character]="viewModel().character"
+        [mobileDrawerOpen]="mobileNavOpen()"
+        (toggleMobileDrawer)="toggleMobileNav()"
+        (navSelected)="onPrimaryNavSelected($event)"
       />
       <div class="flex min-h-0 flex-1">
         <ee-side-nav
           [items]="viewModel().professionNavItems"
           [activeId]="viewModel().activeProfessionId"
           [character]="viewModel().character"
+          [primaryNavItems]="viewModel().primaryNavItems"
+          [activePrimaryId]="viewModel().activePrimaryNavId"
+          [mobileOpen]="mobileNavOpen()"
+          (mobileOpenChange)="mobileNavOpen.set($event)"
+          (primarySelected)="onPrimaryNavSelected($event)"
+          (selected)="onProfessionSelected($event)"
         />
         <ee-page-frame title="Market Browser" eyebrow="Exchange Intelligence">
           <ee-search-input />
@@ -53,4 +62,18 @@ import { MarketBrowserService } from '../../core/services/market-browser.service
 export class MarketBrowserPage {
   private readonly marketBrowserService = inject(MarketBrowserService);
   protected readonly viewModel = this.marketBrowserService.viewModel;
+  protected readonly mobileNavOpen = signal(false);
+
+  protected toggleMobileNav(): void {
+    this.mobileNavOpen.update((open) => !open);
+  }
+
+  protected onPrimaryNavSelected(id: string): void {
+    this.marketBrowserService.setActivePrimaryNavId(id);
+    this.mobileNavOpen.set(false);
+  }
+
+  protected onProfessionSelected(id: string): void {
+    this.marketBrowserService.setActiveProfessionId(id);
+  }
 }

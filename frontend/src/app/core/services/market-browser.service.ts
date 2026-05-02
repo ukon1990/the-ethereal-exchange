@@ -102,4 +102,12 @@ export class MarketBrowserService {
   });
 
   readonly viewModel = this.marketBrowser.asReadonly();
+
+  setActivePrimaryNavId(id: string): void {
+    this.marketBrowser.update((vm) => ({ ...vm, activePrimaryNavId: id }));
+  }
+
+  setActiveProfessionId(id: string): void {
+    this.marketBrowser.update((vm) => ({ ...vm, activeProfessionId: id }));
+  }
 }
