@@ -299,6 +299,10 @@
                 <version>${ktlint.version}</version>
                 <configuration>
                     <verbose>true</verbose>
+                    <!-- OpenAPI generator output does not match project ktlint rules; lint hand-written sources only. -->
+                    <sourcesExcludes>
+                        <sourcesExclude>net/jonasmf/auctionengine/generated/**</sourcesExclude>
+                    </sourcesExcludes>
                 </configuration>
                 <executions>
                     <execution>
