@@ -57,7 +57,10 @@ export class MarketBrowserService {
   private readonly auctionMarketApi = inject(AuctionMarketApiService);
   private readonly router = inject(Router);
   private route: ActivatedRoute | null = null;
-  private requestId = 0;
+  private filterRequestId = 0;
+  private searchRequestId = 0;
+  private filterCacheKey: string | null = null;
+  private cachedFilters: readonly AuctionMarketFilter[] = [];
   private queryState: MarketBrowserQueryState = defaultQueryState;
   private routeRegion: 'us' | 'eu' | 'kr' | 'tw' | null = null;
   private routeRealmSlug: string | null = null;
@@ -105,35 +108,47 @@ export class MarketBrowserService {
     this.route = route;
   }
 
-  loadFromRoute(
-    paramMap: ParamMap,
-    queryParamMap: ParamMap,
-  ): void {
+  loadFromRoute(paramMap: ParamMap, queryParamMap: ParamMap): void {
     const region = paramMap.get('region')?.toLowerCase();
     const realmSlug = paramMap.get('realm');
     if (!isRegion(region) || !realmSlug) return;
     this.routeRegion = region;
     this.routeRealmSlug = realmSlug;
     this.queryState = readQueryState(queryParamMap);
+    const filterCacheKey = `${region}:${realmSlug}`;
+    const hasCachedFiltersForRoute = this.filterCacheKey === filterCacheKey;
     this.marketBrowser.update((vm) => ({
       ...vm,
       searchQuery: this.queryState.query,
       page: this.queryState.page,
       loading: true,
+      filterSections: hasCachedFiltersForRoute
+        ? toFilterSections(this.cachedFilters, this.queryState)
+        : [],
     }));
 
-    const currentRequestId = ++this.requestId;
-    this.auctionMarketApi
-      .getAuctionMarketFilters(region, realmSlug, undefined, 'body', false, { transferCache: false })
-      .subscribe({
-        next: (response) => {
-          if (currentRequestId !== this.requestId) return;
-          this.marketBrowser.update((vm) => ({
-            ...vm,
-            filterSections: toFilterSections(response.filters ?? [], this.queryState),
-          }));
-        },
-      });
+    if (!hasCachedFiltersForRoute) {
+      this.filterCacheKey = filterCacheKey;
+      this.cachedFilters = [];
+      this.marketBrowser.update((vm) => ({ ...vm, filterSections: [] }));
+      const currentFilterRequestId = ++this.filterRequestId;
+      this.auctionMarketApi
+        .getAuctionMarketFilters(region, realmSlug, undefined, 'body', false, {
+          transferCache: false,
+        })
+        .subscribe({
+          next: (response) => {
+            if (currentFilterRequestId !== this.filterRequestId) return;
+            this.cachedFilters = response.filters ?? [];
+            this.marketBrowser.update((vm) => ({
+              ...vm,
+              filterSections: toFilterSections(this.cachedFilters, this.queryState),
+            }));
+          },
+        });
+    }
+
+    const currentSearchRequestId = ++this.searchRequestId;
     this.auctionMarketApi
       .searchAuctionMarket(
         region,
@@ -158,11 +173,11 @@ export class MarketBrowserService {
       )
       .subscribe({
         next: (response) => {
-          if (currentRequestId !== this.requestId) return;
+          if (currentSearchRequestId !== this.searchRequestId) return;
           this.applySearchPage(response);
         },
         error: () => {
-          if (currentRequestId !== this.requestId) return;
+          if (currentSearchRequestId !== this.searchRequestId) return;
           this.marketBrowser.update((vm) => ({
             ...vm,
             loading: false,
@@ -204,16 +219,24 @@ export class MarketBrowserService {
         qualityIds: toggleNumber(this.queryState.qualityIds, value),
         page: 0,
       });
-    } else if (filterId === 'itemClassIds') {
+    }
+  }
+
+  selectFilter(filterId: string, optionId: string | null): void {
+    const rawValue = optionId?.split(':')[1];
+    const value = rawValue === undefined ? null : Number(rawValue);
+    if (value !== null && !Number.isFinite(value)) return;
+    if (filterId === 'itemClassIds') {
       this.navigateWithState({
         ...this.queryState,
-        itemClassIds: toggleNumber(this.queryState.itemClassIds, value),
+        itemClassIds: value === null ? [] : [value],
+        itemSubclassIds: [],
         page: 0,
       });
     } else if (filterId === 'itemSubclassIds') {
       this.navigateWithState({
         ...this.queryState,
-        itemSubclassIds: toggleNumber(this.queryState.itemSubclassIds, value),
+        itemSubclassIds: value === null ? [] : [value],
         page: 0,
       });
     }
@@ -261,7 +284,9 @@ export class MarketBrowserService {
       page,
       totalPages: response.page.totalPages ?? 0,
       paginationSummary:
-        totalItems === 0 ? 'No market items available.' : `Showing ${start}-${end} of ${totalItems} items`,
+        totalItems === 0
+          ? 'No market items available.'
+          : `Showing ${start}-${end} of ${totalItems} items`,
     }));
   }
 
@@ -284,8 +309,8 @@ function readQueryState(queryParamMap: ParamMap): MarketBrowserQueryState {
     ...defaultQueryState,
     query: queryParamMap.get('query') ?? '',
     qualityIds: queryParamMap.getAll('qualityIds').map(Number).filter(Number.isFinite),
-    itemClassIds: queryParamMap.getAll('itemClassIds').map(Number).filter(Number.isFinite),
-    itemSubclassIds: queryParamMap.getAll('itemSubclassIds').map(Number).filter(Number.isFinite),
+    itemClassIds: firstFinite(queryParamMap.getAll('itemClassIds')),
+    itemSubclassIds: firstFinite(queryParamMap.getAll('itemSubclassIds')),
     recipeOnly: queryParamMap.get('recipeOnly') === 'true' ? true : null,
     minPrice: nullableNumber(queryParamMap.get('minPrice')),
     maxPrice: nullableNumber(queryParamMap.get('maxPrice')),
@@ -296,6 +321,11 @@ function readQueryState(queryParamMap: ParamMap): MarketBrowserQueryState {
     sortBy: readSortBy(queryParamMap.get('sortBy')),
     sortDirection: queryParamMap.get('sortDirection') === 'desc' ? 'desc' : 'asc',
   };
+}
+
+function firstFinite(values: readonly string[]): readonly number[] {
+  const value = values.map(Number).find(Number.isFinite);
+  return value === undefined ? [] : [value];
 }
 
 function nullableNumber(value: string | null): number | null {
@@ -318,7 +348,9 @@ function readSortBy(value: string | null): MarketBrowserQueryState['sortBy'] {
   return allowed.find((candidate) => candidate === value) ?? 'itemName';
 }
 
-function toQueryParams(state: MarketBrowserQueryState): Record<string, string | number | boolean | readonly number[] | null> {
+function toQueryParams(
+  state: MarketBrowserQueryState,
+): Record<string, string | number | boolean | readonly number[] | null> {
   return {
     query: state.query || null,
     qualityIds: state.qualityIds.length ? state.qualityIds : null,
@@ -347,18 +379,20 @@ function toFilterSections(
         id: filter.id,
         label: filter.label,
         type: filter.type,
-        options: [{ id: `${filter.id}:true`, label: filter.label, selected: state.recipeOnly === true }],
+        options: [
+          { id: `${filter.id}:true`, label: filter.label, selected: state.recipeOnly === true },
+        ],
       };
     }
     return {
       id: filter.id,
       label: filter.label,
-      type: filter.type,
+      type: filterType(filter),
       min: filter.min ?? undefined,
       max: filter.max ?? undefined,
       selectedMin: selectedRangeValue(filter.id, 'min', state),
       selectedMax: selectedRangeValue(filter.id, 'max', state),
-      options: (filter.options ?? []).map((option) => ({
+      options: filterOptions(filter, state).map((option) => ({
         id: `${filter.id}:${option.id}`,
         label: option.label,
         selected: selectedIds.has(option.id),
@@ -369,10 +403,24 @@ function toFilterSections(
   });
 }
 
-function selectedSet(
-  filterId: string,
+function filterType(filter: AuctionMarketFilter): FilterSection['type'] {
+  if (filter.id === 'itemClassIds' || filter.id === 'itemSubclassIds') return 'select';
+  return filter.type;
+}
+
+function filterOptions(
+  filter: AuctionMarketFilter,
   state: MarketBrowserQueryState,
-): Set<string> {
+): readonly NonNullable<AuctionMarketFilter['options']>[number][] {
+  const options = filter.options ?? [];
+  if (filter.id !== 'itemSubclassIds' || state.itemClassIds.length === 0) return options;
+  const selectedClassIds = new Set(state.itemClassIds.map(String));
+  return options.filter(
+    (option) => option.parentId !== null && selectedClassIds.has(String(option.parentId)),
+  );
+}
+
+function selectedSet(filterId: string, state: MarketBrowserQueryState): Set<string> {
   if (filterId === 'qualityIds') return new Set(state.qualityIds.map(String));
   if (filterId === 'itemClassIds') return new Set(state.itemClassIds.map(String));
   if (filterId === 'itemSubclassIds') return new Set(state.itemSubclassIds.map(String));
@@ -385,7 +433,8 @@ function selectedRangeValue(
   state: MarketBrowserQueryState,
 ): number | undefined {
   if (filterId === 'price') return (bound === 'min' ? state.minPrice : state.maxPrice) ?? undefined;
-  if (filterId === 'quantity') return (bound === 'min' ? state.minQuantity : state.maxQuantity) ?? undefined;
+  if (filterId === 'quantity')
+    return (bound === 'min' ? state.minQuantity : state.maxQuantity) ?? undefined;
   return undefined;
 }
 
@@ -427,9 +476,8 @@ function toQuality(value: string | undefined): ItemQuality {
   return 'common';
 }
 
-function toggleNumber(
-  values: readonly number[],
-  value: number,
-): readonly number[] {
-  return values.includes(value) ? values.filter((candidate) => candidate !== value) : [...values, value];
+function toggleNumber(values: readonly number[], value: number): readonly number[] {
+  return values.includes(value)
+    ? values.filter((candidate) => candidate !== value)
+    : [...values, value];
 }

@@ -54,6 +54,7 @@ describe('MarketBrowserPage', () => {
     setActiveProfessionId: vitest.fn(),
     setSearchQuery: vitest.fn(),
     toggleFilter: vitest.fn(),
+    selectFilter: vitest.fn(),
     setRangeFilter: vitest.fn(),
     resetFilters: vitest.fn(),
     goToPreviousPage: vitest.fn(),
