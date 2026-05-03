@@ -6,7 +6,6 @@ import {
   PageFrameComponent,
   SearchInputComponent,
   SideNavComponent,
-  TopNavComponent,
 } from '@ui';
 
 import { MarketBrowserService } from '../../core/services/market-browser.service';

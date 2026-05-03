@@ -46,15 +46,13 @@ describe('SelectRealmPage', () => {
   beforeEach(async () => {
     realmApi = {
       listRealms: vitest.fn().mockReturnValue(of(realmsFixture)),
-      getRealm: vitest
-        .fn()
-        .mockReturnValue(
-          of({
-            realm: realmsFixture[0],
-            auctionHouse: { connectedRealmId: 1 },
-            community: { connectedRealmId: -2 },
-          }),
-        ),
+      getRealm: vitest.fn().mockReturnValue(
+        of({
+          realm: realmsFixture[0],
+          auctionHouse: { connectedRealmId: 1 },
+          community: { connectedRealmId: -2 },
+        }),
+      ),
     };
 
     localStorage.clear();
