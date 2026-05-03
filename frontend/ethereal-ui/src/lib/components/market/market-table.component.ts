@@ -45,13 +45,17 @@ import { SymbolIconComponent } from '../primitives/symbol-icon.component';
               [amount]="row.minBuyout"
               [emphasis]="row.selected === true"
             />
-            <ee-currency-amount class="justify-self-end opacity-80" [amount]="row.marketValue" />
+            @if (row.selectedQuantity !== undefined) {
+              <div class="justify-self-end ee-data text-on-surface">{{ row.selectedQuantity }}</div>
+            } @else {
+              <ee-currency-amount class="justify-self-end opacity-80" [amount]="row.marketValue" />
+            }
             <ee-currency-amount
               class="justify-self-end opacity-80"
               [amount]="row.regionalAverage"
             />
             <div class="justify-self-end ee-data text-tertiary-container">
-              {{ row.saleRate.toFixed(2) }}
+              {{ row.communityQuantity !== undefined ? row.communityQuantity : row.saleRate.toFixed(2) }}
             </div>
           </button>
         } @empty {
@@ -67,6 +71,7 @@ import { SymbolIconComponent } from '../primitives/symbol-icon.component';
             type="button"
             class="rounded p-1 transition hover:text-primary"
             aria-label="Previous page"
+            (click)="previousPage.emit()"
           >
             <ee-symbol-icon name="chevron_left" />
           </button>
@@ -74,6 +79,7 @@ import { SymbolIconComponent } from '../primitives/symbol-icon.component';
             type="button"
             class="rounded p-1 transition hover:text-primary"
             aria-label="Next page"
+            (click)="nextPage.emit()"
           >
             <ee-symbol-icon name="chevron_right" />
           </button>
@@ -88,6 +94,8 @@ export class MarketTableComponent {
   readonly rows = input.required<readonly MarketItemRow[]>();
   readonly summary = input.required<string>();
   readonly rowSelected = output<string>();
+  readonly previousPage = output<void>();
+  readonly nextPage = output<void>();
 
   protected columnClass(align: TableColumn['align']): string {
     return align === 'right' ? 'text-right' : 'text-left';
