@@ -10,4 +10,8 @@ export interface MarketBrowserViewModel {
   readonly tableColumns: readonly TableColumn[];
   readonly rows: readonly MarketItemRow[];
   readonly paginationSummary: string;
+  readonly searchQuery: string;
+  readonly page: number;
+  readonly totalPages: number;
+  readonly loading: boolean;
 }

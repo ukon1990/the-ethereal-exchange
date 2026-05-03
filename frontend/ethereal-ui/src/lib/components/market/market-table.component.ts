@@ -8,55 +8,75 @@ import { SymbolIconComponent } from '../primitives/symbol-icon.component';
 
 @Component({
   selector: 'ee-market-table',
+  host: {
+    class: 'flex min-h-0 min-w-0 flex-1',
+  },
   imports: [CurrencyAmountComponent, ScrollingModule, SymbolIconComponent],
   template: `
     <section
-      class="ee-glass flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg"
+      class="ee-glass flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg"
       aria-label="Market items"
     >
-      <div
-        class="grid grid-cols-[minmax(14rem,3fr)_7rem_minmax(7rem,1.5fr)_minmax(7rem,1.5fr)_minmax(7rem,1.5fr)_6rem] gap-4 border-b border-white/10 bg-surface-container-high px-6 py-4 ee-label text-outline"
-        role="row"
-      >
-        @for (column of columns(); track column.id) {
-          <div [class]="columnClass(column.align)" role="columnheader">{{ column.label }}</div>
-        }
-      </div>
-      <div cdkScrollable class="min-h-0 flex-1 overflow-y-auto divide-y divide-white/5">
-        @for (row of rows(); track row.id) {
-          <button type="button" [class]="rowClass(row)" (click)="rowSelected.emit(row.id)">
-            <div class="flex min-w-0 items-center gap-3">
-              <div [class]="iconClass(row.quality)">
-                @if (row.iconUrl) {
-                  <img
-                    class="h-6 w-6 rounded-sm object-cover"
-                    [src]="row.iconUrl"
-                    [alt]="row.name + ' icon'"
-                  />
+      <div class="min-h-0 flex-1 overflow-x-auto">
+        <div class="flex h-full min-w-[56rem] flex-col">
+          <div
+            class="grid grid-cols-[minmax(14rem,3fr)_7rem_minmax(7rem,1.5fr)_minmax(7rem,1.5fr)_minmax(7rem,1.5fr)_6rem] gap-4 border-b border-white/10 bg-surface-container-high px-6 py-4 ee-label text-outline"
+            role="row"
+          >
+            @for (column of columns(); track column.id) {
+              <div [class]="columnClass(column.align)" role="columnheader">{{ column.label }}</div>
+            }
+          </div>
+          <div cdkScrollable class="min-h-0 flex-1 overflow-y-auto divide-y divide-white/5">
+            @for (row of rows(); track row.id) {
+              <button type="button" [class]="rowClass(row)" (click)="rowSelected.emit(row.id)">
+                <div class="flex min-w-0 items-center gap-3">
+                  <div [class]="iconClass(row.quality)">
+                    @if (row.iconUrl) {
+                      <img
+                        class="h-6 w-6 rounded-sm object-cover"
+                        [src]="row.iconUrl"
+                        [alt]="row.name + ' icon'"
+                      />
+                    } @else {
+                      <ee-symbol-icon class="text-[18px]" name="deployed_code" />
+                    }
+                  </div>
+                  <span [class]="nameClass(row.quality)">{{ row.name }}</span>
+                </div>
+                <div [class]="qualityClass(row.quality)">{{ qualityLabel(row.quality) }}</div>
+                <ee-currency-amount
+                  class="justify-self-end"
+                  [amount]="row.minBuyout"
+                  [emphasis]="row.selected === true"
+                />
+                @if (row.selectedQuantity !== undefined) {
+                  <div class="justify-self-end ee-data text-on-surface">
+                    {{ row.selectedQuantity }}
+                  </div>
                 } @else {
-                  <ee-symbol-icon class="text-[18px]" name="deployed_code" />
+                  <ee-currency-amount
+                    class="justify-self-end opacity-80"
+                    [amount]="row.marketValue"
+                  />
                 }
-              </div>
-              <span [class]="nameClass(row.quality)">{{ row.name }}</span>
-            </div>
-            <div [class]="qualityClass(row.quality)">{{ qualityLabel(row.quality) }}</div>
-            <ee-currency-amount
-              class="justify-self-end"
-              [amount]="row.minBuyout"
-              [emphasis]="row.selected === true"
-            />
-            <ee-currency-amount class="justify-self-end opacity-80" [amount]="row.marketValue" />
-            <ee-currency-amount
-              class="justify-self-end opacity-80"
-              [amount]="row.regionalAverage"
-            />
-            <div class="justify-self-end ee-data text-tertiary-container">
-              {{ row.saleRate.toFixed(2) }}
-            </div>
-          </button>
-        } @empty {
-          <div class="p-8 text-center text-on-surface-variant">No market items available.</div>
-        }
+                <ee-currency-amount
+                  class="justify-self-end opacity-80"
+                  [amount]="row.regionalAverage"
+                />
+                <div class="justify-self-end ee-data text-tertiary-container">
+                  {{
+                    row.communityQuantity !== undefined
+                      ? row.communityQuantity
+                      : row.saleRate.toFixed(2)
+                  }}
+                </div>
+              </button>
+            } @empty {
+              <div class="p-8 text-center text-on-surface-variant">No market items available.</div>
+            }
+          </div>
+        </div>
       </div>
       <footer
         class="flex items-center justify-between border-t border-white/10 bg-surface-container-high p-4 ee-data text-outline"
@@ -67,6 +87,7 @@ import { SymbolIconComponent } from '../primitives/symbol-icon.component';
             type="button"
             class="rounded p-1 transition hover:text-primary"
             aria-label="Previous page"
+            (click)="previousPage.emit()"
           >
             <ee-symbol-icon name="chevron_left" />
           </button>
@@ -74,6 +95,7 @@ import { SymbolIconComponent } from '../primitives/symbol-icon.component';
             type="button"
             class="rounded p-1 transition hover:text-primary"
             aria-label="Next page"
+            (click)="nextPage.emit()"
           >
             <ee-symbol-icon name="chevron_right" />
           </button>
@@ -88,6 +110,8 @@ export class MarketTableComponent {
   readonly rows = input.required<readonly MarketItemRow[]>();
   readonly summary = input.required<string>();
   readonly rowSelected = output<string>();
+  readonly previousPage = output<void>();
+  readonly nextPage = output<void>();
 
   protected columnClass(align: TableColumn['align']): string {
     return align === 'right' ? 'text-right' : 'text-left';

@@ -31,12 +31,18 @@ export interface FilterOption {
   readonly label: string;
   readonly selected: boolean;
   readonly quality?: ItemQuality;
+  readonly parentId?: string;
 }
 
 export interface FilterSection {
   readonly id: string;
   readonly label: string;
+  readonly type?: 'text' | 'select' | 'multiSelect' | 'boolean' | 'range';
   readonly options: readonly FilterOption[];
+  readonly min?: number;
+  readonly max?: number;
+  readonly selectedMin?: number;
+  readonly selectedMax?: number;
 }
 
 export interface TableColumn {
@@ -53,6 +59,8 @@ export interface MarketItemRow {
   readonly marketValue: CurrencyAmount;
   readonly regionalAverage: CurrencyAmount;
   readonly saleRate: number;
+  readonly selectedQuantity?: number;
+  readonly communityQuantity?: number;
   readonly iconUrl?: string;
   readonly selected?: boolean;
 }
