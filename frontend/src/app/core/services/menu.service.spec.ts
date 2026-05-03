@@ -21,27 +21,58 @@ describe('MenuService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should correctly return valid route links', async () => {
-    const canActivate = vitest.fn().mockReturnValue(Promise.resolve(true));
-    const links = await service.getActiveRouteLinks(
-      [
-        { title: 'First page', path: '', icon: 'home' },
-        { title: 'Second page', path: 'second', icon: 'pageview' },
-        {
-          title: 'Admin page',
-          path: 'admin',
-          icon: 'admin_panel_settings',
-          canActivate: [canActivate],
-        },
-      ],
-      routeSnapshot,
-      routerState,
-    );
+  describe('getActiveRouteLinks', () => {
+    it('should correctly return valid route links', async () => {
+      const links = await service.getActiveRouteLinks(
+        [
+          { title: 'First page', path: '', icon: 'home' },
+          { title: 'Second page', path: 'second', icon: 'pageview' },
+        ],
+        routeSnapshot,
+        routerState,
+      );
 
-    expect(links.length).toBe(3);
-    expect(links[0].label).toBe('First page');
-    expect(links[0].icon).toBe('home');
-    expect(links[0].routerLink).toBe('');
-    expect(links[0].children).toEqual([]);
+      expect(links.length).toBe(2);
+      expect(links[0].label).toBe('First page');
+      expect(links[0].icon).toBe('home');
+      expect(links[0].routerLink).toBe('');
+      expect(links[0].children).toEqual([]);
+    });
+
+    it('should correctly return link when canActivate returns true', async () => {
+      const canActivate = vitest.fn().mockReturnValue(Promise.resolve(true));
+      const links = await service.getActiveRouteLinks(
+        [
+          {
+            title: 'Admin page',
+            path: 'admin',
+            icon: 'admin_panel_settings',
+            canActivate: [canActivate],
+          },
+        ],
+        routeSnapshot,
+        routerState,
+      );
+
+      expect(links.length).toBe(1);
+    });
+
+    it('should hide links if the user can not activate them', async () => {
+      const canActivate = vitest.fn().mockReturnValue(Promise.resolve(false));
+      const links = await service.getActiveRouteLinks(
+        [
+          {
+            title: 'Admin page',
+            path: 'admin',
+            icon: 'admin_panel_settings',
+            canActivate: [canActivate],
+          },
+        ],
+        routeSnapshot,
+        routerState,
+      );
+
+      expect(links.length).toBe(0);
+    });
   });
 });
