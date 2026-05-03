@@ -1,7 +1,17 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { CharacterSummary, TopNavComponent } from '@ui';
-import { MenuService } from './core/services/menu.service';
+
+import { MenuService } from '@core/services/menu.service';
+import { RealmSelectionService } from '@core/services/realm-selection.service';
+
+const FALLBACK_CHARACTER: CharacterSummary = {
+  name: 'Adventurer',
+  realm: 'No realm selected',
+  level: 0,
+  profession: '',
+  skill: '',
+};
 
 @Component({
   selector: 'app-root',
@@ -23,7 +33,17 @@ import { MenuService } from './core/services/menu.service';
 })
 export class App {
   readonly menu = inject(MenuService);
+  private readonly realmSelection = inject(RealmSelectionService);
   protected readonly mobileNavOpen = signal(false);
+
+  protected readonly character = computed<CharacterSummary>(() => {
+    const realm = this.realmSelection.selected();
+    if (!realm) return FALLBACK_CHARACTER;
+    return {
+      ...FALLBACK_CHARACTER,
+      realm: `${realm.name}-${realm.region.toUpperCase()}`,
+    };
+  });
 
   protected toggleMobileNav(): void {
     this.mobileNavOpen.update((open) => !open);
@@ -32,11 +52,4 @@ export class App {
   protected onPrimaryNavSelected(id: string): void {
     console.log(id);
   }
-  readonly character = signal<CharacterSummary>({
-    name: 'GoblinKing99',
-    realm: 'Illidan-US',
-    level: 70,
-    profession: 'Blacksmithing',
-    skill: 'Skill Level 300/300',
-  });
 }
