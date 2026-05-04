@@ -267,7 +267,9 @@ export class MarketBrowserService {
   }
 
   selectFilter(filterId: string, optionId: string | null): void {
-    const rawValue = optionId?.split(':')[1];
+    const optionIdParts = optionId?.split(':') ?? [];
+    const rawValue =
+      optionIdParts.length === 0 ? undefined : optionIdParts[optionIdParts.length - 1];
     const value = rawValue === undefined ? null : Number(rawValue);
     if (value !== null && !Number.isFinite(value)) return;
     if (filterId === 'itemClassIds') {
@@ -315,6 +317,9 @@ export class MarketBrowserService {
     const first = sorting[0];
     const sortBy = first ? readSortBy(first.id) : defaultQueryState.sortBy;
     const sortDirection: 'asc' | 'desc' = first?.desc ? 'desc' : 'asc';
+    if (this.queryState.sortBy === sortBy && this.queryState.sortDirection === sortDirection) {
+      return;
+    }
     this.navigateWithState({ ...this.queryState, sortBy, sortDirection, page: 0 });
   }
 
@@ -468,7 +473,7 @@ function toFilterSections(
       selectedMin: selectedRangeValue(filter.id, 'min', state),
       selectedMax: selectedRangeValue(filter.id, 'max', state),
       options: filterOptions(filter, state).map((option) => ({
-        id: `${filter.id}:${option.id}`,
+        id: filterOptionId(filter.id, option),
         label: option.label,
         selected: selectedIds.has(option.id),
         parentId: option.parentId ?? undefined,
@@ -493,6 +498,16 @@ function filterOptions(
   return options.filter(
     (option) => option.parentId !== null && selectedClassIds.has(String(option.parentId)),
   );
+}
+
+function filterOptionId(
+  filterId: string,
+  option: NonNullable<AuctionMarketFilter['options']>[number],
+): string {
+  if (filterId === 'itemSubclassIds' && option.parentId !== null && option.parentId !== undefined) {
+    return `${filterId}:${option.parentId}:${option.id}`;
+  }
+  return `${filterId}:${option.id}`;
 }
 
 function selectedSet(filterId: string, state: MarketBrowserQueryState): Set<string> {

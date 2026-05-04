@@ -210,15 +210,16 @@ export class TableComponent<TData extends RowData> {
   readonly previousPage = output<void>();
   readonly nextPage = output<void>();
   readonly sortingChange = output<SortingState>();
+  private readonly coreRowModel = getCoreRowModel<TData>();
 
   /**
    * Cast for ng-packagr `.d.ts` emit: the real value is a TanStack `Table` plus an Angular `Signal` proxy.
    */
   protected readonly table = createAngularTable<TData>(() => {
     const base = {
-      data: [...this.data()],
-      columns: [...this.columns()],
-      getCoreRowModel: getCoreRowModel(),
+      data: this.data() as TData[],
+      columns: this.columns(),
+      getCoreRowModel: this.coreRowModel,
       getRowId: (originalRow: TData, index: number) => {
         const fn = this.getRowId();
         return fn ? fn(originalRow as TData, index) : String(index);
@@ -230,7 +231,7 @@ export class TableComponent<TData extends RowData> {
         manualSorting: true,
         enableSortingRemoval: false,
         state: {
-          sorting: [...this.sorting()],
+          sorting: this.sorting(),
         },
         onSortingChange: (updater) => {
           const next = functionalUpdate(updater, this.sorting());

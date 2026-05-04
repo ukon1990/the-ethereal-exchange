@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, combineLatest, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -106,6 +113,10 @@ export class MarketBrowserPage {
   protected readonly marketTableMinWidth = marketBrowserContentMinWidthClass();
   protected readonly marketTableHeaderRow = marketBrowserHeaderRowClass();
   protected readonly marketSkeletonRowClass = marketBrowserSkeletonRowClass();
+  protected readonly marketTableSorting = computed<SortingState>(() => {
+    const vm = this.viewModel();
+    return [{ id: vm.sortBy, desc: vm.sortDirection === 'desc' }];
+  });
 
   constructor() {
     this.marketBrowserService.bindRoute(this.route);
@@ -164,11 +175,6 @@ export class MarketBrowserPage {
 
   protected onNextPage(): void {
     this.marketBrowserService.goToNextPage();
-  }
-
-  protected marketTableSorting(): SortingState {
-    const vm = this.viewModel();
-    return [{ id: vm.sortBy, desc: vm.sortDirection === 'desc' }];
   }
 
   protected onTableSortingChange(sorting: SortingState): void {
