@@ -15,11 +15,13 @@ import net.jonasmf.auctionengine.dto.LocaleDTO
 import net.jonasmf.auctionengine.integration.blizzard.ItemApiClient
 import net.jonasmf.auctionengine.repository.rds.ItemJdbcRepository
 import net.jonasmf.auctionengine.repository.rds.ItemPersistenceSummary
+import net.jonasmf.auctionengine.repository.rds.ItemRetryEligibility
 import net.jonasmf.auctionengine.repository.rds.ItemSourceDiscovery
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.Clock
 import java.time.Instant
+import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
 class ItemSyncServiceTest {
@@ -66,6 +68,15 @@ class ItemSyncServiceTest {
         every { itemApiClient.getById(1003, Region.Europe) } throws RuntimeException("boom")
         every { blizzardMediaService.resolveItem(Region.Europe, item) } returns item
         every { itemBulkSyncService.syncItems(listOf(item)) } returns summary(items = 1)
+        every { itemJdbcRepository.classifyItemRetryEligibility(listOf(1001, 1003), any()) } returns
+            ItemRetryEligibility(
+                retryableIds = listOf(1001, 1003),
+                cooldownSkippedIds = emptyList(),
+                manualDisabledIds = emptyList(),
+            )
+        every { itemJdbcRepository.findItemFetchFailureStates(listOf(1001, 1003)) } returns emptyMap()
+        every { itemJdbcRepository.upsertItemFetchFailureState(1003, 1, null, "boom", any(), any(), false) } returns Unit
+        every { itemJdbcRepository.clearItemFetchFailureStates(listOf(1001)) } returns Unit
 
         val result = service.syncRegion(Region.Europe)
 
@@ -75,6 +86,8 @@ class ItemSyncServiceTest {
         assertEquals(4, result.candidateItemCount)
         assertEquals(2, result.existingItemCount)
         assertEquals(2, result.missingItemCount)
+        assertEquals(0, result.skippedByBackoffCount)
+        assertEquals(0, result.skippedManualDisabledCount)
         assertEquals(1, result.fetchedItemCount)
         assertEquals(1, result.itemFetchFailures)
         assertEquals(1, result.persistedItemCount)
@@ -101,15 +114,56 @@ class ItemSyncServiceTest {
         every { itemApiClient.getById(2001, Region.Europe) } returns item
         every { blizzardMediaService.resolveItem(Region.Europe, item) } returns item
         every { itemBulkSyncService.syncItems(listOf(item)) } returns summary(items = 1)
+        every { itemJdbcRepository.classifyItemRetryEligibility(listOf(2001), any()) } returns
+            ItemRetryEligibility(
+                retryableIds = listOf(2001),
+                cooldownSkippedIds = emptyList(),
+                manualDisabledIds = emptyList(),
+            )
+        every { itemJdbcRepository.findItemFetchFailureStates(listOf(2001)) } returns emptyMap()
+        every { itemJdbcRepository.clearItemFetchFailureStates(listOf(2001)) } returns Unit
 
         val result = service.syncRegion(Region.Europe)
 
         assertEquals(1, result.auctionSourceCount)
         assertEquals(0, result.recipeCraftedSourceCount)
         assertEquals(0, result.recipeReagentSourceCount)
+        assertEquals(0, result.skippedByBackoffCount)
+        assertEquals(0, result.skippedManualDisabledCount)
         assertEquals(1, result.fetchedItemCount)
         assertEquals(1, result.persistedItemCount)
         verify(exactly = 1) { itemJdbcRepository.findMissingItemIdsForDate(any()) }
+    }
+
+    @Test
+    fun `syncRegion skips non-retryable items`() {
+        val service = createService()
+
+        every { itemJdbcRepository.findMissingItemIdsForDate(any()) } returns
+            ItemSourceDiscovery(
+                auctionSourceCount = 2,
+                recipeCraftedSourceCount = 0,
+                recipeReagentSourceCount = 0,
+                candidateItemCount = 2,
+                existingItemCount = 0,
+                missingItemIds = listOf(3001, 3002),
+            )
+        every { itemJdbcRepository.classifyItemRetryEligibility(listOf(3001, 3002), any()) } returns
+            ItemRetryEligibility(
+                retryableIds = emptyList(),
+                cooldownSkippedIds = listOf(3001),
+                manualDisabledIds = listOf(3002),
+            )
+        every { itemJdbcRepository.findItemFetchFailureStates(emptyList()) } returns emptyMap()
+        every { itemJdbcRepository.findExistingItemIds(emptyList()) } returns emptySet()
+
+        val result = service.syncRegion(Region.Europe)
+
+        assertEquals(2, result.missingItemCount)
+        assertEquals(1, result.skippedByBackoffCount)
+        assertEquals(1, result.skippedManualDisabledCount)
+        assertEquals(0, result.fetchedItemCount)
+        verify(exactly = 0) { itemApiClient.getById(any(), any()) }
     }
 
     private fun item(id: Int) =

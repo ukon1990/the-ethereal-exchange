@@ -106,6 +106,8 @@ class ItemScheduleTest {
             candidateItemCount = 0,
             existingItemCount = 0,
             missingItemCount = 0,
+            skippedByBackoffCount = 0,
+            skippedManualDisabledCount = 0,
             fetchedItemCount = 0,
             itemFetchFailures = 0,
             persistedItemCount = 0,

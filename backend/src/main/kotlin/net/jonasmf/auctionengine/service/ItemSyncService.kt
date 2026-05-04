@@ -4,6 +4,7 @@ import net.jonasmf.auctionengine.config.BlizzardApiProperties
 import net.jonasmf.auctionengine.constant.Region
 import net.jonasmf.auctionengine.domain.item.Item
 import net.jonasmf.auctionengine.integration.blizzard.ItemApiClient
+import net.jonasmf.auctionengine.repository.rds.ItemFetchFailureState
 import net.jonasmf.auctionengine.repository.rds.ItemJdbcRepository
 import net.jonasmf.auctionengine.repository.rds.ItemPersistenceSummary
 import org.slf4j.LoggerFactory
@@ -12,10 +13,15 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
 import java.time.Clock
+import java.time.Duration
 import java.time.LocalDate
+import java.time.OffsetDateTime
 
 private const val ITEM_FETCH_BATCH_SIZE = 100
 private const val ITEM_FETCH_CONCURRENCY = 20
+private const val ITEM_FETCH_BACKOFF_DISABLE_FAILURE_COUNT = 10
+private val ITEM_FETCH_BASE_BACKOFF: Duration = Duration.ofHours(1)
+private val ITEM_FETCH_MAX_BACKOFF: Duration = Duration.ofDays(7)
 
 private data class ItemFetchOutcome(
     val itemId: Int,
@@ -31,6 +37,8 @@ data class ItemSyncResult(
     val candidateItemCount: Int,
     val existingItemCount: Int,
     val missingItemCount: Int,
+    val skippedByBackoffCount: Int,
+    val skippedManualDisabledCount: Int,
     val fetchedItemCount: Int,
     val itemFetchFailures: Int,
     val persistedItemCount: Int,
@@ -60,9 +68,16 @@ class ItemSyncService(
 
         val discovery = itemJdbcRepository.findMissingItemIdsForDate(today)
         val missingIds = discovery.missingItemIds
+        val now = OffsetDateTime.now(clock)
+        val eligibility = itemJdbcRepository.classifyItemRetryEligibility(missingIds, now)
+        val retryableMissingIds = eligibility.retryableIds
+        val existingFailureStates =
+            itemJdbcRepository
+                .findItemFetchFailureStates(retryableMissingIds)
+                .toMutableMap()
 
         log.info(
-            "Discovered item sync sources region={} auction={} crafted={} reagents={} candidates={} existing={} missing={}",
+            "Discovered item sync sources region={} auction={} crafted={} reagents={} candidates={} existing={} missing={} retryable={} cooldownSkipped={} manualDisabledSkipped={}",
             region,
             discovery.auctionSourceCount,
             discovery.recipeCraftedSourceCount,
@@ -70,9 +85,12 @@ class ItemSyncService(
             discovery.candidateItemCount,
             discovery.existingItemCount,
             missingIds.size,
+            retryableMissingIds.size,
+            eligibility.cooldownSkippedIds.size,
+            eligibility.manualDisabledIds.size,
         )
 
-        val missingIdBatches = missingIds.chunked(ITEM_FETCH_BATCH_SIZE)
+        val missingIdBatches = retryableMissingIds.chunked(ITEM_FETCH_BATCH_SIZE)
         val allFetchedIds = mutableListOf<Int>()
         var totalFetchFailures = 0
         var totalFetchedItems = 0
@@ -95,7 +113,7 @@ class ItemSyncService(
                 missingIdBatches.size,
                 batchIds.size,
                 index * ITEM_FETCH_BATCH_SIZE,
-                missingIds.size,
+                retryableMissingIds.size,
             )
 
             val batchOutcomes =
@@ -121,17 +139,46 @@ class ItemSyncService(
                 batchNumber,
                 missingIdBatches.size,
                 completedAfterBatch,
-                missingIds.size,
+                retryableMissingIds.size,
                 batchSucceeded,
                 batchFailed,
             )
 
             batchOutcomes.filter { it.error != null }.forEach { failure ->
+                val failedAt = OffsetDateTime.now(clock)
+                val previousFailureCount = existingFailureStates[failure.itemId]?.failureCount ?: 0
+                val currentFailureCount = previousFailureCount + 1
+                val manualDisabled = currentFailureCount >= ITEM_FETCH_BACKOFF_DISABLE_FAILURE_COUNT
+                val parsedError = parseError(failure.error)
+                val nextRetryAt = if (manualDisabled) null else failedAt.plus(backoffForFailureCount(currentFailureCount))
+                itemJdbcRepository.upsertItemFetchFailureState(
+                    itemId = failure.itemId,
+                    failureCount = currentFailureCount,
+                    lastErrorStatus = parsedError.first,
+                    lastErrorMessage = parsedError.second,
+                    lastFailedAt = failedAt,
+                    nextRetryAt = nextRetryAt,
+                    manualDisabled = manualDisabled,
+                )
+                existingFailureStates[failure.itemId] =
+                    ItemFetchFailureState(
+                        itemId = failure.itemId,
+                        failureCount = currentFailureCount,
+                        lastErrorStatus = parsedError.first,
+                        lastErrorMessage = parsedError.second,
+                        lastFailedAt = failedAt,
+                        nextRetryAt = nextRetryAt,
+                        manualDisabled = manualDisabled,
+                    )
                 log.warn(
-                    "Skipping item {} for region {} after fetch failure: {}",
+                    "Skipping item {} for region {} after fetch failure count={} manualDisabled={} nextRetryAt={} status={} message={}",
                     failure.itemId,
                     region,
-                    failure.error?.message ?: failure.error?.javaClass?.simpleName ?: "unknown error",
+                    currentFailureCount,
+                    manualDisabled,
+                    nextRetryAt,
+                    parsedError.first ?: "-",
+                    parsedError.second ?: "unknown error",
                 )
             }
 
@@ -159,6 +206,7 @@ class ItemSyncService(
                 totalItemAppearanceLinksUpserted += batchPersistenceSummary.itemAppearanceLinksUpserted
                 totalFetchedItems += batchItems.size
                 allFetchedIds += batchItems.map(Item::id)
+                itemJdbcRepository.clearItemFetchFailureStates(batchItems.map(Item::id))
                 log.info(
                     "Persisted item batch region={} batch={}/{} itemCount={} attemptedItemUpserts={}",
                     region,
@@ -194,6 +242,8 @@ class ItemSyncService(
             candidateItemCount = discovery.candidateItemCount,
             existingItemCount = discovery.existingItemCount,
             missingItemCount = missingIds.size,
+            skippedByBackoffCount = eligibility.cooldownSkippedIds.size,
+            skippedManualDisabledCount = eligibility.manualDisabledIds.size,
             fetchedItemCount = totalFetchedItems,
             itemFetchFailures = totalFetchFailures,
             persistedItemCount = persistedItemCount,
@@ -210,7 +260,7 @@ class ItemSyncService(
                 )
             }
             log.info(
-                "Finished item sync for region {} in {}ms auction={} crafted={} reagents={} candidates={} existing={} missing={} fetched={} failed={} persistedItems={} attemptedItemUpserts={}",
+                "Finished item sync for region {} in {}ms auction={} crafted={} reagents={} candidates={} existing={} missing={} retryable={} cooldownSkipped={} manualDisabledSkipped={} fetched={} failed={} persistedItems={} attemptedItemUpserts={}",
                 result.region,
                 result.durationMs,
                 result.auctionSourceCount,
@@ -219,11 +269,31 @@ class ItemSyncService(
                 result.candidateItemCount,
                 result.existingItemCount,
                 result.missingItemCount,
+                result.missingItemCount - result.skippedByBackoffCount - result.skippedManualDisabledCount,
+                result.skippedByBackoffCount,
+                result.skippedManualDisabledCount,
                 result.fetchedItemCount,
                 result.itemFetchFailures,
                 result.persistedItemCount,
                 result.persistenceSummary.itemsUpserted,
             )
         }
+    }
+
+    private fun backoffForFailureCount(failureCount: Int): Duration {
+        val shift = (failureCount - 1).coerceAtLeast(0)
+        val exponential = if (shift >= 62) Long.MAX_VALUE else 1L shl shift
+        val backoff = ITEM_FETCH_BASE_BACKOFF.multipliedBy(exponential)
+        return if (backoff > ITEM_FETCH_MAX_BACKOFF) ITEM_FETCH_MAX_BACKOFF else backoff
+    }
+
+    private fun parseError(error: Throwable?): Pair<String?, String?> {
+        val message = error?.message?.lineSequence()?.firstOrNull()?.trim()?.take(512)
+        val status = message?.let { STATUS_REGEX.find(it)?.groupValues?.get(1) }
+        return status to message
+    }
+
+    private companion object {
+        val STATUS_REGEX = Regex("""^(\d{3})\b""")
     }
 }

@@ -14,6 +14,8 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 private const val ITEM_JDBC_CHUNK_SIZE = 200
 
@@ -38,10 +40,147 @@ data class ItemSourceDiscovery(
     val missingItemIds: List<Int>,
 )
 
+data class ItemFetchFailureState(
+    val itemId: Int,
+    val failureCount: Int,
+    val lastErrorStatus: String?,
+    val lastErrorMessage: String?,
+    val lastFailedAt: OffsetDateTime,
+    val nextRetryAt: OffsetDateTime?,
+    val manualDisabled: Boolean,
+)
+
+data class ItemRetryEligibility(
+    val retryableIds: List<Int>,
+    val cooldownSkippedIds: List<Int>,
+    val manualDisabledIds: List<Int>,
+)
+
 @Repository
 class ItemJdbcRepository(
     private val jdbcTemplate: JdbcTemplate,
 ) {
+    fun findItemFetchFailureStates(itemIds: Collection<Int>): Map<Int, ItemFetchFailureState> {
+        if (itemIds.isEmpty()) return emptyMap()
+        val states = linkedMapOf<Int, ItemFetchFailureState>()
+        itemIds
+            .distinct()
+            .chunked(ITEM_JDBC_CHUNK_SIZE)
+            .forEach { chunk ->
+                jdbcTemplate.query(
+                    """
+                    SELECT
+                        item_id,
+                        failure_count,
+                        last_error_status,
+                        last_error_message,
+                        last_failed_at,
+                        next_retry_at,
+                        manual_disabled
+                    FROM item_fetch_failure
+                    WHERE item_id IN (${placeholders(chunk.size)})
+                    """.trimIndent(),
+                    { rs, _ ->
+                        ItemFetchFailureState(
+                            itemId = rs.getInt("item_id"),
+                            failureCount = rs.getInt("failure_count"),
+                            lastErrorStatus = rs.getString("last_error_status"),
+                            lastErrorMessage = rs.getString("last_error_message"),
+                            lastFailedAt = rs.getObject("last_failed_at", OffsetDateTime::class.java),
+                            nextRetryAt = rs.getObject("next_retry_at", OffsetDateTime::class.java),
+                            manualDisabled = rs.getBoolean("manual_disabled"),
+                        )
+                    },
+                    *chunk.toTypedArray(),
+                ).forEach { state -> states[state.itemId] = state }
+            }
+        return states
+    }
+
+    fun classifyItemRetryEligibility(
+        itemIds: Collection<Int>,
+        now: OffsetDateTime,
+    ): ItemRetryEligibility {
+        if (itemIds.isEmpty()) {
+            return ItemRetryEligibility(
+                retryableIds = emptyList(),
+                cooldownSkippedIds = emptyList(),
+                manualDisabledIds = emptyList(),
+            )
+        }
+        val states = findItemFetchFailureStates(itemIds)
+        val retryable = mutableListOf<Int>()
+        val cooldownSkipped = mutableListOf<Int>()
+        val manualDisabled = mutableListOf<Int>()
+
+        itemIds.distinct().forEach { itemId ->
+            val state = states[itemId]
+            when {
+                state == null -> retryable += itemId
+                state.manualDisabled -> manualDisabled += itemId
+                state.nextRetryAt != null && state.nextRetryAt.isAfter(now) -> cooldownSkipped += itemId
+                else -> retryable += itemId
+            }
+        }
+
+        return ItemRetryEligibility(
+            retryableIds = retryable,
+            cooldownSkippedIds = cooldownSkipped,
+            manualDisabledIds = manualDisabled,
+        )
+    }
+
+    fun upsertItemFetchFailureState(
+        itemId: Int,
+        failureCount: Int,
+        lastErrorStatus: String?,
+        lastErrorMessage: String?,
+        lastFailedAt: OffsetDateTime,
+        nextRetryAt: OffsetDateTime?,
+        manualDisabled: Boolean,
+    ) {
+        jdbcTemplate.update(
+            """
+            INSERT INTO item_fetch_failure (
+                item_id,
+                failure_count,
+                last_error_status,
+                last_error_message,
+                last_failed_at,
+                next_retry_at,
+                manual_disabled
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                failure_count = VALUES(failure_count),
+                last_error_status = VALUES(last_error_status),
+                last_error_message = VALUES(last_error_message),
+                last_failed_at = VALUES(last_failed_at),
+                next_retry_at = VALUES(next_retry_at),
+                manual_disabled = VALUES(manual_disabled)
+            """.trimIndent(),
+            itemId,
+            failureCount,
+            lastErrorStatus,
+            lastErrorMessage,
+            lastFailedAt.withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime(),
+            nextRetryAt?.withOffsetSameInstant(ZoneOffset.UTC)?.toLocalDateTime(),
+            manualDisabled,
+        )
+    }
+
+    fun clearItemFetchFailureStates(itemIds: Collection<Int>) {
+        if (itemIds.isEmpty()) return
+        itemIds
+            .distinct()
+            .chunked(ITEM_JDBC_CHUNK_SIZE)
+            .forEach { chunk ->
+                jdbcTemplate.update(
+                    "DELETE FROM item_fetch_failure WHERE item_id IN (${placeholders(chunk.size)})",
+                    *chunk.toTypedArray(),
+                )
+            }
+    }
+
     fun findMissingItemIdsForDate(date: LocalDate): ItemSourceDiscovery {
         val missingItemIds = mutableListOf<Int>()
         var auctionSourceCount = 0
@@ -337,7 +476,7 @@ class ItemJdbcRepository(
                     append(chunk.joinToString(",") { "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" })
                     append(
                         """
-                        
+
                         ON DUPLICATE KEY UPDATE
                             en_us = VALUES(en_us),
                             es_mx = VALUES(es_mx),

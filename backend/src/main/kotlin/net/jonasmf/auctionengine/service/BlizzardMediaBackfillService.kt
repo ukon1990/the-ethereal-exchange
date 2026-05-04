@@ -2,15 +2,23 @@ package net.jonasmf.auctionengine.service
 
 import net.jonasmf.auctionengine.config.BlizzardApiProperties
 import net.jonasmf.auctionengine.constant.Region
+import net.jonasmf.auctionengine.repository.rds.ItemFetchFailureState
+import net.jonasmf.auctionengine.repository.rds.ItemJdbcRepository
 import org.slf4j.LoggerFactory
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
+import java.time.Clock
+import java.time.Duration
+import java.time.OffsetDateTime
 
 private const val MEDIA_BACKFILL_CHUNK_SIZE = 500
 private const val MEDIA_BACKFILL_CONCURRENCY = 10
+private const val MEDIA_BACKFILL_DISABLE_FAILURE_COUNT = 10
+private val MEDIA_BACKFILL_BASE_BACKOFF: Duration = Duration.ofHours(1)
+private val MEDIA_BACKFILL_MAX_BACKOFF: Duration = Duration.ofDays(7)
 
 private data class MediaBackfillRow(
     val id: Int,
@@ -34,6 +42,8 @@ class BlizzardMediaBackfillService(
     private val properties: BlizzardApiProperties,
     private val jdbcTemplate: JdbcTemplate,
     private val blizzardMediaService: BlizzardMediaService,
+    private val itemJdbcRepository: ItemJdbcRepository,
+    private val clock: Clock = Clock.systemDefaultZone(),
 ) {
     private val log = LoggerFactory.getLogger(BlizzardMediaBackfillService::class.java)
 
@@ -68,12 +78,46 @@ class BlizzardMediaBackfillService(
         while (true) {
             val rows = readRows(tableName, offset)
             if (rows.isEmpty()) break
+            val now = OffsetDateTime.now(clock)
+            val retryableRows =
+                if (tableName == "item") {
+                    val eligibility = itemJdbcRepository.classifyItemRetryEligibility(rows.map(MediaBackfillRow::id), now)
+                    val retryableIds = eligibility.retryableIds.toSet()
+                    log.info(
+                        "Media backfill eligibility table={} chunkOffset={} chunkSize={} retryable={} cooldownSkipped={} manualDisabledSkipped={}",
+                        tableName,
+                        offset,
+                        rows.size,
+                        retryableIds.size,
+                        eligibility.cooldownSkippedIds.size,
+                        eligibility.manualDisabledIds.size,
+                    )
+                    rows.filter { retryableIds.contains(it.id) }
+                } else {
+                    rows
+                }
+            val existingFailureStates =
+                if (tableName == "item") {
+                    itemJdbcRepository
+                        .findItemFetchFailureStates(retryableRows.map(MediaBackfillRow::id))
+                        .toMutableMap()
+                } else {
+                    mutableMapOf()
+                }
             updates +=
                 Flux
-                    .fromIterable(rows)
+                    .fromIterable(retryableRows)
                     .flatMap({ row ->
                         Mono
-                            .fromCallable { resolveAndUpdate(region, tableName, type, row) }
+                            .fromCallable {
+                                resolveAndUpdate(
+                                    region = region,
+                                    tableName = tableName,
+                                    type = type,
+                                    row = row,
+                                    existingFailureStates = existingFailureStates,
+                                )
+                            }
                             .subscribeOn(Schedulers.boundedElastic())
                     }, MEDIA_BACKFILL_CONCURRENCY)
                     .collectList()
@@ -120,20 +164,66 @@ class BlizzardMediaBackfillService(
         tableName: String,
         type: BlizzardMediaType,
         row: MediaBackfillRow,
+        existingFailureStates: MutableMap<Int, ItemFetchFailureState>,
     ): Boolean {
         val sourceHref = sourceHref(row)
-        val resolved = blizzardMediaService.resolve(region, type, row.mediaLookupId, sourceHref, row.id) ?: return false
-        jdbcTemplate.update(
-            """
-            UPDATE `$tableName`
-            SET media_url = ?, media_source_url = ?
-            WHERE id = ?
-            """.trimIndent(),
-            resolved.mediaUrl,
-            resolved.mediaSourceUrl,
-            row.id,
-        )
-        return true
+        val resolved = blizzardMediaService.resolve(region, type, row.mediaLookupId, sourceHref, row.id)
+        if (resolved != null) {
+            jdbcTemplate.update(
+                """
+                UPDATE `$tableName`
+                SET media_url = ?, media_source_url = ?
+                WHERE id = ?
+                """.trimIndent(),
+                resolved.mediaUrl,
+                resolved.mediaSourceUrl,
+                row.id,
+            )
+            if (tableName == "item") {
+                itemJdbcRepository.clearItemFetchFailureStates(listOf(row.id))
+            }
+            return true
+        }
+
+        if (tableName == "item") {
+            val failedAt = OffsetDateTime.now(clock)
+            val previousFailureCount = existingFailureStates[row.id]?.failureCount ?: 0
+            val currentFailureCount = previousFailureCount + 1
+            val manualDisabled = currentFailureCount >= MEDIA_BACKFILL_DISABLE_FAILURE_COUNT
+            val nextRetryAt =
+                if (manualDisabled) {
+                    null
+                } else {
+                    failedAt.plus(backoffForFailureCount(currentFailureCount))
+                }
+            itemJdbcRepository.upsertItemFetchFailureState(
+                itemId = row.id,
+                failureCount = currentFailureCount,
+                lastErrorStatus = null,
+                lastErrorMessage = "media resolution returned null",
+                lastFailedAt = failedAt,
+                nextRetryAt = nextRetryAt,
+                manualDisabled = manualDisabled,
+            )
+            existingFailureStates[row.id] =
+                ItemFetchFailureState(
+                    itemId = row.id,
+                    failureCount = currentFailureCount,
+                    lastErrorStatus = null,
+                    lastErrorMessage = "media resolution returned null",
+                    lastFailedAt = failedAt,
+                    nextRetryAt = nextRetryAt,
+                    manualDisabled = manualDisabled,
+                )
+        }
+        return false
+    }
+
+    private fun backoffForFailureCount(failureCount: Int): Duration {
+        val shift = (failureCount - 1).coerceAtLeast(0)
+        val exponential = if (shift >= 62) Long.MAX_VALUE else 1L shl shift
+        val backoff = MEDIA_BACKFILL_BASE_BACKOFF.multipliedBy(exponential)
+        return if (backoff > MEDIA_BACKFILL_MAX_BACKOFF) MEDIA_BACKFILL_MAX_BACKOFF else backoff
     }
 
     private fun sourceHref(row: MediaBackfillRow): String? =
