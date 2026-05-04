@@ -177,7 +177,8 @@ class AuctionMarketItemDetailRepository(
     fun loadHourlySeries(
         connectedRealmId: Int,
         itemId: Int,
-        statDate: LocalDate,
+        fromDate: LocalDate,
+        toDate: LocalDate,
         variant: Boolean,
         bonusKey: String,
         modifierKey: String,
@@ -187,7 +188,8 @@ class AuctionMarketItemDetailRepository(
             buildHourlySqlAndArgs(
                 connectedRealmId,
                 itemId,
-                statDate,
+                fromDate,
+                toDate,
                 variant,
                 bonusKey,
                 modifierKey,
@@ -344,7 +346,14 @@ class AuctionMarketItemDetailRepository(
         val sql =
             if (variant) {
                 """
-                WITH priced AS (
+                WITH RECURSIVE date_spine AS (
+                    SELECT ? AS stat_date
+                    UNION ALL
+                    SELECT DATE_ADD(stat_date, INTERVAL 1 DAY)
+                    FROM date_spine
+                    WHERE stat_date < ?
+                ),
+                priced AS (
                     SELECT
                         v.date,
                         v.price,
@@ -362,24 +371,45 @@ class AuctionMarketItemDetailRepository(
                       AND v.bonus_key <=> ?
                       AND v.modifier_key <=> ?
                       AND v.pet_species_id = ?
+                ),
+                daily_agg AS (
+                    SELECT
+                        date AS stat_date,
+                        MIN(price) AS min_price,
+                        AVG(price) AS avg_price,
+                        MIN(p25_price) AS p25_price,
+                        MIN(p75_price) AS p75_price,
+                        MAX(price) AS max_price,
+                        MIN(quantity) AS min_quantity,
+                        AVG(quantity) AS avg_quantity,
+                        MAX(quantity) AS max_quantity
+                    FROM priced
+                    GROUP BY date
                 )
                 SELECT
-                    date AS stat_date,
-                    MIN(price) AS min_price,
-                    AVG(price) AS avg_price,
-                    MIN(p25_price) AS p25_price,
-                    MIN(p75_price) AS p75_price,
-                    MAX(price) AS max_price,
-                    MIN(quantity) AS min_quantity,
-                    AVG(quantity) AS avg_quantity,
-                    MAX(quantity) AS max_quantity
-                FROM priced
-                GROUP BY date
-                ORDER BY date
+                    ds.stat_date,
+                    da.min_price,
+                    da.avg_price,
+                    da.p25_price,
+                    da.p75_price,
+                    da.max_price,
+                    da.min_quantity,
+                    da.avg_quantity,
+                    da.max_quantity
+                FROM date_spine ds
+                LEFT JOIN daily_agg da ON da.stat_date = ds.stat_date
+                ORDER BY ds.stat_date
                 """.trimIndent()
             } else {
                 """
-                WITH priced AS (
+                WITH RECURSIVE date_spine AS (
+                    SELECT ? AS stat_date
+                    UNION ALL
+                    SELECT DATE_ADD(stat_date, INTERVAL 1 DAY)
+                    FROM date_spine
+                    WHERE stat_date < ?
+                ),
+                priced AS (
                     SELECT
                         v.date,
                         v.price,
@@ -394,25 +424,41 @@ class AuctionMarketItemDetailRepository(
                     WHERE v.connected_realm_id = ?
                       AND v.item_id = ?
                       AND v.date BETWEEN ? AND ?
+                ),
+                daily_agg AS (
+                    SELECT
+                        date AS stat_date,
+                        MIN(price) AS min_price,
+                        AVG(price) AS avg_price,
+                        MIN(p25_price) AS p25_price,
+                        MIN(p75_price) AS p75_price,
+                        MAX(price) AS max_price,
+                        MIN(quantity) AS min_quantity,
+                        AVG(quantity) AS avg_quantity,
+                        MAX(quantity) AS max_quantity
+                    FROM priced
+                    GROUP BY date
                 )
                 SELECT
-                    date AS stat_date,
-                    MIN(price) AS min_price,
-                    AVG(price) AS avg_price,
-                    MIN(p25_price) AS p25_price,
-                    MIN(p75_price) AS p75_price,
-                    MAX(price) AS max_price,
-                    MIN(quantity) AS min_quantity,
-                    AVG(quantity) AS avg_quantity,
-                    MAX(quantity) AS max_quantity
-                FROM priced
-                GROUP BY date
-                ORDER BY date
+                    ds.stat_date,
+                    da.min_price,
+                    da.avg_price,
+                    da.p25_price,
+                    da.p75_price,
+                    da.max_price,
+                    da.min_quantity,
+                    da.avg_quantity,
+                    da.max_quantity
+                FROM date_spine ds
+                LEFT JOIN daily_agg da ON da.stat_date = ds.stat_date
+                ORDER BY ds.stat_date
                 """.trimIndent()
             }
         val params: Array<Any?> =
             if (variant) {
                 arrayOf(
+                    java.sql.Date.valueOf(fromDate),
+                    java.sql.Date.valueOf(toDate),
                     connectedRealmId,
                     itemId,
                     java.sql.Date.valueOf(fromDate),
@@ -423,6 +469,8 @@ class AuctionMarketItemDetailRepository(
                 )
             } else {
                 arrayOf(
+                    java.sql.Date.valueOf(fromDate),
+                    java.sql.Date.valueOf(toDate),
                     connectedRealmId,
                     itemId,
                     java.sql.Date.valueOf(fromDate),
@@ -435,7 +483,8 @@ class AuctionMarketItemDetailRepository(
     internal fun buildHourlySqlAndArgs(
         connectedRealmId: Int,
         itemId: Int,
-        statDate: LocalDate,
+        fromDate: LocalDate,
+        toDate: LocalDate,
         variant: Boolean,
         bonusKey: String,
         modifierKey: String,
@@ -444,8 +493,21 @@ class AuctionMarketItemDetailRepository(
         val sql =
             if (variant) {
                 """
-                WITH priced AS (
+                WITH RECURSIVE date_spine AS (
+                    SELECT ? AS stat_date
+                    UNION ALL
+                    SELECT DATE_ADD(stat_date, INTERVAL 1 DAY)
+                    FROM date_spine
+                    WHERE stat_date < ?
+                ),
+                hour_spine AS (
+                    SELECT 0 AS hour_of_day
+                    UNION ALL
+                    SELECT hour_of_day + 1 FROM hour_spine WHERE hour_of_day < 23
+                ),
+                priced AS (
                     SELECT
+                        v.date AS stat_date,
                         v.timestamp,
                         v.hour_of_day,
                         v.price,
@@ -459,28 +521,59 @@ class AuctionMarketItemDetailRepository(
                     FROM v_auction_house_prices v
                     WHERE v.connected_realm_id = ?
                       AND v.item_id = ?
-                      AND v.date = ?
+                      AND v.date BETWEEN ? AND ?
                       AND v.bonus_key <=> ?
                       AND v.modifier_key <=> ?
                       AND v.pet_species_id = ?
+                ),
+                hourly_agg AS (
+                    SELECT
+                        stat_date,
+                        hour_of_day,
+                        MIN(timestamp) AS timestamp,
+                        MIN(price) AS min_price,
+                        AVG(price) AS avg_price,
+                        MIN(p25_price) AS p25_price,
+                        MIN(p75_price) AS p75_price,
+                        MAX(price) AS max_price,
+                        SUM(quantity) AS total_quantity
+                    FROM priced
+                    GROUP BY stat_date, hour_of_day
                 )
                 SELECT
-                    timestamp,
-                    hour_of_day,
-                    MIN(price) AS min_price,
-                    AVG(price) AS avg_price,
-                    MIN(p25_price) AS p25_price,
-                    MIN(p75_price) AS p75_price,
-                    MAX(price) AS max_price,
-                    SUM(quantity) AS total_quantity
-                FROM priced
-                GROUP BY timestamp, hour_of_day
-                ORDER BY hour_of_day
+                    ds.stat_date,
+                    hs.hour_of_day,
+                    COALESCE(ha.timestamp, DATE_ADD(TIMESTAMP(ds.stat_date), INTERVAL hs.hour_of_day HOUR)) AS timestamp,
+                    ha.min_price,
+                    ha.avg_price,
+                    ha.p25_price,
+                    ha.p75_price,
+                    ha.max_price,
+                    ha.total_quantity
+                FROM date_spine ds
+                CROSS JOIN hour_spine hs
+                LEFT JOIN hourly_agg ha
+                  ON ha.stat_date = ds.stat_date
+                 AND ha.hour_of_day = hs.hour_of_day
+                ORDER BY ds.stat_date, hs.hour_of_day
                 """.trimIndent()
             } else {
                 """
-                WITH priced AS (
+                WITH RECURSIVE date_spine AS (
+                    SELECT ? AS stat_date
+                    UNION ALL
+                    SELECT DATE_ADD(stat_date, INTERVAL 1 DAY)
+                    FROM date_spine
+                    WHERE stat_date < ?
+                ),
+                hour_spine AS (
+                    SELECT 0 AS hour_of_day
+                    UNION ALL
+                    SELECT hour_of_day + 1 FROM hour_spine WHERE hour_of_day < 23
+                ),
+                priced AS (
                     SELECT
+                        v.date AS stat_date,
                         v.timestamp,
                         v.hour_of_day,
                         v.price,
@@ -494,37 +587,61 @@ class AuctionMarketItemDetailRepository(
                     FROM v_auction_house_prices v
                     WHERE v.connected_realm_id = ?
                       AND v.item_id = ?
-                      AND v.date = ?
+                      AND v.date BETWEEN ? AND ?
+                ),
+                hourly_agg AS (
+                    SELECT
+                        stat_date,
+                        hour_of_day,
+                        MIN(timestamp) AS timestamp,
+                        MIN(price) AS min_price,
+                        AVG(price) AS avg_price,
+                        MIN(p25_price) AS p25_price,
+                        MIN(p75_price) AS p75_price,
+                        MAX(price) AS max_price,
+                        SUM(quantity) AS total_quantity
+                    FROM priced
+                    GROUP BY stat_date, hour_of_day
                 )
                 SELECT
-                    timestamp,
-                    hour_of_day,
-                    MIN(price) AS min_price,
-                    AVG(price) AS avg_price,
-                    MIN(p25_price) AS p25_price,
-                    MIN(p75_price) AS p75_price,
-                    MAX(price) AS max_price,
-                    SUM(quantity) AS total_quantity
-                FROM priced
-                GROUP BY timestamp, hour_of_day
-                ORDER BY hour_of_day
+                    ds.stat_date,
+                    hs.hour_of_day,
+                    COALESCE(ha.timestamp, DATE_ADD(TIMESTAMP(ds.stat_date), INTERVAL hs.hour_of_day HOUR)) AS timestamp,
+                    ha.min_price,
+                    ha.avg_price,
+                    ha.p25_price,
+                    ha.p75_price,
+                    ha.max_price,
+                    ha.total_quantity
+                FROM date_spine ds
+                CROSS JOIN hour_spine hs
+                LEFT JOIN hourly_agg ha
+                  ON ha.stat_date = ds.stat_date
+                 AND ha.hour_of_day = hs.hour_of_day
+                ORDER BY ds.stat_date, hs.hour_of_day
                 """.trimIndent()
             }
         val params: Array<Any?> =
             if (variant) {
                 arrayOf(
+                    java.sql.Date.valueOf(fromDate),
+                    java.sql.Date.valueOf(toDate),
                     connectedRealmId,
                     itemId,
-                    java.sql.Date.valueOf(statDate),
+                    java.sql.Date.valueOf(fromDate),
+                    java.sql.Date.valueOf(toDate),
                     bonusKey,
                     modifierKey,
                     petSpeciesId,
                 )
             } else {
                 arrayOf(
+                    java.sql.Date.valueOf(fromDate),
+                    java.sql.Date.valueOf(toDate),
                     connectedRealmId,
                     itemId,
-                    java.sql.Date.valueOf(statDate),
+                    java.sql.Date.valueOf(fromDate),
+                    java.sql.Date.valueOf(toDate),
                 )
             }
         return sql to params

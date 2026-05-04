@@ -73,6 +73,7 @@ class AuctionMarketController(
         bonusKey: String,
         modifierKey: String,
         petSpeciesId: Int,
+        scope: String,
         locale: String?,
     ): ResponseEntity<AuctionMarketItemDetailResponse> =
         ResponseEntity.ok(
@@ -83,6 +84,7 @@ class AuctionMarketController(
                 bonusKey = bonusKey,
                 modifierKey = modifierKey,
                 petSpeciesId = petSpeciesId,
+                scope = scope.ifBlank { "realm" },
                 localeOverride = locale,
             ),
         )

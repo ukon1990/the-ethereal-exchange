@@ -1,5 +1,6 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { DecimalPipe } from '@angular/common';
 
 import {
   copperToCurrencyAmount,
@@ -66,6 +67,7 @@ export class MarketBrowserService {
   private readonly router = inject(Router);
   private readonly realmSelection = inject(RealmSelectionService);
   private readonly marketBrowserCache = inject(MarketBrowserCache);
+  private readonly decimalPipe = new DecimalPipe('en-US');
   private route: ActivatedRoute | null = null;
   private filterRequestId = 0;
   private searchRequestId = 0;
@@ -339,6 +341,10 @@ export class MarketBrowserService {
     const pageSize = response.page.pageSize ?? this.queryState.pageSize;
     const start = totalItems === 0 ? 0 : page * pageSize + 1;
     const end = Math.min((page + 1) * pageSize, totalItems);
+    const locale = normalizeLocaleForNumberPipe(this.realmSelection.selected()?.locale);
+    const startLabel = this.formatInteger(start, locale);
+    const endLabel = this.formatInteger(end, locale);
+    const totalItemsLabel = this.formatInteger(totalItems, locale);
     this.marketBrowser.update((vm) => ({
       ...vm,
       loading: false,
@@ -351,8 +357,12 @@ export class MarketBrowserService {
       paginationSummary:
         totalItems === 0
           ? 'No market items available.'
-          : `Showing ${start}-${end} of ${totalItems} items`,
+          : `Showing ${startLabel}-${endLabel} of ${totalItemsLabel} items`,
     }));
+  }
+
+  private formatInteger(value: number, locale: string | undefined): string {
+    return this.decimalPipe.transform(value, '1.0-0', locale) ?? String(value);
   }
 
   private navigateWithState(state: MarketBrowserQueryState): void {
@@ -586,4 +596,8 @@ function toggleNumber(values: readonly number[], value: number): readonly number
   return values.includes(value)
     ? values.filter((candidate) => candidate !== value)
     : [...values, value];
+}
+
+function normalizeLocaleForNumberPipe(locale: string | undefined): string | undefined {
+  return locale?.replace('_', '-');
 }

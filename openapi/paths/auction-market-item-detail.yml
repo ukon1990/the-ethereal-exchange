@@ -44,6 +44,13 @@ get:
               type: integer
               format: int32
               default: 0
+        - name: scope
+          in: query
+          required: false
+          schema:
+              type: string
+              enum: [realm, community]
+              default: realm
         - name: locale
           in: query
           required: false

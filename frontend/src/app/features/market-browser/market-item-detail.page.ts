@@ -1,4 +1,4 @@
-import { isPlatformBrowser } from '@angular/common';
+import { DecimalPipe, isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -38,9 +38,11 @@ import {
 } from 'rxjs';
 
 import {
+  ItemDetailScope,
   ItemDetailVariantParams,
   MarketItemDetailService,
 } from '@core/services/market-item-detail.service';
+import { RealmSelectionService } from '@core/services/realm-selection.service';
 
 type RegionCode = 'us' | 'eu' | 'kr' | 'tw';
 
@@ -135,7 +137,8 @@ interface TooltipRow {
                 [class.bg-primary]="chartScope() === 'realm'"
                 [class.text-on-primary]="chartScope() === 'realm'"
                 [attr.aria-pressed]="chartScope() === 'realm'"
-                (click)="chartScope.set('realm')"
+                [disabled]="communityLoading()"
+                (click)="onScopeSelected('realm')"
               >
                 Realm
               </button>
@@ -145,7 +148,8 @@ interface TooltipRow {
                 [class.bg-primary]="chartScope() === 'community'"
                 [class.text-on-primary]="chartScope() === 'community'"
                 [attr.aria-pressed]="chartScope() === 'community'"
-                (click)="chartScope.set('community')"
+                [disabled]="communityLoading()"
+                (click)="onScopeSelected('community')"
               >
                 Region
               </button>
@@ -197,40 +201,24 @@ interface TooltipRow {
       } @else if (detail(); as d) {
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <ee-item-stat-card
-            label="Realm price"
+            [label]="activeScopeLabel() + ' price'"
             icon="payments"
-            [currency]="d.summary.selectedRealmPrice | copperToCurrency"
-            [caption]="priceChangeCaption(d.summary.selectedRealmPriceChangePercent)"
+            [currency]="activeScopePrice(d.summary) | copperToCurrency"
+            [caption]="activeScopePriceCaption(d.summary)"
             tone="primary"
           />
           <ee-item-stat-card
-            label="Realm quantity"
+            [label]="activeScopeLabel() + ' quantity'"
             icon="inventory_2"
-            [value]="quantityLabel(d.summary.selectedRealmQuantity)"
+            [value]="quantityLabel(activeScopeQuantity(d.summary))"
             [caption]="''"
           />
-          @if (!d.regionalMetricsRedundant && summaryHasCommunityPrice(d.summary)) {
-            <ee-item-stat-card
-              label="Community price"
-              icon="public"
-              [currency]="d.summary.communityPrice | copperToCurrency"
-              [caption]="priceChangeCaption(d.summary.communityPriceChangePercent)"
-            />
-          }
-          @if (!d.regionalMetricsRedundant && summaryHasCommunityQuantity(d.summary)) {
-            <ee-item-stat-card
-              label="Community quantity"
-              icon="groups"
-              [value]="quantityLabel(d.summary.communityQuantity)"
-              [caption]="realmVsCommunityCaption(d.summary.realmVsCommunityPricePercent)"
-            />
-          }
         </div>
 
         <p class="ee-data text-on-surface-variant select-text">
           Snapshot: realm {{ d.selectedRealm.date ?? '—' }}, hour
           {{ d.selectedRealm.hourOfDay ?? '—' }}
-          @if (showCommunitySnapshotLine(d)) {
+          @if (showCommunitySnapshotLine(d) && chartScope() === 'community') {
             <span>
               · community {{ d.community.date ?? '—' }}, hour
               {{ d.community.hourOfDay ?? '—' }}</span
@@ -296,11 +284,11 @@ interface TooltipRow {
         />
 
         <ee-chart-panel
-          title="Hourly snapshot"
-          rangeLabel="Snapshot day"
+          title="Hourly market"
+          rangeLabel="14 days"
           [series]="hourlyChartSeries()"
           [tooltipTemplate]="hourlyChartTip"
-          description="Listed quantity per hour as bars; buyout spread and average as lines."
+          description="Listed quantity per hour over 14 days as bars; buyout spread and average as lines."
         />
 
         @if (d.crafting) {
@@ -362,11 +350,15 @@ export class MarketItemDetailPage {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly detailService = inject(MarketItemDetailService);
+  private readonly realmSelection = inject(RealmSelectionService);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly decimalPipe = new DecimalPipe('en-US');
 
   protected readonly loading = signal(true);
+  protected readonly communityLoading = signal(false);
   protected readonly error = signal(false);
   protected readonly detail = signal<AuctionMarketItemDetailResponse | null>(null);
+  protected readonly communityLoaded = signal(false);
   protected readonly chartScope = signal<'realm' | 'community'>('realm');
   protected readonly skeletonCards = [0, 1, 2, 3] as const;
   protected readonly skeletonCharts = [0, 1] as const;
@@ -473,8 +465,10 @@ export class MarketItemDetailPage {
           });
           this.loading.set(true);
           this.error.set(false);
+          this.communityLoaded.set(false);
+          this.chartScope.set('realm');
           return this.detailService
-            .loadItemDetail(ctx.region, ctx.realmSlug, ctx.itemId, ctx.variant)
+            .loadItemDetail(ctx.region, ctx.realmSlug, ctx.itemId, ctx.variant, 'realm')
             .pipe(
               finalize(() => this.loading.set(false)),
               catchError(() => {
@@ -489,7 +483,9 @@ export class MarketItemDetailPage {
       .subscribe((res) => {
         if (res) {
           this.detail.set(res);
-          if (res.regionalMetricsRedundant || !showChartScopeToggleFn(res)) {
+          if (res.regionalMetricsRedundant) {
+            this.chartScope.set('community');
+          } else {
             this.chartScope.set('realm');
           }
         }
@@ -498,6 +494,36 @@ export class MarketItemDetailPage {
 
   protected backLabel(): string {
     return this.backState().returnLabel ?? 'Back to market';
+  }
+
+  protected onScopeSelected(scope: ItemDetailScope): void {
+    if (scope === 'realm') {
+      this.chartScope.set('realm');
+      return;
+    }
+    if (this.communityLoaded()) {
+      this.chartScope.set('community');
+      return;
+    }
+    const ctx = this.routeCtx();
+    if (!ctx) return;
+    this.communityLoading.set(true);
+    this.detailService
+      .loadItemDetail(ctx.region, ctx.realmSlug, ctx.itemId, ctx.variant, 'community')
+      .pipe(
+        finalize(() => this.communityLoading.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (communityRes) => {
+          this.detail.update((existing) => mergeCommunityScope(existing, communityRes));
+          this.communityLoaded.set(true);
+          this.chartScope.set('community');
+        },
+        error: () => {
+          this.error.set(true);
+        },
+      });
   }
 
   protected goBack(): void {
@@ -511,12 +537,12 @@ export class MarketItemDetailPage {
 
   protected formatRoi(pct: number | null | undefined): string {
     if (pct == null || !Number.isFinite(pct)) return '—';
-    return `${pct.toFixed(1)}%`;
+    return `${this.formatDecimal(pct, '1.1-1')}%`;
   }
 
   protected quantityLabel(q: number | null | undefined): string {
     if (q == null || !Number.isFinite(q)) return '—';
-    return String(Math.round(q));
+    return this.formatDecimal(Math.round(q), '1.0-0');
   }
 
   protected dailyTooltipTitle(d: AuctionMarketItemDetailResponse, x: number): string {
@@ -529,9 +555,9 @@ export class MarketItemDetailPage {
     if (!point) return [];
     return [
       { label: 'date', value: point.statDate ?? '—' },
-      { label: 'quantity / hour', value: numberDisplay(point.avgQuantity) },
-      { label: 'min quantity', value: numberDisplay(point.minQuantity) },
-      { label: 'max quantity', value: numberDisplay(point.maxQuantity) },
+      { label: 'avg quantity', value: this.numberDisplay(point.avgQuantity) },
+      { label: 'min quantity', value: this.numberDisplay(point.minQuantity) },
+      { label: 'max quantity', value: this.numberDisplay(point.maxQuantity) },
       { label: 'min price', value: formatCopperCurrency(point.minPrice) },
       { label: 'p25 price', value: formatCopperCurrency(point.p25Price) },
       { label: 'avg price', value: formatCopperCurrency(point.avgPrice) },
@@ -542,9 +568,9 @@ export class MarketItemDetailPage {
 
   protected hourlyTooltipTitle(d: AuctionMarketItemDetailResponse, x: number): string {
     const point = this.hourlyTooltipPoint(d, x);
-    const hour = point?.hourOfDay ?? Math.max(0, Math.min(23, Math.round(x)));
+    const hour = point?.hourOfDay ?? 0;
     const prefix = `${String(hour).padStart(2, '0')}:00`;
-    return point?.timestamp ? `${prefix} · ${point.timestamp}` : prefix;
+    return point?.timestamp ? `${point.timestamp} · ${prefix}` : prefix;
   }
 
   protected hourlyTooltipRows(d: AuctionMarketItemDetailResponse, x: number): TooltipRow[] {
@@ -553,7 +579,7 @@ export class MarketItemDetailPage {
     return [
       { label: 'hour', value: `${String(point.hourOfDay).padStart(2, '0')}:00` },
       { label: 'timestamp', value: point.timestamp ?? '—' },
-      { label: 'quantity / hour', value: numberDisplay(point.totalQuantity) },
+      { label: 'quantity / hour', value: this.numberDisplay(point.totalQuantity) },
       { label: 'min price', value: formatCopperCurrency(point.minPrice) },
       { label: 'p25 price', value: formatCopperCurrency(point.p25Price) },
       { label: 'avg price', value: formatCopperCurrency(point.avgPrice) },
@@ -565,13 +591,13 @@ export class MarketItemDetailPage {
   protected priceChangeCaption(pct: number | null | undefined): string {
     if (pct == null || !Number.isFinite(pct)) return '';
     const sign = pct > 0 ? '+' : '';
-    return `${sign}${pct.toFixed(1)}% vs prior day`;
+    return `${sign}${this.formatDecimal(pct, '1.1-1')}% vs prior day`;
   }
 
   protected realmVsCommunityCaption(pct: number | null | undefined): string {
     if (pct == null || !Number.isFinite(pct)) return '';
     const sign = pct > 0 ? '+' : '';
-    return `${sign}${pct.toFixed(1)}% vs community`;
+    return `${sign}${this.formatDecimal(pct, '1.1-1')}% vs community`;
   }
 
   protected summaryHasCommunityPrice(s: AuctionMarketItemDetailSummary): boolean {
@@ -590,6 +616,26 @@ export class MarketItemDetailPage {
 
   protected showCommunitySnapshotLine(d: AuctionMarketItemDetailResponse): boolean {
     return showChartScopeToggleFn(d);
+  }
+
+  protected activeScopeLabel(): string {
+    return this.chartScope() === 'community' || this.detail()?.regionalMetricsRedundant
+      ? 'Region'
+      : 'Realm';
+  }
+
+  protected activeScopePrice(s: AuctionMarketItemDetailSummary): number | null | undefined {
+    return this.chartScope() === 'community' ? s.communityPrice : s.selectedRealmPrice;
+  }
+
+  protected activeScopeQuantity(s: AuctionMarketItemDetailSummary): number | null | undefined {
+    return this.chartScope() === 'community' ? s.communityQuantity : s.selectedRealmQuantity;
+  }
+
+  protected activeScopePriceCaption(s: AuctionMarketItemDetailSummary): string {
+    return this.chartScope() === 'community'
+      ? priceChangeCaptionStatic(s.communityPriceChangePercent)
+      : priceChangeCaptionStatic(s.selectedRealmPriceChangePercent);
   }
 
   private dailyTooltipPoint(
@@ -611,8 +657,25 @@ export class MarketItemDetailPage {
       d.regionalMetricsRedundant || this.chartScope() === 'realm'
         ? d.hourlySeriesRealm
         : d.hourlySeriesCommunity;
-    const hour = Math.round(x);
-    return points.find((p) => p.hourOfDay === hour);
+    if (points.length === 0) return undefined;
+    const i = Math.max(0, Math.min(points.length - 1, Math.round(x)));
+    return points[i];
+  }
+
+  private numberDisplay(value: number | null | undefined): string {
+    if (value == null || !Number.isFinite(value)) return '—';
+    return this.formatDecimal(Math.round(value), '1.0-0');
+  }
+
+  private formatDecimal(value: number, digitsInfo: string): string {
+    return (
+      this.decimalPipe.transform(value, digitsInfo, this.selectedLocaleForNumberPipe()) ??
+      String(value)
+    );
+  }
+
+  private selectedLocaleForNumberPipe(): string | undefined {
+    return this.realmSelection.selected()?.locale?.replace('_', '-');
   }
 }
 
@@ -653,52 +716,91 @@ function formatRealmLabel(slug: string): string {
   return t.length ? t.charAt(0).toUpperCase() + t.slice(1) : slug;
 }
 
-function numberDisplay(value: number | null | undefined): string {
-  if (value == null || !Number.isFinite(value)) return '—';
-  return Math.round(value).toLocaleString('en-US');
-}
-
 function showChartScopeToggleFn(d: AuctionMarketItemDetailResponse): boolean {
-  if (d.regionalMetricsRedundant) return false;
-  const p = d.summary.communityPrice;
-  const q = d.summary.communityQuantity;
-  const hasPrice = p != null && Number.isFinite(p);
-  const hasQty = q != null && Number.isFinite(q);
-  return hasPrice || hasQty;
+  return !d.regionalMetricsRedundant;
 }
 
-function pickDailyLinePoints(
-  points: readonly AuctionMarketItemDetailPoint[],
-  fn: (p: AuctionMarketItemDetailPoint) => number | null | undefined,
-): ChartPoint[] {
-  const out: ChartPoint[] = [];
-  for (let i = 0; i < points.length; i++) {
-    const y = fn(points[i]!);
-    if (y != null && Number.isFinite(y)) {
-      out.push({ x: i, y });
-    }
+function priceChangeCaptionStatic(pct: number | null | undefined): string {
+  if (pct == null || !Number.isFinite(pct)) return '';
+  const sign = pct > 0 ? '+' : '';
+  return `${sign}${pct.toFixed(1)}% vs prior day`;
+}
+
+function mergeCommunityScope(
+  existing: AuctionMarketItemDetailResponse | null,
+  community: AuctionMarketItemDetailResponse,
+): AuctionMarketItemDetailResponse {
+  if (!existing) return community;
+  return {
+    ...existing,
+    regionalMetricsRedundant: community.regionalMetricsRedundant,
+    community: community.community,
+    summary: {
+      ...existing.summary,
+      communityPrice: community.summary.communityPrice,
+      communityQuantity: community.summary.communityQuantity,
+      communityPriceChangePercent: community.summary.communityPriceChangePercent,
+      realmVsCommunityPricePercent: community.summary.realmVsCommunityPricePercent,
+    },
+    dailySeriesCommunity: community.dailySeriesCommunity,
+    hourlySeriesCommunity: community.hourlySeriesCommunity,
+    quantityPieCommunity: community.quantityPieCommunity,
+    marketDataSources:
+      community.marketDataSources.length > 0 ? community.marketDataSources : existing.marketDataSources,
+  };
+}
+
+/**
+ * One pass per `dailySeries*` row: bars use `avgQuantity`, lines use price fields from the same object.
+ * `ee-chart-panel` uses separate `yScaleKey`s (`price` vs `quantity`) from `chart.ts`.
+ */
+function dailyPointsToChartSeries(rows: readonly AuctionMarketItemDetailPoint[]): ChartSeries[] {
+  if (rows.length === 0) return [];
+
+  const qtyPts: ChartPoint[] = [];
+  const lowerPts: ChartPoint[] = [];
+  const midPts: ChartPoint[] = [];
+  const upperPts: ChartPoint[] = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const p = rows[i]!;
+    const x = i;
+
+    const q = p.avgQuantity;
+    qtyPts.push({
+      x,
+      y: q != null && Number.isFinite(q) && q >= 0 ? q : 0,
+    });
+
+    const hasPctiles =
+      p.p25Price != null &&
+      p.p75Price != null &&
+      Number.isFinite(p.p25Price) &&
+      Number.isFinite(p.p75Price);
+    const lo = hasPctiles ? p.p25Price! : p.minPrice;
+    const hi = hasPctiles ? p.p75Price! : p.maxPrice;
+    const mid = p.avgPrice;
+
+    if (lo != null && Number.isFinite(lo)) lowerPts.push({ x, y: lo });
+    if (mid != null && Number.isFinite(mid)) midPts.push({ x, y: mid });
+    if (hi != null && Number.isFinite(hi)) upperPts.push({ x, y: hi });
   }
-  return out;
-}
 
-function pickDailyQuantityBars(points: readonly AuctionMarketItemDetailPoint[]): ChartPoint[] {
-  const out: ChartPoint[] = [];
-  for (let i = 0; i < points.length; i++) {
-    const q = points[i]!.avgQuantity;
-    if (q != null && Number.isFinite(q) && q >= 0) {
-      out.push({ x: i, y: q });
-    }
+  if (lowerPts.length === 0 && midPts.length === 0 && upperPts.length === 0) {
+    return qtyPts.length
+      ? [
+          {
+            id: 'quantity',
+            kind: 'column',
+            yScaleKey: 'quantity',
+            color: 'tertiary-container',
+            points: qtyPts,
+          },
+        ]
+      : [];
   }
-  return out;
-}
 
-/** Lines use `price` scale; quantity uses `quantity` scale (`ee-chart-panel` + `chart.ts`). */
-function dailyPointsToChartSeries(points: readonly AuctionMarketItemDetailPoint[]): ChartSeries[] {
-  if (points.length === 0) return [];
-
-  const qtyPts = pickDailyQuantityBars(points);
   const series: ChartSeries[] = [];
-
   if (qtyPts.length > 0) {
     series.push({
       id: 'quantity',
@@ -708,67 +810,85 @@ function dailyPointsToChartSeries(points: readonly AuctionMarketItemDetailPoint[
       points: qtyPts,
     });
   }
-
-  let lower = pickDailyLinePoints(points, (p) => p.p25Price);
-  let mid = pickDailyLinePoints(points, (p) => p.avgPrice);
-  let upper = pickDailyLinePoints(points, (p) => p.p75Price);
-  if (lower.length === 0 && mid.length === 0 && upper.length === 0) {
-    lower = pickDailyLinePoints(points, (p) => p.minPrice);
-    mid = pickDailyLinePoints(points, (p) => p.avgPrice);
-    upper = pickDailyLinePoints(points, (p) => p.maxPrice);
+  if (lowerPts.length > 0) {
+    series.push({
+      id: 'low',
+      kind: 'line',
+      yScaleKey: 'price',
+      color: 'secondary',
+      points: lowerPts,
+    });
   }
-
-  if (lower.length > 0) {
-    series.push({ id: 'low', kind: 'line', yScaleKey: 'price', color: 'secondary', points: lower });
-  }
-  if (mid.length > 0) {
+  if (midPts.length > 0) {
     series.push({
       id: 'mid',
       kind: 'line',
       yScaleKey: 'price',
       color: 'primary-container',
-      points: mid,
+      points: midPts,
     });
   }
-  if (upper.length > 0) {
-    series.push({ id: 'high', kind: 'line', yScaleKey: 'price', color: 'error', points: upper });
+  if (upperPts.length > 0) {
+    series.push({ id: 'high', kind: 'line', yScaleKey: 'price', color: 'error', points: upperPts });
   }
-
   return series;
 }
 
-function pickHourlyLinePoints(
-  sorted: readonly AuctionMarketItemHourlyPoint[],
-  fn: (p: AuctionMarketItemHourlyPoint) => number | null | undefined,
-): ChartPoint[] {
-  const out: ChartPoint[] = [];
-  for (const p of sorted) {
-    const y = fn(p);
-    if (y != null && Number.isFinite(y)) {
-      out.push({ x: p.hourOfDay, y });
-    }
-  }
-  return out;
-}
+function hourlyPointsToChartSeries(rows: readonly AuctionMarketItemHourlyPoint[]): ChartSeries[] {
+  if (rows.length === 0) return [];
 
-function pickHourlyQuantityBars(sorted: readonly AuctionMarketItemHourlyPoint[]): ChartPoint[] {
-  const out: ChartPoint[] = [];
-  for (const p of sorted) {
+  const sorted = [...rows].sort((a, b) => {
+    const ta = Date.parse(a.timestamp ?? '');
+    const tb = Date.parse(b.timestamp ?? '');
+    if (Number.isFinite(ta) && Number.isFinite(tb)) return ta - tb;
+    if (Number.isFinite(ta)) return -1;
+    if (Number.isFinite(tb)) return 1;
+    return a.hourOfDay - b.hourOfDay;
+  });
+  const qtyPts: ChartPoint[] = [];
+  const lowerPts: ChartPoint[] = [];
+  const midPts: ChartPoint[] = [];
+  const upperPts: ChartPoint[] = [];
+
+  for (let i = 0; i < sorted.length; i++) {
+    const p = sorted[i]!;
+    const x = i;
+
     const q = p.totalQuantity;
-    if (q != null && Number.isFinite(q) && q >= 0) {
-      out.push({ x: p.hourOfDay, y: q });
-    }
-  }
-  return out;
-}
+    qtyPts.push({
+      x,
+      y: q != null && Number.isFinite(q) && q >= 0 ? q : 0,
+    });
 
-function hourlyPointsToChartSeries(points: readonly AuctionMarketItemHourlyPoint[]): ChartSeries[] {
-  const sorted = [...points].sort((a, b) => a.hourOfDay - b.hourOfDay);
-  if (sorted.length === 0) return [];
+    const hasPctiles =
+      p.p25Price != null &&
+      p.p75Price != null &&
+      Number.isFinite(p.p25Price) &&
+      Number.isFinite(p.p75Price);
+    const lo = hasPctiles ? p.p25Price! : p.minPrice;
+    const hi = hasPctiles ? p.p75Price! : p.maxPrice;
+    const mid = p.avgPrice;
+
+    if (lo != null && Number.isFinite(lo)) lowerPts.push({ x, y: lo });
+    if (mid != null && Number.isFinite(mid)) midPts.push({ x, y: mid });
+    if (hi != null && Number.isFinite(hi)) upperPts.push({ x, y: hi });
+  }
+
+  if (lowerPts.length === 0 && midPts.length === 0 && upperPts.length === 0) {
+    return qtyPts.length
+      ? [
+          {
+            id: 'quantity',
+            kind: 'column',
+            yScaleKey: 'quantity',
+            color: 'tertiary-container',
+            points: qtyPts,
+          },
+        ]
+      : [];
+  }
 
   const series: ChartSeries[] = [];
-
-  const qtyPts = pickHourlyQuantityBars(sorted);
   if (qtyPts.length > 0) {
     series.push({
       id: 'quantity',
@@ -778,31 +898,26 @@ function hourlyPointsToChartSeries(points: readonly AuctionMarketItemHourlyPoint
       points: qtyPts,
     });
   }
-
-  let lower = pickHourlyLinePoints(sorted, (p) => p.p25Price);
-  let mid = pickHourlyLinePoints(sorted, (p) => p.avgPrice);
-  let upper = pickHourlyLinePoints(sorted, (p) => p.p75Price);
-  if (lower.length === 0 && mid.length === 0 && upper.length === 0) {
-    lower = pickHourlyLinePoints(sorted, (p) => p.minPrice);
-    mid = pickHourlyLinePoints(sorted, (p) => p.avgPrice);
-    upper = pickHourlyLinePoints(sorted, (p) => p.maxPrice);
+  if (lowerPts.length > 0) {
+    series.push({
+      id: 'low',
+      kind: 'line',
+      yScaleKey: 'price',
+      color: 'secondary',
+      points: lowerPts,
+    });
   }
-
-  if (lower.length > 0) {
-    series.push({ id: 'low', kind: 'line', yScaleKey: 'price', color: 'secondary', points: lower });
-  }
-  if (mid.length > 0) {
+  if (midPts.length > 0) {
     series.push({
       id: 'mid',
       kind: 'line',
       yScaleKey: 'price',
       color: 'primary-container',
-      points: mid,
+      points: midPts,
     });
   }
-  if (upper.length > 0) {
-    series.push({ id: 'high', kind: 'line', yScaleKey: 'price', color: 'error', points: upper });
+  if (upperPts.length > 0) {
+    series.push({ id: 'high', kind: 'line', yScaleKey: 'price', color: 'error', points: upperPts });
   }
-
   return series;
 }

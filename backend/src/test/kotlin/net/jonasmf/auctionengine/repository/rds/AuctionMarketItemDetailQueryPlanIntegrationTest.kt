@@ -18,9 +18,8 @@ class AuctionMarketItemDetailQueryPlanIntegrationTest : IntegrationTestBase() {
     @Test
     fun `item detail sql explains successfully`() {
         MarketSearchTestFixtures.seedMarketSearchData(jdbcTemplate)
-        val from = LocalDate.parse("2026-05-01")
+        val from = LocalDate.parse("2026-04-18")
         val to = LocalDate.parse("2026-05-01")
-        val day = LocalDate.parse("2026-05-01")
 
         val (daily, dailyArgs) =
             repository.buildDailySqlAndArgs(
@@ -48,7 +47,8 @@ class AuctionMarketItemDetailQueryPlanIntegrationTest : IntegrationTestBase() {
             repository.buildHourlySqlAndArgs(
                 connectedRealmId = 1084,
                 itemId = 19019,
-                statDate = day,
+                fromDate = from,
+                toDate = to,
                 variant = false,
                 bonusKey = "",
                 modifierKey = "",
@@ -58,7 +58,7 @@ class AuctionMarketItemDetailQueryPlanIntegrationTest : IntegrationTestBase() {
             repository.buildPieSqlAndArgs(
                 connectedRealmId = 1084,
                 itemId = 19019,
-                statDate = day,
+                statDate = to,
                 variant = false,
                 bonusKey = "",
                 modifierKey = "",
@@ -68,7 +68,7 @@ class AuctionMarketItemDetailQueryPlanIntegrationTest : IntegrationTestBase() {
             repository.buildCraftingSqlAndArgs(
                 connectedRealmId = 1084,
                 itemId = 19019,
-                statDate = day,
+                statDate = to,
                 hourOfDay = 11,
                 variant = false,
                 bonusKey = "",

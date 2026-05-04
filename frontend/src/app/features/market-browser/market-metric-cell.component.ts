@@ -1,12 +1,14 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { injectFlexRenderContext } from '@tanstack/angular-table';
 import type { CellContext } from '@tanstack/table-core';
 
+import { RealmSelectionService } from '@core/services/realm-selection.service';
 import { CurrencyAmountComponent, MarketItemRow } from '@ui';
 
 @Component({
   selector: 'app-market-metric-cell',
-  imports: [CurrencyAmountComponent],
+  imports: [CurrencyAmountComponent, DecimalPipe],
   template: `
     @switch (columnId()) {
       @case ('selectedPrice') {
@@ -19,7 +21,7 @@ import { CurrencyAmountComponent, MarketItemRow } from '@ui';
       @case ('selectedQuantity') {
         @if (row().selectedQuantity !== undefined) {
           <div class="justify-self-end ee-data text-on-surface">
-            {{ row().selectedQuantity }}
+            {{ row().selectedQuantity | number: '1.0-0' : selectedLocaleForNumberPipe() }}
           </div>
         } @else {
           <ee-currency-amount class="justify-self-end opacity-80" [amount]="row().marketValue" />
@@ -31,6 +33,7 @@ import { CurrencyAmountComponent, MarketItemRow } from '@ui';
 })
 export class MarketMetricCellComponent {
   protected readonly ctx = injectFlexRenderContext<CellContext<MarketItemRow, unknown>>();
+  private readonly realmSelection = inject(RealmSelectionService);
 
   protected row(): MarketItemRow {
     return this.ctx.row.original;
@@ -38,5 +41,9 @@ export class MarketMetricCellComponent {
 
   protected columnId(): string {
     return this.ctx.column.id;
+  }
+
+  protected selectedLocaleForNumberPipe(): string | undefined {
+    return this.realmSelection.selected()?.locale?.replace('_', '-');
   }
 }

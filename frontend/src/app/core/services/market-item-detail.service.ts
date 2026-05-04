@@ -11,6 +11,7 @@ export interface ItemDetailVariantParams {
   readonly modifierKey: string;
   readonly petSpeciesId: number;
 }
+export type ItemDetailScope = 'realm' | 'community';
 
 @Injectable({
   providedIn: 'root',
@@ -25,12 +26,13 @@ export class MarketItemDetailService {
     realmSlug: string,
     itemId: number,
     variant: ItemDetailVariantParams,
+    scope: ItemDetailScope,
     locale?: string,
   ): Observable<AuctionMarketItemDetailResponse> {
     const routeKey = `${region}:${realmSlug.toLowerCase()}`;
     const variantKey = `${variant.bonusKey}|${variant.modifierKey}|${variant.petSpeciesId}`;
     const localeKey = locale?.trim() ? `:${locale.trim()}` : '';
-    const detailKey = `${routeKey}:item:${itemId}:v:${variantKey}${localeKey}`;
+    const detailKey = `${routeKey}:item:${itemId}:v:${variantKey}:scope:${scope}${localeKey}`;
     const version = this.realmSelection.marketDataVersion();
 
     const cached = version ? this.marketBrowserCache.getItemDetail(detailKey, version) : undefined;
@@ -46,6 +48,7 @@ export class MarketItemDetailService {
         variant.bonusKey,
         variant.modifierKey,
         variant.petSpeciesId,
+        scope,
         locale,
         'body',
         false,

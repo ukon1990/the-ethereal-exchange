@@ -36,6 +36,7 @@ class AuctionMarketItemDetailService(
         bonusKey: String,
         modifierKey: String,
         petSpeciesId: Int,
+        scope: String,
         localeOverride: String?,
     ): AuctionMarketItemDetailResponse {
         val context = auctionMarketContextService.resolve(regionCode, realmSlug, localeOverride)
@@ -49,36 +50,25 @@ class AuctionMarketItemDetailService(
 
         val listingKey = AuctionListingKey(bonusKey, modifierKey, petSpeciesId)
         val redundant =
-            context.selectedSnapshot.connectedRealmId == context.communitySnapshot.connectedRealmId
+            context.selectedSnapshot.connectedRealmId == context.commoditySnapshot.connectedRealmId
+        val commodityScopeRequested = scope.equals("commodity", ignoreCase = true)
+        val loadCommodity = commodityScopeRequested && !redundant
 
         val realmFrom = context.selectedSnapshot.date.minusDays(13)
         val realmTo = context.selectedSnapshot.date
-        val communityFrom = context.communitySnapshot.date.minusDays(13)
-        val communityTo = context.communitySnapshot.date
+        val commodityFrom = context.commoditySnapshot.date.minusDays(13)
+        val commodityTo = context.commoditySnapshot.date
 
         val dailyRealm =
-            detailRepository
-                .loadDailySeries(
-                    context.selectedSnapshot.connectedRealmId,
-                    itemId,
-                    realmFrom,
-                    realmTo,
-                    variant,
-                    bonusKey,
-                    modifierKey,
-                    petSpeciesId,
-                ).map { it.toDetailPoint() }
-
-        val dailyCommunity =
-            if (redundant) {
+            if (loadCommodity) {
                 emptyList()
             } else {
                 detailRepository
                     .loadDailySeries(
-                        context.communitySnapshot.connectedRealmId,
+                        context.selectedSnapshot.connectedRealmId,
                         itemId,
-                        communityFrom,
-                        communityTo,
+                        realmFrom,
+                        realmTo,
                         variant,
                         bonusKey,
                         modifierKey,
@@ -86,27 +76,33 @@ class AuctionMarketItemDetailService(
                     ).map { it.toDetailPoint() }
             }
 
-        val hourlyRealm =
-            detailRepository
-                .loadHourlySeries(
-                    context.selectedSnapshot.connectedRealmId,
-                    itemId,
-                    context.selectedSnapshot.date,
-                    variant,
-                    bonusKey,
-                    modifierKey,
-                    petSpeciesId,
-                ).map { it.toHourlyPoint() }
+        val dailyCommodity =
+            if (loadCommodity) {
+                detailRepository
+                    .loadDailySeries(
+                        context.commoditySnapshot.connectedRealmId,
+                        itemId,
+                        commodityFrom,
+                        commodityTo,
+                        variant,
+                        bonusKey,
+                        modifierKey,
+                        petSpeciesId,
+                    ).map { it.toDetailPoint() }
+            } else {
+                emptyList()
+            }
 
-        val hourlyCommunity =
-            if (redundant) {
+        val hourlyRealm =
+            if (loadCommodity) {
                 emptyList()
             } else {
                 detailRepository
                     .loadHourlySeries(
-                        context.communitySnapshot.connectedRealmId,
+                        context.selectedSnapshot.connectedRealmId,
                         itemId,
-                        context.communitySnapshot.date,
+                        realmFrom,
+                        realmTo,
                         variant,
                         bonusKey,
                         modifierKey,
@@ -114,59 +110,84 @@ class AuctionMarketItemDetailService(
                     ).map { it.toHourlyPoint() }
             }
 
-        val pieRealm =
-            detailRepository.loadQuantityPie(
-                context.selectedSnapshot.connectedRealmId,
-                itemId,
-                context.selectedSnapshot.date,
-                variant,
-                bonusKey,
-                modifierKey,
-                petSpeciesId,
-            ).map { it.toPieSlice() }
+        val hourlyCommodity =
+            if (loadCommodity) {
+                detailRepository
+                    .loadHourlySeries(
+                        context.commoditySnapshot.connectedRealmId,
+                        itemId,
+                        commodityFrom,
+                        commodityTo,
+                        variant,
+                        bonusKey,
+                        modifierKey,
+                        petSpeciesId,
+                    ).map { it.toHourlyPoint() }
+            } else {
+                emptyList()
+            }
 
-        val pieCommunity =
-            if (redundant) {
+        val pieRealm =
+            if (loadCommodity) {
                 emptyList()
             } else {
+                detailRepository.loadQuantityPie(
+                    context.selectedSnapshot.connectedRealmId,
+                    itemId,
+                    context.selectedSnapshot.date,
+                    variant,
+                    bonusKey,
+                    modifierKey,
+                    petSpeciesId,
+                ).map { it.toPieSlice() }
+            }
+
+        val pieCommodity =
+            if (loadCommodity) {
                 detailRepository
                     .loadQuantityPie(
-                        context.communitySnapshot.connectedRealmId,
+                        context.commoditySnapshot.connectedRealmId,
                         itemId,
-                        context.communitySnapshot.date,
+                        context.commoditySnapshot.date,
                         variant,
                         bonusKey,
                         modifierKey,
                         petSpeciesId,
                     ).map { it.toPieSlice() }
+            } else {
+                emptyList()
             }
 
         val (selPrice, selQty) =
-            detailRepository.loadSnapshotPriceQuantity(
-                context.selectedSnapshot.connectedRealmId,
-                itemId,
-                context.selectedSnapshot.date,
-                context.selectedSnapshot.hour,
-                variant,
-                bonusKey,
-                modifierKey,
-                petSpeciesId,
-            )
-
-        val (comPrice, comQty) =
-            if (redundant) {
-                selPrice to selQty
+            if (loadCommodity) {
+                null to null
             } else {
                 detailRepository.loadSnapshotPriceQuantity(
-                    context.communitySnapshot.connectedRealmId,
+                    context.selectedSnapshot.connectedRealmId,
                     itemId,
-                    context.communitySnapshot.date,
-                    context.communitySnapshot.hour,
+                    context.selectedSnapshot.date,
+                    context.selectedSnapshot.hour,
                     variant,
                     bonusKey,
                     modifierKey,
                     petSpeciesId,
                 )
+            }
+
+        val (comPrice, comQty) =
+            if (loadCommodity) {
+                detailRepository.loadSnapshotPriceQuantity(
+                    context.commoditySnapshot.connectedRealmId,
+                    itemId,
+                    context.commoditySnapshot.date,
+                    context.commoditySnapshot.hour,
+                    variant,
+                    bonusKey,
+                    modifierKey,
+                    petSpeciesId,
+                )
+            } else {
+                null to null
             }
 
         val selectedMetrics =
@@ -179,12 +200,12 @@ class AuctionMarketItemDetailService(
                 quantity = selQty,
             )
 
-        val communityMetrics =
+        val commodityMetrics =
             AuctionMarketMetrics(
-                connectedRealmId = context.communitySnapshot.connectedRealmId,
-                timestamp = context.communitySnapshot.timestamp,
-                date = context.communitySnapshot.date,
-                hourOfDay = context.communitySnapshot.hour,
+                connectedRealmId = context.commoditySnapshot.connectedRealmId,
+                timestamp = context.commoditySnapshot.timestamp,
+                date = context.commoditySnapshot.date,
+                hourOfDay = context.commoditySnapshot.hour,
                 price = comPrice,
                 quantity = comQty,
             )
@@ -192,11 +213,11 @@ class AuctionMarketItemDetailService(
         val summary =
             buildSummary(
                 dailyRealm = dailyRealm,
-                dailyCommunity = dailyCommunity,
+                dailyCommodity = dailyCommodity,
                 selectedRealmPrice = selPrice,
                 selectedRealmQuantity = selQty,
-                communityPrice = comPrice,
-                communityQuantity = comQty,
+                commodityPrice = comPrice,
+                commodityQuantity = comQty,
                 regionalMetricsRedundant = redundant,
             )
 
@@ -219,16 +240,16 @@ class AuctionMarketItemDetailService(
             listingKey = listingKey,
             rollupListing = rollupListing,
             regionalMetricsRedundant = redundant,
-            marketDataSources = marketDataSources(context, redundant),
+            marketDataSources = marketDataSources(context, redundant, loadCommodity),
             selectedRealm = selectedMetrics,
-            community = communityMetrics,
+            commodity = commodityMetrics,
             summary = summary,
             dailySeriesRealm = dailyRealm,
-            dailySeriesCommunity = dailyCommunity,
+            dailySeriesCommodity = dailyCommodity,
             hourlySeriesRealm = hourlyRealm,
-            hourlySeriesCommunity = hourlyCommunity,
+            hourlySeriesCommodity = hourlyCommodity,
             quantityPieRealm = pieRealm,
-            quantityPieCommunity = pieCommunity,
+            quantityPieCommodity = pieCommodity,
             crafting = craftingDto,
         )
     }
@@ -236,6 +257,7 @@ class AuctionMarketItemDetailService(
     private fun marketDataSources(
         context: MarketContext,
         redundant: Boolean,
+        commodityScopeRequested: Boolean,
     ): List<MarketDataSource> {
         val selected =
             MarketDataSource(
@@ -243,58 +265,59 @@ class AuctionMarketItemDetailService(
                 auctionHouseLastModified =
                     OffsetDateTime.ofInstant(context.selectedAuctionHouseLastModified, ZoneOffset.UTC),
             )
-        return if (redundant) {
+        return if (redundant || !commodityScopeRequested) {
             listOf(selected)
         } else {
-            val community =
+            val commodity =
                 MarketDataSource(
-                    connectedRealmId = context.communitySnapshot.connectedRealmId,
+                    connectedRealmId = context.commoditySnapshot.connectedRealmId,
                     auctionHouseLastModified =
-                        OffsetDateTime.ofInstant(context.communityAuctionHouseLastModified, ZoneOffset.UTC),
+                        OffsetDateTime.ofInstant(context.commodityAuctionHouseLastModified, ZoneOffset.UTC),
                 )
-            listOf(selected, community)
+            listOf(selected, commodity)
         }
     }
 
     private fun buildSummary(
         dailyRealm: List<AuctionMarketItemDetailPoint>,
-        dailyCommunity: List<AuctionMarketItemDetailPoint>,
+        dailyCommodity: List<AuctionMarketItemDetailPoint>,
         selectedRealmPrice: Long?,
         selectedRealmQuantity: Long?,
-        communityPrice: Long?,
-        communityQuantity: Long?,
+        commodityPrice: Long?,
+        commodityQuantity: Long?,
         regionalMetricsRedundant: Boolean,
     ): AuctionMarketItemDetailSummary {
         val realmPct = dayOverDayPercent(dailyRealm)
-        val communityPct =
+        val commodityPct =
             if (regionalMetricsRedundant) {
                 realmPct
             } else {
-                dayOverDayPercent(dailyCommunity)
+                dayOverDayPercent(dailyCommodity)
             }
-        val realmVsCommunity =
-            if (regionalMetricsRedundant || communityPrice == null || communityPrice == 0L) {
+        val realmVsCommodity =
+            if (regionalMetricsRedundant || commodityPrice == null || commodityPrice == 0L) {
                 null
             } else if (selectedRealmPrice == null) {
                 null
             } else {
-                100.0 * (selectedRealmPrice - communityPrice) / communityPrice.toDouble()
+                100.0 * (selectedRealmPrice - commodityPrice) / commodityPrice.toDouble()
             }
         return AuctionMarketItemDetailSummary(
             selectedRealmPrice = selectedRealmPrice,
             selectedRealmQuantity = selectedRealmQuantity,
-            communityPrice = communityPrice,
-            communityQuantity = communityQuantity,
+            commodityPrice = commodityPrice,
+            commodityQuantity = commodityQuantity,
             selectedRealmPriceChangePercent = realmPct,
-            communityPriceChangePercent = communityPct,
-            realmVsCommunityPricePercent = realmVsCommunity,
+            commodityPriceChangePercent = commodityPct,
+            realmVsCommodityPricePercent = realmVsCommodity,
         )
     }
 
     private fun dayOverDayPercent(daily: List<AuctionMarketItemDetailPoint>): Double? {
-        if (daily.size < 2) return null
-        val prev = daily[daily.size - 2].avgPrice ?: return null
-        val cur = daily.last().avgPrice ?: return null
+        val withAvg = daily.mapNotNull { p -> p.avgPrice?.let { p to it } }
+        if (withAvg.size < 2) return null
+        val prev = withAvg[withAvg.size - 2].second
+        val cur = withAvg.last().second
         if (prev == 0.0) return null
         return 100.0 * (cur - prev) / prev
     }
