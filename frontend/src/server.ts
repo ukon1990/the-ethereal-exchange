@@ -5,6 +5,7 @@ import {
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
 import express from 'express';
+import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { resolveBackendOrigin } from './backend-origin';
 
@@ -25,6 +26,12 @@ const hopByHopHeaders = new Set([
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
+const requestIdHeader = 'x-request-id';
+const maxErrorMessageLength = 500;
+const maxStackLines = 6;
+
+registerCompactProcessErrorLogging();
+
 function readRequestBody(req: express.Request): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
@@ -35,6 +42,11 @@ function readRequestBody(req: express.Request): Promise<Buffer> {
 }
 
 app.use('/api', async (req, res, next) => {
+  const proxyStart = performance.now();
+  const requestId = readRequestId(req) ?? randomUUID();
+  let backendHeadersMs = 0;
+  let bodyReadMs = 0;
+
   try {
     const targetUrl = new URL(req.originalUrl, backendOrigin);
     const headers = new Headers();
@@ -51,6 +63,8 @@ app.use('/api', async (req, res, next) => {
         headers.set(key, value);
       }
     }
+    headers.set(requestIdHeader, requestId);
+    res.setHeader('X-Request-Id', requestId);
 
     const bodyBuffer = ['GET', 'HEAD'].includes(req.method)
       ? undefined
@@ -61,11 +75,13 @@ app.use('/api', async (req, res, next) => {
           bodyBuffer.byteOffset + bodyBuffer.byteLength,
         ) as ArrayBuffer)
       : undefined;
+    const backendFetchStart = performance.now();
     const response = await fetch(targetUrl, {
       method: req.method,
       headers,
       body,
     });
+    backendHeadersMs = elapsedMs(backendFetchStart);
 
     res.status(response.status);
     response.headers.forEach((value, key) => {
@@ -76,15 +92,164 @@ app.use('/api', async (req, res, next) => {
     });
 
     if (response.body) {
+      const bodyReadStart = performance.now();
       const responseBody = Buffer.from(await response.arrayBuffer());
+      bodyReadMs = elapsedMs(bodyReadStart);
+      const responseSendStart = performance.now();
+      res.once('finish', () => {
+        logApiProxyTiming({
+          requestId,
+          method: req.method,
+          path: targetUrl.pathname,
+          status: response.status,
+          backendHeadersMs,
+          bodyReadMs,
+          responseSendMs: elapsedMs(responseSendStart),
+          totalMs: elapsedMs(proxyStart),
+        });
+      });
       res.send(responseBody);
     } else {
+      const responseSendStart = performance.now();
+      res.once('finish', () => {
+        logApiProxyTiming({
+          requestId,
+          method: req.method,
+          path: targetUrl.pathname,
+          status: response.status,
+          backendHeadersMs,
+          bodyReadMs,
+          responseSendMs: elapsedMs(responseSendStart),
+          totalMs: elapsedMs(proxyStart),
+        });
+      });
       res.end();
     }
   } catch (error) {
-    next(error);
+    console.error(
+      `API proxy failed in ${elapsedMs(proxyStart)}ms ` +
+        `(requestId=${requestId} method=${req.method} path=${req.path} ` +
+        `error=${formatErrorForLog(error)})`,
+    );
+    if (res.headersSent) {
+      next(error);
+      return;
+    }
+    res.status(502).json({ error: 'Bad Gateway', requestId });
   }
 });
+
+function readRequestId(req: express.Request): string | null {
+  const value = req.headers[requestIdHeader];
+  if (Array.isArray(value)) {
+    return value.find((item) => item.trim()) ?? null;
+  }
+  return value?.trim() || null;
+}
+
+function elapsedMs(start: number): number {
+  return Math.round(performance.now() - start);
+}
+
+function logApiProxyTiming(timing: {
+  requestId: string;
+  method: string;
+  path: string;
+  status: number;
+  backendHeadersMs: number;
+  bodyReadMs: number;
+  responseSendMs: number;
+  totalMs: number;
+}): void {
+  console.info(
+    `API proxy completed in ${timing.totalMs}ms ` +
+      `(requestId=${timing.requestId} method=${timing.method} path=${timing.path} ` +
+      `status=${timing.status} backendHeaders=${timing.backendHeadersMs}ms ` +
+      `bodyRead=${timing.bodyReadMs}ms responseSend=${timing.responseSendMs}ms)`,
+  );
+}
+
+function registerCompactProcessErrorLogging(): void {
+  process.on('uncaughtException', (error) => {
+    console.error(`uncaughtException ${formatErrorForLog(error)}`);
+  });
+  process.on('unhandledRejection', (reason) => {
+    console.error(`unhandledRejection ${formatErrorForLog(reason)}`);
+  });
+}
+
+function formatErrorForLog(error: unknown): string {
+  if (error instanceof Error) {
+    const details = compactObjectDetails(error);
+    const stack = compactStack(error.stack);
+    return [formatErrorNameAndMessage(error.name, error.message), details, stack]
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  if (isRecord(error)) {
+    return [
+      formatErrorNameAndMessage(readString(error, 'name'), readString(error, 'message')),
+      compactObjectDetails(error),
+    ]
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  return truncate(String(error), maxErrorMessageLength);
+}
+
+function formatErrorNameAndMessage(name: string | null, message: string | null): string {
+  const errorName = name || 'Error';
+  return message ? `${errorName}: ${truncate(message, maxErrorMessageLength)}` : errorName;
+}
+
+function compactObjectDetails(error: Error | Record<string, unknown>): string {
+  const record = error as Record<string, unknown>;
+  const details = [
+    formatDetail(record, 'code'),
+    formatDetail(record, 'status'),
+    formatDetail(record, 'statusText'),
+    formatDetail(record, 'url'),
+    formatDetail(record, 'type'),
+  ].filter(Boolean);
+
+  return details.length ? `(${details.join(' ')})` : '';
+}
+
+function formatDetail(record: Record<string, unknown>, key: string): string | null {
+  const value = record[key];
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return `${key}=${truncate(String(value), 200)}`;
+  }
+  return null;
+}
+
+function compactStack(stack: string | undefined): string {
+  if (!stack) {
+    return '';
+  }
+  const lines = stack
+    .split('\n')
+    .slice(1, maxStackLines + 1)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  return lines.length ? `stack="${lines.join(' | ')}"` : '';
+}
+
+function readString(record: Record<string, unknown>, key: string): string | null {
+  const value = record[key];
+  return typeof value === 'string' ? value : null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function truncate(value: string, maxLength: number): string {
+  return value.length > maxLength ? `${value.slice(0, maxLength - 1)}…` : value;
+}
 
 /**
  * Serve static files from /browser

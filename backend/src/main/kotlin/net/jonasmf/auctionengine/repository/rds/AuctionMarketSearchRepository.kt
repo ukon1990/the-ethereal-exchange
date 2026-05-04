@@ -1,6 +1,7 @@
 package net.jonasmf.auctionengine.repository.rds
 
 import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Repository
@@ -87,7 +88,7 @@ class AuctionMarketSearchRepository(
         )
 
     fun search(request: AuctionMarketSearchRequest): AuctionMarketSearchResult {
-        val startNanos = System.nanoTime()
+        val totalStartNanos = System.nanoTime()
         val params = ArrayList<Any?>()
         val fromSql = buildFromSql(request, params)
         val whereSql = buildWhereSql(request, params)
@@ -99,7 +100,7 @@ class AuctionMarketSearchRepository(
                 Long::class.java,
                 *countParams.toTypedArray(),
             ) ?: 0L
-        val countDurationMs = elapsedMs(countStartNanos)
+        val countMs = elapsedMs(countStartNanos)
 
         val sortColumn = sortColumns[request.sortBy] ?: sortColumns.getValue("itemName")
         val sortDirection = if (request.sortDirection.equals("desc", ignoreCase = true)) "DESC" else "ASC"
@@ -139,13 +140,14 @@ class AuctionMarketSearchRepository(
                 rowMapper,
                 *params.toTypedArray(),
             )
-        val rowsDurationMs = elapsedMs(rowsStartNanos)
+        val rowsMs = elapsedMs(rowsStartNanos)
 
         logger.info(
-            "Auction market search completed in {}ms (count={}ms rows={}ms selectedRealm={} selectedDate={} selectedHour={} communityRealm={} communityDate={} communityHour={} totalItems={} returnedRows={})",
-            elapsedMs(startNanos),
-            countDurationMs,
-            rowsDurationMs,
+            "Auction market search repository completed in {}ms (requestId={} count={}ms rows={}ms selectedRealm={} selectedDate={} selectedHour={} communityRealm={} communityDate={} communityHour={} totalItems={} returnedRows={})",
+            elapsedMs(totalStartNanos),
+            requestId(),
+            countMs,
+            rowsMs,
             request.selectedConnectedRealmId,
             request.selectedDate,
             request.selectedHour,
@@ -372,4 +374,6 @@ class AuctionMarketSearchRepository(
         val value = getLong(column)
         return if (wasNull()) null else value
     }
+
+    private fun requestId(): String = MDC.get("requestId") ?: "-"
 }
