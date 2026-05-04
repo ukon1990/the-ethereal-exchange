@@ -5,13 +5,20 @@ import { Subject, combineLatest, debounceTime, distinctUntilChanged } from 'rxjs
 
 import {
   FilterPanelComponent,
-  MarketTableComponent,
   PageFrameComponent,
   SearchInputComponent,
-  SideNavComponent,
+  TableComponent,
 } from '@ui';
+import type { MarketItemRow } from '@ui';
 
-import { MarketBrowserService } from '../../core/services/market-browser.service';
+import { MarketBrowserService } from '@core/services/market-browser.service';
+
+import {
+  createMarketBrowserTableColumns,
+  marketBrowserContentMinWidthClass,
+  marketBrowserHeaderRowClass,
+  marketBrowserRowClass,
+} from './market-browser-table.columns';
 
 @Component({
   selector: 'app-market-browser-page',
@@ -20,14 +27,15 @@ import { MarketBrowserService } from '../../core/services/market-browser.service
   },
   imports: [
     FilterPanelComponent,
-    MarketTableComponent,
     PageFrameComponent,
     SearchInputComponent,
-    SideNavComponent,
+    // SideNavComponent,
+    TableComponent,
   ],
   template: `
     <div class="flex min-h-0 flex-1 overflow-hidden">
-      <ee-side-nav
+      <!-- TODO: Maybe add back later?
+       <ee-side-nav
         [items]="viewModel().professionNavItems"
         [activeId]="viewModel().activeProfessionId"
         [character]="viewModel().character"
@@ -37,7 +45,7 @@ import { MarketBrowserService } from '../../core/services/market-browser.service
         (mobileOpenChange)="mobileNavOpen.set($event)"
         (primarySelected)="onPrimaryNavSelected($event)"
         (selected)="onProfessionSelected($event)"
-      />
+      />*/}}-->
       <ee-page-frame title="Market Browser" eyebrow="Exchange Intelligence">
         <ee-search-input
           [value]="viewModel().searchQuery"
@@ -51,10 +59,18 @@ import { MarketBrowserService } from '../../core/services/market-browser.service
             (rangeChanged)="onRangeChanged($event)"
             (reset)="onFiltersReset()"
           />
-          <ee-market-table
-            [columns]="viewModel().tableColumns"
-            [rows]="viewModel().rows"
-            [summary]="viewModel().paginationSummary"
+          <ee-table
+            [data]="viewModel().rows"
+            [columns]="marketColumns"
+            [getRowId]="marketRowId"
+            sectionAriaLabel="Market items"
+            emptyMessage="No market items available."
+            [contentMinWidthClass]="marketTableMinWidth"
+            [headerRowClass]="marketTableHeaderRow"
+            [bodyRowClassFn]="marketRowClass"
+            [showFooter]="true"
+            [footerSummary]="viewModel().paginationSummary"
+            [showPagination]="true"
             (previousPage)="onPreviousPage()"
             (nextPage)="onNextPage()"
           />
@@ -71,6 +87,12 @@ export class MarketBrowserPage {
   protected readonly viewModel = this.marketBrowserService.viewModel;
   protected readonly mobileNavOpen = signal(false);
   private readonly searchChanged = new Subject<string>();
+
+  protected readonly marketColumns = createMarketBrowserTableColumns();
+  protected readonly marketRowClass = marketBrowserRowClass;
+  protected readonly marketRowId = (row: MarketItemRow) => row.id;
+  protected readonly marketTableMinWidth = marketBrowserContentMinWidthClass();
+  protected readonly marketTableHeaderRow = marketBrowserHeaderRowClass();
 
   constructor() {
     this.marketBrowserService.bindRoute(this.route);

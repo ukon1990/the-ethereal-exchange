@@ -1,0 +1,58 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+
+import { Realm } from '../../api/generated';
+import { RealmSelectionService } from '../services/realm-selection.service';
+import { WowheadTooltipService } from '../services/wowhead-tooltip';
+import { WowheadItemTooltipDirective } from './wowhead-item-tooltip';
+
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [WowheadItemTooltipDirective],
+  template: `<span appWowheadItemTooltip [itemId]="42">Item</span>`,
+})
+class WowheadHostComponent {}
+
+describe('WowheadItemTooltipDirective', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [WowheadHostComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        WowheadTooltipService,
+        {
+          provide: RealmSelectionService,
+          useValue: {
+            selected: (): Realm => ({
+              region: Realm.RegionEnum.Us,
+              name: 'x',
+              slug: 'x',
+              category: 'c',
+              locale: 'en_US',
+              timezone: 't',
+            }),
+          },
+        },
+      ],
+    });
+  });
+
+  it('requests a tooltip on mouseenter', async () => {
+    const fixture = TestBed.createComponent(WowheadHostComponent);
+    const httpMock = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+
+    const span = (fixture.nativeElement as HTMLElement).querySelector('span')!;
+    span.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true, clientX: 5, clientY: 6 }));
+
+    const req = httpMock.expectOne((r) => r.url.includes('/tooltip/item/42'));
+    req.flush({ tooltip: '<span>Tip</span>' });
+
+    await fixture.whenStable();
+    expect(TestBed.inject(WowheadTooltipService).active()).not.toBeNull();
+    httpMock.verify();
+  });
+});
