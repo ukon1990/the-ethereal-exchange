@@ -19,6 +19,8 @@ import net.jonasmf.auctionengine.repository.rds.AuctionMarketSearchRepository
 import net.jonasmf.auctionengine.repository.rds.AuctionMarketSearchRequest
 import net.jonasmf.auctionengine.repository.rds.ConnectedRealmRepository
 import net.jonasmf.auctionengine.utility.resolveZone
+import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
@@ -48,6 +50,8 @@ class AuctionMarketSearchService(
     private val connectedRealmRepository: ConnectedRealmRepository,
     private val auctionMarketSearchRepository: AuctionMarketSearchRepository,
 ) {
+    private val log = LoggerFactory.getLogger(AuctionMarketSearchService::class.java)
+
     fun search(
         regionCode: String,
         realmSlug: String,
@@ -69,7 +73,10 @@ class AuctionMarketSearchService(
         validateRange("price", minPrice, maxPrice)
         validateRange("quantity", minQuantity, maxQuantity)
 
+        val totalStartNanos = System.nanoTime()
+        val resolveContextStartNanos = System.nanoTime()
         val context = resolveContext(regionCode, realmSlug, localeOverride)
+        val resolveContextMs = elapsedMs(resolveContextStartNanos)
         val normalizedPage = page.coerceAtLeast(0)
         val normalizedPageSize = pageSize.coerceIn(1, 100)
         val normalizedSortBy = allowedSorts.firstOrNull { it == sortBy } ?: "itemName"
@@ -97,7 +104,9 @@ class AuctionMarketSearchService(
                 minQuantity = minQuantity,
                 maxQuantity = maxQuantity,
             )
+        val repositoryStartNanos = System.nanoTime()
         val result = auctionMarketSearchRepository.search(request)
+        val repositoryMs = elapsedMs(repositoryStartNanos)
         val totalPages =
             if (result.totalItems == 0L) {
                 0
@@ -105,71 +114,89 @@ class AuctionMarketSearchService(
                 ((result.totalItems + normalizedPageSize - 1) / normalizedPageSize).toInt()
             }
 
-        return AuctionMarketSearchPage(
-            items =
-                result.rows.map { row ->
-                    AuctionMarketSearchRow(
-                        item =
-                            AuctionMarketItem(
-                                id = row.itemId,
-                                name = row.itemName,
-                                mediaUrl = row.itemMediaUrl,
-                                quality =
-                                    row.qualityId?.let {
-                                        AuctionMarketNamedId(
-                                            it,
-                                            row.qualityName.orEmpty(),
-                                            row.qualityType,
-                                        )
-                                    },
-                                itemClass =
-                                    row.itemClassId?.let {
-                                        AuctionMarketNamedId(
-                                            it,
-                                            row.itemClassName.orEmpty(),
-                                        )
-                                    },
-                                itemSubclass =
-                                    row.itemSubclassId?.let {
-                                        AuctionMarketNamedId(
-                                            it,
-                                            row.itemSubclassName.orEmpty(),
-                                        )
-                                    },
-                                recipe =
-                                    row.recipeId?.let {
-                                        AuctionMarketRecipe(
-                                            id = it,
-                                            name = row.recipeName.orEmpty(),
-                                            mediaUrl = row.recipeMediaUrl,
-                                        )
-                                    },
-                            ),
-                        selectedRealm =
-                            context.selectedSnapshot.toMetrics(
-                                price = row.selectedPrice,
-                                quantity = row.selectedQuantity,
-                            ),
-                        community =
-                            context.communitySnapshot.toMetrics(
-                                price = row.communityPrice,
-                                quantity = row.communityQuantity,
-                            ),
-                    )
-                },
-            page =
-                PageMetadata(
-                    page = normalizedPage,
-                    pageSize = normalizedPageSize,
-                    totalItems = result.totalItems,
-                    totalPages = totalPages,
-                ),
-            sort =
-                AuctionMarketSort(
-                    sortBy = normalizedSortBy,
-                    sortDirection = AuctionMarketSort.SortDirection.forValue(normalizedSortDirection),
-                ),
+        val mappingStartNanos = System.nanoTime()
+        val response =
+            AuctionMarketSearchPage(
+                items =
+                    result.rows.map { row ->
+                        AuctionMarketSearchRow(
+                            item =
+                                AuctionMarketItem(
+                                    id = row.itemId,
+                                    name = row.itemName,
+                                    mediaUrl = row.itemMediaUrl,
+                                    quality =
+                                        row.qualityId?.let {
+                                            AuctionMarketNamedId(
+                                                it,
+                                                row.qualityName.orEmpty(),
+                                                row.qualityType,
+                                            )
+                                        },
+                                    itemClass =
+                                        row.itemClassId?.let {
+                                            AuctionMarketNamedId(
+                                                it,
+                                                row.itemClassName.orEmpty(),
+                                            )
+                                        },
+                                    itemSubclass =
+                                        row.itemSubclassId?.let {
+                                            AuctionMarketNamedId(
+                                                it,
+                                                row.itemSubclassName.orEmpty(),
+                                            )
+                                        },
+                                    recipe =
+                                        row.recipeId?.let {
+                                            AuctionMarketRecipe(
+                                                id = it,
+                                                name = row.recipeName.orEmpty(),
+                                                mediaUrl = row.recipeMediaUrl,
+                                            )
+                                        },
+                                ),
+                            selectedRealm =
+                                context.selectedSnapshot.toMetrics(
+                                    price = row.selectedPrice,
+                                    quantity = row.selectedQuantity,
+                                ),
+                            community =
+                                context.communitySnapshot.toMetrics(
+                                    price = row.communityPrice,
+                                    quantity = row.communityQuantity,
+                                ),
+                        )
+                    },
+                page =
+                    PageMetadata(
+                        page = normalizedPage,
+                        pageSize = normalizedPageSize,
+                        totalItems = result.totalItems,
+                        totalPages = totalPages,
+                    ),
+                sort =
+                    AuctionMarketSort(
+                        sortBy = normalizedSortBy,
+                        sortDirection = AuctionMarketSort.SortDirection.forValue(normalizedSortDirection),
+                    ),
+            )
+        val mappingMs = elapsedMs(mappingStartNanos)
+        log.info(
+            "Auction market search service completed in {}ms (requestId={} resolveContext={}ms repository={}ms mapping={}ms region={} realmSlug={} page={} pageSize={} totalItems={} returnedRows={})",
+            elapsedMs(totalStartNanos),
+            requestId(),
+            resolveContextMs,
+            repositoryMs,
+            mappingMs,
+            regionCode,
+            realmSlug,
+            normalizedPage,
+            normalizedPageSize,
+            result.totalItems,
+            result.rows.size,
         )
+        return response
     }
 
     fun filters(
@@ -177,7 +204,10 @@ class AuctionMarketSearchService(
         realmSlug: String,
         localeOverride: String?,
     ): AuctionMarketFilterResponse {
+        val totalStartNanos = System.nanoTime()
+        val resolveContextStartNanos = System.nanoTime()
         val context = resolveContext(regionCode, realmSlug, localeOverride)
+        val resolveContextMs = elapsedMs(resolveContextStartNanos)
         val request =
             AuctionMarketSearchRequest(
                 selectedConnectedRealmId = context.selectedSnapshot.connectedRealmId,
@@ -201,54 +231,86 @@ class AuctionMarketSearchService(
                 minQuantity = null,
                 maxQuantity = null,
             )
+        val rangeStartNanos = System.nanoTime()
         val range = auctionMarketSearchRepository.priceAndQuantityRange(request)
-        return AuctionMarketFilterResponse(
-            filters =
-                listOf(
-                    AuctionMarketFilter(
-                        id = "query",
-                        label = "Search",
-                        type = AuctionMarketFilter.Type.TEXT,
+        val rangeMs = elapsedMs(rangeStartNanos)
+
+        val qualityOptionsStartNanos = System.nanoTime()
+        val qualityOptions = auctionMarketSearchRepository.qualityOptions(request).toDtoOptions()
+        val qualityOptionsMs = elapsedMs(qualityOptionsStartNanos)
+
+        val itemClassOptionsStartNanos = System.nanoTime()
+        val itemClassOptions = auctionMarketSearchRepository.itemClassOptions(request).toDtoOptions()
+        val itemClassOptionsMs = elapsedMs(itemClassOptionsStartNanos)
+
+        val itemSubclassOptionsStartNanos = System.nanoTime()
+        val itemSubclassOptions = auctionMarketSearchRepository.itemSubclassOptions(request).toDtoOptions()
+        val itemSubclassOptionsMs = elapsedMs(itemSubclassOptionsStartNanos)
+
+        val response =
+            AuctionMarketFilterResponse(
+                filters =
+                    listOf(
+                        AuctionMarketFilter(
+                            id = "query",
+                            label = "Search",
+                            type = AuctionMarketFilter.Type.TEXT,
+                        ),
+                        AuctionMarketFilter(
+                            id = "qualityIds",
+                            label = "Quality",
+                            type = AuctionMarketFilter.Type.MULTI_SELECT,
+                            options = qualityOptions,
+                        ),
+                        AuctionMarketFilter(
+                            id = "itemClassIds",
+                            label = "Item Class",
+                            type = AuctionMarketFilter.Type.MULTI_SELECT,
+                            options = itemClassOptions,
+                        ),
+                        AuctionMarketFilter(
+                            id = "itemSubclassIds",
+                            label = "Item Subclass",
+                            type = AuctionMarketFilter.Type.MULTI_SELECT,
+                            options = itemSubclassOptions,
+                        ),
+                        AuctionMarketFilter(
+                            id = "recipeOnly",
+                            label = "Has Recipe",
+                            type = AuctionMarketFilter.Type.BOOLEAN,
+                        ),
+                        AuctionMarketFilter(
+                            id = "price",
+                            label = "Price",
+                            type = AuctionMarketFilter.Type.RANGE,
+                            min = range.minPrice,
+                            max = range.maxPrice,
+                        ),
+                        AuctionMarketFilter(
+                            id = "quantity",
+                            label = "Quantity",
+                            type = AuctionMarketFilter.Type.RANGE,
+                            min = range.minQuantity,
+                            max = range.maxQuantity,
+                        ),
                     ),
-                    AuctionMarketFilter(
-                        id = "qualityIds",
-                        label = "Quality",
-                        type = AuctionMarketFilter.Type.MULTI_SELECT,
-                        options = auctionMarketSearchRepository.qualityOptions(request).toDtoOptions(),
-                    ),
-                    AuctionMarketFilter(
-                        id = "itemClassIds",
-                        label = "Item Class",
-                        type = AuctionMarketFilter.Type.MULTI_SELECT,
-                        options = auctionMarketSearchRepository.itemClassOptions(request).toDtoOptions(),
-                    ),
-                    AuctionMarketFilter(
-                        id = "itemSubclassIds",
-                        label = "Item Subclass",
-                        type = AuctionMarketFilter.Type.MULTI_SELECT,
-                        options = auctionMarketSearchRepository.itemSubclassOptions(request).toDtoOptions(),
-                    ),
-                    AuctionMarketFilter(
-                        id = "recipeOnly",
-                        label = "Has Recipe",
-                        type = AuctionMarketFilter.Type.BOOLEAN,
-                    ),
-                    AuctionMarketFilter(
-                        id = "price",
-                        label = "Price",
-                        type = AuctionMarketFilter.Type.RANGE,
-                        min = range.minPrice,
-                        max = range.maxPrice,
-                    ),
-                    AuctionMarketFilter(
-                        id = "quantity",
-                        label = "Quantity",
-                        type = AuctionMarketFilter.Type.RANGE,
-                        min = range.minQuantity,
-                        max = range.maxQuantity,
-                    ),
-                ),
+            )
+        log.info(
+            "Auction market filters service completed in {}ms (requestId={} resolveContext={}ms range={}ms qualityOptions={}ms itemClassOptions={}ms itemSubclassOptions={}ms region={} realmSlug={} qualityOptionsCount={} itemClassOptionsCount={} itemSubclassOptionsCount={})",
+            elapsedMs(totalStartNanos),
+            requestId(),
+            resolveContextMs,
+            rangeMs,
+            qualityOptionsMs,
+            itemClassOptionsMs,
+            itemSubclassOptionsMs,
+            regionCode,
+            realmSlug,
+            qualityOptions.size,
+            itemClassOptions.size,
+            itemSubclassOptions.size,
         )
+        return response
     }
 
     private fun resolveContext(
@@ -351,6 +413,10 @@ class AuctionMarketSearchService(
 
     private val Locale.columnSuffix: String
         get() = value.lowercase()
+
+    private fun elapsedMs(startNanos: Long): Long = (System.nanoTime() - startNanos) / 1_000_000
+
+    private fun requestId(): String = MDC.get("requestId") ?: "-"
 
     companion object {
         private val allowedSorts =

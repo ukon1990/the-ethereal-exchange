@@ -5,6 +5,7 @@ import {
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
 import express from 'express';
+import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { resolveBackendOrigin } from './backend-origin';
 
@@ -25,6 +26,8 @@ const hopByHopHeaders = new Set([
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
+const requestIdHeader = 'x-request-id';
+
 function readRequestBody(req: express.Request): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
@@ -35,6 +38,13 @@ function readRequestBody(req: express.Request): Promise<Buffer> {
 }
 
 app.use('/api', async (req, res, next) => {
+  const proxyStart = performance.now();
+  const isMarketSearchRequest =
+    req.path === '/auctions/market-search' || req.path === '/auctions/market-search/filters';
+  const requestId = readRequestId(req) ?? randomUUID();
+  let backendHeadersMs = 0;
+  let bodyReadMs = 0;
+
   try {
     const targetUrl = new URL(req.originalUrl, backendOrigin);
     const headers = new Headers();
@@ -51,6 +61,8 @@ app.use('/api', async (req, res, next) => {
         headers.set(key, value);
       }
     }
+    headers.set(requestIdHeader, requestId);
+    res.setHeader('X-Request-Id', requestId);
 
     const bodyBuffer = ['GET', 'HEAD'].includes(req.method)
       ? undefined
@@ -61,11 +73,13 @@ app.use('/api', async (req, res, next) => {
           bodyBuffer.byteOffset + bodyBuffer.byteLength,
         ) as ArrayBuffer)
       : undefined;
+    const backendFetchStart = performance.now();
     const response = await fetch(targetUrl, {
       method: req.method,
       headers,
       body,
     });
+    backendHeadersMs = elapsedMs(backendFetchStart);
 
     res.status(response.status);
     response.headers.forEach((value, key) => {
@@ -76,15 +90,83 @@ app.use('/api', async (req, res, next) => {
     });
 
     if (response.body) {
+      const bodyReadStart = performance.now();
       const responseBody = Buffer.from(await response.arrayBuffer());
+      bodyReadMs = elapsedMs(bodyReadStart);
+      const responseSendStart = performance.now();
+      res.once('finish', () => {
+        if (isMarketSearchRequest) {
+          logMarketSearchProxyTiming({
+            requestId,
+            method: req.method,
+            path: targetUrl.pathname,
+            status: response.status,
+            backendHeadersMs,
+            bodyReadMs,
+            responseSendMs: elapsedMs(responseSendStart),
+            totalMs: elapsedMs(proxyStart),
+          });
+        }
+      });
       res.send(responseBody);
     } else {
+      const responseSendStart = performance.now();
+      res.once('finish', () => {
+        if (isMarketSearchRequest) {
+          logMarketSearchProxyTiming({
+            requestId,
+            method: req.method,
+            path: targetUrl.pathname,
+            status: response.status,
+            backendHeadersMs,
+            bodyReadMs,
+            responseSendMs: elapsedMs(responseSendStart),
+            totalMs: elapsedMs(proxyStart),
+          });
+        }
+      });
       res.end();
     }
   } catch (error) {
+    if (isMarketSearchRequest) {
+      console.error(
+        `Market search proxy failed in ${elapsedMs(proxyStart)}ms (requestId=${requestId} method=${req.method} path=${req.path})`,
+        error,
+      );
+    }
     next(error);
   }
 });
+
+function readRequestId(req: express.Request): string | null {
+  const value = req.headers[requestIdHeader];
+  if (Array.isArray(value)) {
+    return value.find((item) => item.trim()) ?? null;
+  }
+  return value?.trim() || null;
+}
+
+function elapsedMs(start: number): number {
+  return Math.round(performance.now() - start);
+}
+
+function logMarketSearchProxyTiming(timing: {
+  requestId: string;
+  method: string;
+  path: string;
+  status: number;
+  backendHeadersMs: number;
+  bodyReadMs: number;
+  responseSendMs: number;
+  totalMs: number;
+}): void {
+  console.info(
+    `Market search proxy completed in ${timing.totalMs}ms ` +
+      `(requestId=${timing.requestId} method=${timing.method} path=${timing.path} ` +
+      `status=${timing.status} backendHeaders=${timing.backendHeadersMs}ms ` +
+      `bodyRead=${timing.bodyReadMs}ms responseSend=${timing.responseSendMs}ms)`,
+  );
+}
 
 /**
  * Serve static files from /browser
