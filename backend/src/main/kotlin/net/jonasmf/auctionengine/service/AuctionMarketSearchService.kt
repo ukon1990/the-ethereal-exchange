@@ -286,7 +286,7 @@ class AuctionMarketSearchService(
                     val rangeDef =
                         async {
                             withAuctionMdc(mdcSnapshot) {
-                                auctionMarketSearchRepository.priceAndQuantityRange(request)
+                                AuctionMarketRange(null, null, null, null)
                             }
                         }
                     val qualityDef =
