@@ -7,7 +7,6 @@ import {
   FilterPanelComponent,
   PageFrameComponent,
   SearchInputComponent,
-  SideNavComponent,
   TableComponent,
 } from '@ui';
 import type { MarketItemRow } from '@ui';
