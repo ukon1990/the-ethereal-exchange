@@ -2,9 +2,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Realm } from '../@api/generated';
-import { RealmSelectionService } from '../../services/realm-selection.service';
-import { WowheadTooltipService } from '../../services/wowhead-tooltip';
+import { Realm } from '@api/generated';
+import { RealmSelectionService } from '@core/services/realm-selection.service';
+import { WowheadTooltipService } from '@core/services/wowhead-tooltip';
 import { WowheadTooltipLayer } from './wowhead-tooltip-layer';
 
 describe('WowheadTooltipLayer', () => {
