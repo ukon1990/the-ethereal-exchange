@@ -8,4 +8,5 @@ data class ItemAppearance(
     val itemDisplayInfoId: Int,
     val items: List<ItemSummary> = emptyList(),
     val mediaUrl: String,
+    val mediaSourceUrl: String? = null,
 )

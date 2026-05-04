@@ -34,6 +34,7 @@ class ItemSyncServiceTest {
     private val itemApiClient = mockk<ItemApiClient>()
     private val itemJdbcRepository = mockk<ItemJdbcRepository>()
     private val itemBulkSyncService = mockk<ItemBulkSyncService>()
+    private val blizzardMediaService = mockk<BlizzardMediaService>()
     private val clock = Clock.fixed(Instant.parse("2026-04-14T08:00:00Z"), ZoneOffset.UTC)
 
     private fun createService() =
@@ -42,6 +43,7 @@ class ItemSyncServiceTest {
             itemApiClient = itemApiClient,
             itemJdbcRepository = itemJdbcRepository,
             itemBulkSyncService = itemBulkSyncService,
+            blizzardMediaService = blizzardMediaService,
             clock = clock,
         )
 
@@ -62,6 +64,7 @@ class ItemSyncServiceTest {
         every { itemJdbcRepository.findExistingItemIds(listOf(1001)) } returns setOf(1001)
         every { itemApiClient.getById(1001, Region.Europe) } returns item
         every { itemApiClient.getById(1003, Region.Europe) } throws RuntimeException("boom")
+        every { blizzardMediaService.resolveItem(Region.Europe, item) } returns item
         every { itemBulkSyncService.syncItems(listOf(item)) } returns summary(items = 1)
 
         val result = service.syncRegion(Region.Europe)
@@ -96,6 +99,7 @@ class ItemSyncServiceTest {
             )
         every { itemJdbcRepository.findExistingItemIds(listOf(2001)) } returns setOf(2001)
         every { itemApiClient.getById(2001, Region.Europe) } returns item
+        every { blizzardMediaService.resolveItem(Region.Europe, item) } returns item
         every { itemBulkSyncService.syncItems(listOf(item)) } returns summary(items = 1)
 
         val result = service.syncRegion(Region.Europe)

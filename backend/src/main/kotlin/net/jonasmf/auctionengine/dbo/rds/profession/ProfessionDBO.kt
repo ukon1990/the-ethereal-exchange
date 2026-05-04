@@ -50,6 +50,7 @@ class ProfessionDBO(
     @OneToOne(cascade = [CascadeType.ALL], fetch = FetchType.EAGER, orphanRemoval = true)
     val description: LocaleDBO,
     val mediaUrl: String,
+    val mediaSourceUrl: String? = null,
     val lastModified: Instant? = null,
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "profession_id")

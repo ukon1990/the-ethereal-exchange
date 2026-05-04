@@ -8,6 +8,7 @@ data class Profession(
     val name: LocaleDTO,
     val description: LocaleDTO,
     val mediaUrl: String,
+    val mediaSourceUrl: String? = null,
     val lastModified: Instant? = null,
     val skillTiers: List<SkillTier> = emptyList(),
 )

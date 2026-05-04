@@ -2,6 +2,8 @@ package net.jonasmf.auctionengine.service
 
 import aws.sdk.kotlin.services.s3.S3Client
 import aws.sdk.kotlin.services.s3.model.GetObjectRequest
+import aws.sdk.kotlin.services.s3.model.HeadObjectRequest
+import aws.sdk.kotlin.services.s3.model.NotFound
 import aws.sdk.kotlin.services.s3.model.PutObjectRequest
 import aws.smithy.kotlin.runtime.content.asByteStream
 import aws.smithy.kotlin.runtime.content.writeToFile
@@ -14,6 +16,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -132,6 +135,67 @@ class AmazonS3Service(
             }
         logger.info("Uploaded file to $url")
         return url
+    }
+
+    fun objectExists(
+        region: Region,
+        key: String,
+    ): Boolean {
+        val bucketConfig = s3Properties.bucketFor(region)
+        val bucketName = bucketConfig.name
+        val s3Client = clientFor(bucketConfig.bucketRegion)
+        return runBlocking {
+            try {
+                s3Client.headObject(
+                    HeadObjectRequest {
+                        bucket = bucketName
+                        this.key = key
+                    },
+                )
+                true
+            } catch (_: NotFound) {
+                false
+            }
+        }
+    }
+
+    fun uploadBytes(
+        region: Region,
+        key: String,
+        bytes: ByteArray,
+        contentType: String,
+    ): String {
+        val bucketConfig = s3Properties.bucketFor(region)
+        val bucketName = bucketConfig.name
+        val s3Client = clientFor(bucketConfig.bucketRegion)
+        runBlocking {
+            ByteArrayInputStream(bytes).use { input ->
+                s3Client.putObject(
+                    PutObjectRequest {
+                        bucket = bucketName
+                        this.key = key
+                        this.contentType = contentType
+                        body = input.asByteStream(bytes.size.toLong())
+                    },
+                )
+            }
+        }
+        val url = publicUrl(region, key)
+        logger.info("Uploaded media to $url")
+        return url
+    }
+
+    fun publicUrl(
+        region: Region,
+        key: String,
+    ): String {
+        val bucketConfig = s3Properties.bucketFor(region)
+        val bucketName = bucketConfig.name
+        return if (s3Endpoint.isBlank()) {
+            "https://$bucketName.s3.${bucketConfig.bucketRegion}.amazonaws.com/$key"
+        } else {
+            "${s3Endpoint.trimEnd('/')}/$bucketName/$key"
+        }
     }
 
     fun getFile(

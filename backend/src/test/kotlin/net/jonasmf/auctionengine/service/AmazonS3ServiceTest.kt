@@ -1,6 +1,8 @@
 package net.jonasmf.auctionengine.service
 
 import aws.sdk.kotlin.services.s3.S3Client
+import aws.sdk.kotlin.services.s3.model.HeadObjectRequest
+import aws.sdk.kotlin.services.s3.model.HeadObjectResponse
 import aws.sdk.kotlin.services.s3.model.PutObjectRequest
 import aws.sdk.kotlin.services.s3.model.PutObjectResponse
 import io.mockk.coEvery
@@ -50,5 +52,65 @@ class AmazonS3ServiceTest {
         assertEquals("https://wah-data-us.s3.us-west-1.amazonaws.com/engine/auctions/northamerica/1/test.json.gz", url)
         assertEquals("wah-data-us", requestSlot.single().bucket)
         coVerify(exactly = 1) { regionalClient.putObject(any()) }
+    }
+
+    @Test
+    fun `uploadBytes uploads raw media without engine gzip prefix`() {
+        val defaultClient = mockk<S3Client>(relaxed = true)
+        val regionalClient = mockk<S3Client>()
+        val clientFactory = mockk<AmazonS3ClientFactory>()
+        val s3Properties =
+            WaeS3Properties(
+                buckets = mapOf("europe" to BucketConfig("wah-data-eu", "eu-west-1")),
+            )
+        val requestSlot = mutableListOf<PutObjectRequest>()
+        val service =
+            AmazonS3Service(
+                amazonS3 = defaultClient,
+                amazonS3ClientFactory = clientFactory,
+                s3Properties = s3Properties,
+                s3Endpoint = "",
+            )
+
+        every { clientFactory.create("eu-west-1") } returns regionalClient
+        coEvery { regionalClient.putObject(any()) } answers {
+            requestSlot += firstArg<PutObjectRequest>()
+            mockk<PutObjectResponse>(relaxed = true)
+        }
+
+        val url = service.uploadBytes(Region.Europe, "media/item/19019.png", byteArrayOf(1, 2, 3), "image/png")
+
+        assertEquals("https://wah-data-eu.s3.eu-west-1.amazonaws.com/media/item/19019.png", url)
+        assertEquals("wah-data-eu", requestSlot.single().bucket)
+        assertEquals("media/item/19019.png", requestSlot.single().key)
+        assertEquals("image/png", requestSlot.single().contentType)
+    }
+
+    @Test
+    fun `objectExists returns true when head object succeeds`() {
+        val defaultClient = mockk<S3Client>(relaxed = true)
+        val regionalClient = mockk<S3Client>()
+        val clientFactory = mockk<AmazonS3ClientFactory>()
+        val s3Properties =
+            WaeS3Properties(
+                buckets = mapOf("europe" to BucketConfig("wah-data-eu", "eu-west-1")),
+            )
+        val requestSlot = mutableListOf<HeadObjectRequest>()
+        val service =
+            AmazonS3Service(
+                amazonS3 = defaultClient,
+                amazonS3ClientFactory = clientFactory,
+                s3Properties = s3Properties,
+                s3Endpoint = "",
+            )
+
+        every { clientFactory.create("eu-west-1") } returns regionalClient
+        coEvery { regionalClient.headObject(any()) } answers {
+            requestSlot += firstArg<HeadObjectRequest>()
+            mockk<HeadObjectResponse>(relaxed = true)
+        }
+
+        assertEquals(true, service.objectExists(Region.Europe, "media/item/19019.png"))
+        assertEquals("media/item/19019.png", requestSlot.single().key)
     }
 }

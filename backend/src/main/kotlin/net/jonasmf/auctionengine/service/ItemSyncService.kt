@@ -44,6 +44,7 @@ class ItemSyncService(
     private val itemApiClient: ItemApiClient,
     private val itemJdbcRepository: ItemJdbcRepository,
     private val itemBulkSyncService: ItemBulkSyncService,
+    private val blizzardMediaService: BlizzardMediaService,
     private val clock: Clock = Clock.systemDefaultZone(),
 ) {
     private val log = LoggerFactory.getLogger(ItemSyncService::class.java)
@@ -134,7 +135,10 @@ class ItemSyncService(
                 )
             }
 
-            val batchItems = batchOutcomes.mapNotNull(ItemFetchOutcome::item)
+            val batchItems =
+                batchOutcomes
+                    .mapNotNull(ItemFetchOutcome::item)
+                    .map { item -> blizzardMediaService.resolveItem(region, item) }
             if (batchItems.isNotEmpty()) {
                 log.info(
                     "Persisting item batch region={} batch={}/{} itemCount={}",

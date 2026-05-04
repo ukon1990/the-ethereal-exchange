@@ -94,6 +94,7 @@ fun ItemDTO.toDomain() =
         level = level,
         requiredLevel = requiredLevel,
         mediaUrl = media.key.href,
+        mediaSourceUrl = media.key.href,
         itemClass = itemClass.toDomain(),
         itemSubclass = itemSubclass.toDomain(itemClass.id),
         inventoryType = inventoryType.toDomain(),
@@ -131,6 +132,7 @@ fun ItemAppearanceDTO.toDomain() =
         itemDisplayInfoId = itemDisplayInfoId,
         items = items.map { it.toItemSummaryDomain() },
         mediaUrl = media.key.href,
+        mediaSourceUrl = media.key.href,
     )
 
 fun ItemQuality.toDBO() =
@@ -238,6 +240,7 @@ fun Item.toDBO() =
         level = level,
         requiredLevel = requiredLevel,
         mediaUrl = mediaUrl,
+        mediaSourceUrl = mediaSourceUrl,
         itemClass = itemClass.toDBO(),
         itemSubclass = itemSubclass.toDBO(),
         inventoryType = inventoryType.toDBO(),
@@ -259,6 +262,7 @@ fun ItemDBO.toDomain() =
         level = level,
         requiredLevel = requiredLevel,
         mediaUrl = mediaUrl,
+        mediaSourceUrl = mediaSourceUrl,
         itemClass = itemClass.toDomain(),
         itemSubclass = itemSubclass.toDomain(),
         inventoryType = inventoryType.toDomain(),
@@ -281,6 +285,7 @@ fun ItemAppearance.toDBO() =
         itemDisplayInfoId = itemDisplayInfoId,
         items = items.map { it.toDBO() }.toMutableList(),
         mediaUrl = mediaUrl,
+        mediaSourceUrl = mediaSourceUrl,
     )
 
 fun ItemAppearanceDBO.toDomain() =
@@ -292,4 +297,5 @@ fun ItemAppearanceDBO.toDomain() =
         itemDisplayInfoId = itemDisplayInfoId,
         items = items.map { it.toDomain() },
         mediaUrl = mediaUrl,
+        mediaSourceUrl = mediaSourceUrl,
     )

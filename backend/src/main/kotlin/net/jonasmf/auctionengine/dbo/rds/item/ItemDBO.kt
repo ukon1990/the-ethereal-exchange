@@ -101,6 +101,7 @@ class ItemDBO(
     val level: Int,
     val requiredLevel: Int,
     val mediaUrl: String,
+    val mediaSourceUrl: String? = null,
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "item_class_id")
     val itemClass: ItemClassDBO,

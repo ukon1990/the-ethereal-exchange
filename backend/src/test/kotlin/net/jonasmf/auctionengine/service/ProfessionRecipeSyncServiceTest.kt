@@ -32,6 +32,7 @@ class ProfessionRecipeSyncServiceTest {
     private val recipeApiClient = mockk<RecipeApiClient>()
     private val modifiedCraftingApiClient = mockk<ModifiedCraftingApiClient>()
     private val bulkSyncService = mockk<ProfessionRecipeBulkSyncService>()
+    private val blizzardMediaService = mockk<BlizzardMediaService>()
 
     private fun createService() =
         ProfessionRecipeSyncService(
@@ -40,6 +41,7 @@ class ProfessionRecipeSyncServiceTest {
             recipeApiClient = recipeApiClient,
             modifiedCraftingApiClient = modifiedCraftingApiClient,
             professionRecipeBulkSyncService = bulkSyncService,
+            blizzardMediaService = blizzardMediaService,
         )
 
     @Test
@@ -54,6 +56,8 @@ class ProfessionRecipeSyncServiceTest {
         val slotsSlot = slot<List<ModifiedCraftingSlot>>()
 
         every { professionApiClient.getAll(Region.Europe) } returns listOf(profession)
+        every { blizzardMediaService.resolveProfession(Region.Europe, profession) } returns profession
+        recipes.forEach { recipe -> every { blizzardMediaService.resolveRecipe(Region.Europe, recipe) } returns recipe }
         every { recipeApiClient.getById(1001, Region.Europe) } returns recipes[0]
         every { recipeApiClient.getById(1002, Region.Europe) } returns recipes[1]
         every { modifiedCraftingApiClient.getAllCategories(Region.Europe) } returns categories
@@ -87,6 +91,8 @@ class ProfessionRecipeSyncServiceTest {
         val profession = professionWithRecipeIds(201, listOf(2001, 2001, 2002))
 
         every { professionApiClient.getAll(Region.Europe) } returns listOf(profession)
+        every { blizzardMediaService.resolveProfession(Region.Europe, profession) } returns profession
+        every { blizzardMediaService.resolveRecipe(Region.Europe, any()) } answers { secondArg() }
         every { recipeApiClient.getById(2001, Region.Europe) } returns recipeDetail(2001)
         every { recipeApiClient.getById(2002, Region.Europe) } returns recipeDetail(2002)
         every { modifiedCraftingApiClient.getAllCategories(Region.Europe) } returns emptyList()
@@ -119,6 +125,7 @@ class ProfessionRecipeSyncServiceTest {
                 recipeApiClient = recipeApiClient,
                 modifiedCraftingApiClient = modifiedCraftingApiClient,
                 professionRecipeBulkSyncService = bulkSyncService,
+                blizzardMediaService = blizzardMediaService,
             )
 
         every { professionApiClient.getAll(Region.Europe) } returns emptyList()
@@ -141,6 +148,8 @@ class ProfessionRecipeSyncServiceTest {
         val profession = professionWithRecipeIds(301, listOf(3001, 3002))
 
         every { professionApiClient.getAll(Region.Europe) } returns listOf(profession)
+        every { blizzardMediaService.resolveProfession(Region.Europe, profession) } returns profession
+        every { blizzardMediaService.resolveRecipe(Region.Europe, any()) } answers { secondArg() }
         every { recipeApiClient.getById(3001, Region.Europe) } returns recipeDetail(3001)
         every { recipeApiClient.getById(3002, Region.Europe) } throws RuntimeException("boom")
         every { modifiedCraftingApiClient.getAllCategories(Region.Europe) } returns emptyList()

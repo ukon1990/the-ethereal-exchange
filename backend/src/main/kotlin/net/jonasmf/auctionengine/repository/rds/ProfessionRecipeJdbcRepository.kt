@@ -66,18 +66,20 @@ class ProfessionRecipeJdbcRepository(
 
         jdbcTemplate.update(
             """
-            INSERT INTO profession (id, name_id, description_id, media_url, last_modified)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO profession (id, name_id, description_id, media_url, media_source_url, last_modified)
+            VALUES (?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
                 name_id = VALUES(name_id),
                 description_id = VALUES(description_id),
                 media_url = VALUES(media_url),
+                media_source_url = VALUES(media_source_url),
                 last_modified = VALUES(last_modified)
             """.trimIndent(),
             profession.id,
             nameId,
             descriptionId,
             profession.mediaUrl,
+            profession.mediaSourceUrl,
             profession.lastModified?.let(Timestamp::from),
         )
     }
@@ -183,16 +185,18 @@ class ProfessionRecipeJdbcRepository(
                 name_id,
                 description_id,
                 media_url,
+                media_source_url,
                 last_modified,
                 rank,
                 crafted_item_id,
                 crafted_quantity,
                 profession_category_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
                 name_id = VALUES(name_id),
                 description_id = VALUES(description_id),
                 media_url = VALUES(media_url),
+                media_source_url = VALUES(media_source_url),
                 last_modified = VALUES(last_modified),
                 rank = VALUES(rank),
                 crafted_item_id = VALUES(crafted_item_id),
@@ -203,6 +207,7 @@ class ProfessionRecipeJdbcRepository(
             nameId,
             descriptionId,
             recipe.mediaUrl,
+            recipe.mediaSourceUrl,
             recipe.lastModified?.let(Timestamp::from),
             recipe.rank,
             recipe.craftedItemId,
