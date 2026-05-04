@@ -1,11 +1,10 @@
 package net.jonasmf.auctionengine.repository.rds
 
 import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Repository
-import org.slf4j.LoggerFactory
-import org.slf4j.MDC
 import java.sql.ResultSet
 import java.time.LocalDate
 
@@ -76,8 +75,6 @@ class AuctionMarketSearchRepository(
 ) {
     private val logger = LoggerFactory.getLogger(AuctionMarketSearchRepository::class.java)
 
-    private val log = LoggerFactory.getLogger(AuctionMarketSearchRepository::class.java)
-
     private val sortColumns =
         mapOf(
             "itemName" to "item_name",
@@ -145,7 +142,7 @@ class AuctionMarketSearchRepository(
             )
         val rowsMs = elapsedMs(rowsStartNanos)
 
-        log.info(
+        logger.info(
             "Auction market search repository completed in {}ms (requestId={} count={}ms rows={}ms selectedRealm={} selectedDate={} selectedHour={} communityRealm={} communityDate={} communityHour={} totalItems={} returnedRows={})",
             elapsedMs(totalStartNanos),
             requestId(),
@@ -377,8 +374,6 @@ class AuctionMarketSearchRepository(
         val value = getLong(column)
         return if (wasNull()) null else value
     }
-
-    private fun elapsedMs(startNanos: Long): Long = (System.nanoTime() - startNanos) / 1_000_000
 
     private fun requestId(): String = MDC.get("requestId") ?: "-"
 }
