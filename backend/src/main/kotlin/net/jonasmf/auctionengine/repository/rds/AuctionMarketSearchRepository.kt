@@ -230,31 +230,91 @@ class AuctionMarketSearchRepository(
         request: AuctionMarketSearchRequest,
         params: MutableList<Any?>,
     ): String {
-        params.add(request.selectedConnectedRealmId)
-        params.add(java.sql.Date.valueOf(request.selectedDate))
-        params.add(request.communityConnectedRealmId)
-        params.add(java.sql.Date.valueOf(request.communityDate))
-
+        // Drive from hourly aggregates (tens of k rows per realm/day), not from `item`:
+        // without STRAIGHT_JOIN the optimizer merges the view and full-scans `item` (~all items)
+        // before probing stats, multiplying recipe/locale lookups (see ANALYZE on local DB).
+        val selectedDate = java.sql.Date.valueOf(request.selectedDate)
+        val communityDate = java.sql.Date.valueOf(request.communityDate)
         return """
-            FROM v_auction_market_item_details d
-                     JOIN (${buildHourlyAggregateSql(request.selectedHour)}) s ON s.item_id = d.item_id
-                     LEFT JOIN (${buildHourlyAggregateSql(request.communityHour)}) c ON c.item_id = d.item_id
+            FROM (${buildHourlyAggregateSql(request.selectedHour, request.selectedConnectedRealmId, selectedDate, request, params)}) s
+                     STRAIGHT_JOIN v_auction_market_item_details d ON d.item_id = s.item_id
+                     LEFT JOIN (${buildHourlyAggregateSql(request.communityHour, request.communityConnectedRealmId, communityDate, request, params)}) c ON c.item_id = d.item_id
             """.trimIndent()
     }
 
-    private fun buildHourlyAggregateSql(hour: Int): String {
+    /**
+     * When set, quality/class/subclass/recipe filters are applied inside this subquery (via `item`)
+     * so `GROUP BY item_id` touches fewer auction_stats rows before joining the heavy view.
+     */
+    private fun pushesItemDimensionFiltersIntoHourlyAggregate(request: AuctionMarketSearchRequest): Boolean =
+        request.qualityIds.isNotEmpty() ||
+            request.itemClassIds.isNotEmpty() ||
+            request.itemSubclassIds.isNotEmpty() ||
+            request.recipeOnly == true
+
+    private fun buildHourlyAggregateSql(
+        hour: Int,
+        connectedRealmId: Int,
+        date: java.sql.Date,
+        request: AuctionMarketSearchRequest,
+        params: MutableList<Any?>,
+    ): String {
         val hourSuffix = hourColumnSuffix(hour)
         val priceColumn = "price$hourSuffix"
         val quantityColumn = "quantity$hourSuffix"
-
+        val useItemJoin = pushesItemDimensionFiltersIntoHourlyAggregate(request)
+        val itemJoin =
+            if (useItemJoin) {
+                "INNER JOIN item i ON i.id = ash.item_id\n            "
+            } else {
+                ""
+            }
+        val itemFilterSql = if (useItemJoin) buildItemDimensionFilterSql(request) else ""
+        params.add(connectedRealmId)
+        params.add(date)
+        if (useItemJoin) {
+            appendItemDimensionFilterParams(params, request)
+        }
         return """
-            SELECT item_id, MIN($priceColumn) AS price, SUM($quantityColumn) AS quantity
-            FROM auction_stats_hourly
-            WHERE connected_realm_id = ?
-              AND date = ?
-              AND $priceColumn IS NOT NULL
-            GROUP BY item_id
+            SELECT ash.item_id, MIN(ash.$priceColumn) AS price, SUM(ash.$quantityColumn) AS quantity
+            FROM auction_stats_hourly ash
+            $itemJoin
+            WHERE ash.connected_realm_id = ?
+              AND ash.date = ?
+              AND ash.$priceColumn IS NOT NULL
+            $itemFilterSql
+            GROUP BY ash.item_id
             """.trimIndent()
+    }
+
+    /** IDs match `d.item_subclass_id` (subclass_id), not `item.item_subclass_id` (internal_id). */
+    private fun buildItemDimensionFilterSql(request: AuctionMarketSearchRequest): String {
+        val parts = mutableListOf<String>()
+        if (request.qualityIds.isNotEmpty()) {
+            parts.add("i.quality_id IN (${request.qualityIds.joinToString(",") { "?" }})")
+        }
+        if (request.itemClassIds.isNotEmpty()) {
+            parts.add("i.item_class_id IN (${request.itemClassIds.joinToString(",") { "?" }})")
+        }
+        if (request.itemSubclassIds.isNotEmpty()) {
+            val placeholders = request.itemSubclassIds.joinToString(",") { "?" }
+            parts.add(
+                "EXISTS (SELECT 1 FROM item_subclass isc WHERE isc.internal_id = i.item_subclass_id AND isc.class_id <=> i.item_class_id AND isc.subclass_id IN ($placeholders))",
+            )
+        }
+        if (request.recipeOnly == true) {
+            parts.add("EXISTS (SELECT 1 FROM recipe r WHERE r.crafted_item_id = i.id)")
+        }
+        return if (parts.isEmpty()) "" else "  AND " + parts.joinToString(" AND ")
+    }
+
+    private fun appendItemDimensionFilterParams(
+        params: MutableList<Any?>,
+        request: AuctionMarketSearchRequest,
+    ) {
+        if (request.qualityIds.isNotEmpty()) params.addAll(request.qualityIds)
+        if (request.itemClassIds.isNotEmpty()) params.addAll(request.itemClassIds)
+        if (request.itemSubclassIds.isNotEmpty()) params.addAll(request.itemSubclassIds)
     }
 
     private fun hourColumnSuffix(hour: Int): String {
@@ -278,11 +338,13 @@ class AuctionMarketSearchRepository(
             params.add(like)
             params.add(like)
         }
-        addInPredicate("d.quality_id", request.qualityIds, predicates, params)
-        addInPredicate("d.item_class_id", request.itemClassIds, predicates, params)
-        addInPredicate("d.item_subclass_id", request.itemSubclassIds, predicates, params)
-        if (request.recipeOnly == true) {
-            predicates.add("d.recipe_id IS NOT NULL")
+        if (!pushesItemDimensionFiltersIntoHourlyAggregate(request)) {
+            addInPredicate("d.quality_id", request.qualityIds, predicates, params)
+            addInPredicate("d.item_class_id", request.itemClassIds, predicates, params)
+            addInPredicate("d.item_subclass_id", request.itemSubclassIds, predicates, params)
+            if (request.recipeOnly == true) {
+                predicates.add("d.recipe_id IS NOT NULL")
+            }
         }
         request.minPrice?.let {
             predicates.add("s.price >= ?")
@@ -386,10 +448,11 @@ class AuctionMarketSearchRepository(
         return Pair(buildSearchPagedSql(request, fromSql, whereSql, sortColumn, sortDirection), params.toTypedArray())
     }
 
-    internal fun buildPriceAndQuantityRangeSqlForExplain(request: AuctionMarketSearchRequest): Pair<String, Array<Any?>> {
+    internal fun buildPriceAndQuantityRangeSqlForExplain(
+        request: AuctionMarketSearchRequest,
+    ): Pair<String, Array<Any?>> {
         val params = mutableListOf<Any?>()
-        params.add(request.selectedConnectedRealmId)
-        params.add(java.sql.Date.valueOf(request.selectedDate))
+        val selectedDate = java.sql.Date.valueOf(request.selectedDate)
         val sql =
             """
             SELECT
@@ -397,7 +460,7 @@ class AuctionMarketSearchRepository(
                 MAX(s.price) AS max_price,
                 MIN(s.quantity) AS min_quantity,
                 MAX(s.quantity) AS max_quantity
-            FROM (${buildHourlyAggregateSql(request.selectedHour)}) s
+            FROM (${buildHourlyAggregateSql(request.selectedHour, request.selectedConnectedRealmId, selectedDate, request, params)}) s
             """.trimIndent()
         return Pair(sql, params.toTypedArray())
     }
