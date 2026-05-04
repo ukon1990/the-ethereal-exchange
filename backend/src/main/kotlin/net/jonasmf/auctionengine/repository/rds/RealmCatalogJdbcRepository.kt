@@ -1,0 +1,144 @@
+package net.jonasmf.auctionengine.repository.rds
+
+import net.jonasmf.auctionengine.constant.Region
+import net.jonasmf.auctionengine.service.CommunityRealms
+import org.springframework.cache.annotation.Cacheable
+import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.stereotype.Repository
+import java.sql.ResultSet
+import java.time.Instant
+import net.jonasmf.auctionengine.constant.Locale as WowLocale
+
+data class RealmCatalogRow(
+    val regionId: Int,
+    val name: String,
+    val category: String,
+    val slug: String,
+    val locale: String,
+    val timezone: String,
+)
+
+data class RealmDetailRow(
+    val connectedRealmId: Int,
+    val regionId: Int,
+    val name: String,
+    val category: String,
+    val slug: String,
+    val locale: String,
+    val timezone: String,
+    val lastDailyPriceUpdate: Instant?,
+    val lastModified: Instant?,
+    val nextUpdate: Instant?,
+    val communityConnectedRealmId: Int,
+    val communityLastDailyPriceUpdate: Instant?,
+    val communityLastModified: Instant?,
+    val communityNextUpdate: Instant?,
+)
+
+@Repository
+class RealmCatalogJdbcRepository(
+    private val jdbcTemplate: JdbcTemplate,
+) {
+    @Cacheable(cacheNames = ["realmCatalog"])
+    fun findRealmCatalogRows(): List<RealmCatalogRow> =
+        jdbcTemplate.query(
+            """
+            SELECT
+                r.region_id AS regionId,
+                r.name,
+                r.category,
+                r.slug,
+                r.locale,
+                r.timezone
+            FROM connected_realm cr
+            JOIN connected_realm_realms crr ON crr.connected_realm_id = cr.id
+            JOIN realm r ON r.id = crr.realms_id
+            WHERE cr.id >= 0
+            ORDER BY r.region_id, r.name
+            """.trimIndent(),
+            { rs, rowNum -> mapRealmCatalogRow(rs, rowNum) },
+        )
+
+    fun findRealmDetailRow(
+        region: Region,
+        slug: String,
+    ): RealmDetailRow? {
+        val communityId = CommunityRealms.idFor(region)
+        return jdbcTemplate
+            .query(
+                """
+                SELECT
+                    cr.id AS connectedRealmId,
+                    r.region_id AS regionId,
+                    r.name,
+                    r.category,
+                    r.slug,
+                    r.locale,
+                    r.timezone,
+                    ah.last_daily_price_update AS lastDailyPriceUpdate,
+                    ah.last_modified AS lastModified,
+                    ah.next_update AS nextUpdate,
+                    community_cr.id AS communityConnectedRealmId,
+                    community_ah.last_daily_price_update AS communityLastDailyPriceUpdate,
+                    community_ah.last_modified AS communityLastModified,
+                    community_ah.next_update AS communityNextUpdate
+                FROM realm r
+                JOIN connected_realm_realms crr ON crr.realms_id = r.id
+                JOIN connected_realm cr ON cr.id = crr.connected_realm_id
+                JOIN auction_house ah ON ah.id = cr.auction_house_id
+                JOIN connected_realm community_cr ON community_cr.id = ?
+                JOIN auction_house community_ah ON community_ah.id = community_cr.auction_house_id
+                WHERE r.region_id = ?
+                  AND r.slug = ?
+                LIMIT 1
+                """.trimIndent(),
+                { rs, _ -> rs.toRealmDetailRow() },
+                communityId,
+                region.toDbId(),
+                slug.lowercase(),
+            ).firstOrNull()
+    }
+
+    private fun mapRealmCatalogRow(
+        rs: ResultSet,
+        rowNum: Int,
+    ): RealmCatalogRow =
+        RealmCatalogRow(
+            regionId = rs.getInt("regionId"),
+            name = rs.getString("name"),
+            category = rs.getString("category"),
+            slug = rs.getString("slug"),
+            locale = rs.getLocaleValue("locale"),
+            timezone = rs.getString("timezone"),
+        )
+
+    private fun ResultSet.toRealmDetailRow(): RealmDetailRow =
+        RealmDetailRow(
+            connectedRealmId = getInt("connectedRealmId"),
+            regionId = getInt("regionId"),
+            name = getString("name"),
+            category = getString("category"),
+            slug = getString("slug"),
+            locale = getLocaleValue("locale"),
+            timezone = getString("timezone"),
+            lastDailyPriceUpdate = getInstant("lastDailyPriceUpdate"),
+            lastModified = getInstant("lastModified"),
+            nextUpdate = getInstant("nextUpdate"),
+            communityConnectedRealmId = getInt("communityConnectedRealmId"),
+            communityLastDailyPriceUpdate = getInstant("communityLastDailyPriceUpdate"),
+            communityLastModified = getInstant("communityLastModified"),
+            communityNextUpdate = getInstant("communityNextUpdate"),
+        )
+
+    private fun ResultSet.getInstant(column: String): Instant? = getTimestamp(column)?.toInstant()
+
+    private fun ResultSet.getLocaleValue(column: String): String = WowLocale.entries[getInt(column)].value
+
+    private fun Region.toDbId(): Int =
+        when (this) {
+            Region.NorthAmerica -> 1
+            Region.Europe -> 2
+            Region.Korea -> 3
+            Region.Taiwan -> 4
+        }
+}

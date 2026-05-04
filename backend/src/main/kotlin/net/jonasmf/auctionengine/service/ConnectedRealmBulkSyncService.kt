@@ -8,8 +8,11 @@ import net.jonasmf.auctionengine.repository.rds.ConnectedRealmRepository
 import net.jonasmf.auctionengine.repository.rds.ConnectedRealmUpsertRow
 import net.jonasmf.auctionengine.repository.rds.RealmSyncRow
 import org.slf4j.LoggerFactory
+import org.springframework.cache.CacheManager
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import java.time.Instant
 
 @Service
@@ -17,6 +20,7 @@ class ConnectedRealmBulkSyncService(
     private val connectedRealmJdbcRepository: ConnectedRealmJdbcRepository,
     private val connectedRealmRepository: ConnectedRealmRepository,
     private val auctionHouseRepository: AuctionHouseRepository,
+    private val cacheManager: CacheManager,
 ) {
     private val log = LoggerFactory.getLogger(ConnectedRealmBulkSyncService::class.java)
 
@@ -85,7 +89,23 @@ class ConnectedRealmBulkSyncService(
         connectedRealmJdbcRepository.replaceRealmsForConnectedRealms(connectedRealmIds, realmRows)
 
         val savedById = connectedRealmRepository.findAllById(connectedRealmIds).associateBy { it.id }
+        evictRealmCatalogAfterCommit()
         return connectedRealmIds.mapNotNull(savedById::get)
+    }
+
+    private fun evictRealmCatalogAfterCommit() {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            cacheManager.getCache("realmCatalog")?.clear()
+            return
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(
+            object : TransactionSynchronization {
+                override fun afterCommit() {
+                    cacheManager.getCache("realmCatalog")?.clear()
+                }
+            },
+        )
     }
 
     private fun normalizeAuctionHouse(

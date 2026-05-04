@@ -1,5 +1,6 @@
 package net.jonasmf.auctionengine.repository.rds
 
+import org.slf4j.LoggerFactory
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Repository
@@ -71,6 +72,8 @@ data class AuctionMarketRange(
 class AuctionMarketSearchRepository(
     private val jdbcTemplate: JdbcTemplate,
 ) {
+    private val logger = LoggerFactory.getLogger(AuctionMarketSearchRepository::class.java)
+
     private val sortColumns =
         mapOf(
             "itemName" to "item_name",
@@ -84,16 +87,19 @@ class AuctionMarketSearchRepository(
         )
 
     fun search(request: AuctionMarketSearchRequest): AuctionMarketSearchResult {
+        val startNanos = System.nanoTime()
         val params = ArrayList<Any?>()
         val fromSql = buildFromSql(request, params)
         val whereSql = buildWhereSql(request, params)
         val countParams = ArrayList(params)
+        val countStartNanos = System.nanoTime()
         val totalItems =
             jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) $fromSql $whereSql",
                 Long::class.java,
                 *countParams.toTypedArray(),
             ) ?: 0L
+        val countDurationMs = elapsedMs(countStartNanos)
 
         val sortColumn = sortColumns[request.sortBy] ?: sortColumns.getValue("itemName")
         val sortDirection = if (request.sortDirection.equals("desc", ignoreCase = true)) "DESC" else "ASC"
@@ -101,6 +107,7 @@ class AuctionMarketSearchRepository(
         params.add(request.pageSize)
         params.add(offset)
 
+        val rowsStartNanos = System.nanoTime()
         val rows =
             jdbcTemplate.query(
                 """
@@ -132,6 +139,22 @@ class AuctionMarketSearchRepository(
                 rowMapper,
                 *params.toTypedArray(),
             )
+        val rowsDurationMs = elapsedMs(rowsStartNanos)
+
+        logger.info(
+            "Auction market search completed in {}ms (count={}ms rows={}ms selectedRealm={} selectedDate={} selectedHour={} communityRealm={} communityDate={} communityHour={} totalItems={} returnedRows={})",
+            elapsedMs(startNanos),
+            countDurationMs,
+            rowsDurationMs,
+            request.selectedConnectedRealmId,
+            request.selectedDate,
+            request.selectedHour,
+            request.communityConnectedRealmId,
+            request.communityDate,
+            request.communityHour,
+            totalItems,
+            rows.size,
+        )
 
         return AuctionMarketSearchResult(rows = rows, totalItems = totalItems)
     }
@@ -227,30 +250,34 @@ class AuctionMarketSearchRepository(
     ): String {
         params.add(request.selectedConnectedRealmId)
         params.add(java.sql.Date.valueOf(request.selectedDate))
-        params.add(request.selectedHour)
         params.add(request.communityConnectedRealmId)
         params.add(java.sql.Date.valueOf(request.communityDate))
-        params.add(request.communityHour)
 
         return """
             FROM v_auction_market_item_details d
-                     JOIN (
-                         SELECT item_id, MIN(price) AS price, SUM(quantity) AS quantity
-                         FROM v_auction_house_prices
-                         WHERE connected_realm_id = ?
-                           AND date = ?
-                           AND hour_of_day = ?
-                         GROUP BY item_id
-                     ) s ON s.item_id = d.item_id
-                     LEFT JOIN (
-                         SELECT item_id, MIN(price) AS price, SUM(quantity) AS quantity
-                         FROM v_auction_house_prices
-                         WHERE connected_realm_id = ?
-                           AND date = ?
-                           AND hour_of_day = ?
-                         GROUP BY item_id
-                     ) c ON c.item_id = d.item_id
+                     JOIN (${buildHourlyAggregateSql(request.selectedHour)}) s ON s.item_id = d.item_id
+                     LEFT JOIN (${buildHourlyAggregateSql(request.communityHour)}) c ON c.item_id = d.item_id
             """.trimIndent()
+    }
+
+    private fun buildHourlyAggregateSql(hour: Int): String {
+        val hourSuffix = hourColumnSuffix(hour)
+        val priceColumn = "price$hourSuffix"
+        val quantityColumn = "quantity$hourSuffix"
+
+        return """
+            SELECT item_id, MIN($priceColumn) AS price, SUM($quantityColumn) AS quantity
+            FROM auction_stats_hourly
+            WHERE connected_realm_id = ?
+              AND date = ?
+              AND $priceColumn IS NOT NULL
+            GROUP BY item_id
+            """.trimIndent()
+    }
+
+    private fun hourColumnSuffix(hour: Int): String {
+        require(hour in 0..23) { "Hour must be between 0 and 23: $hour" }
+        return hour.toString().padStart(2, '0')
     }
 
     private fun buildWhereSql(
@@ -310,6 +337,8 @@ class AuctionMarketSearchRepository(
         replace("!", "!!")
             .replace("%", "!%")
             .replace("_", "!_")
+
+    private fun elapsedMs(startNanos: Long): Long = (System.nanoTime() - startNanos) / 1_000_000
 
     private val rowMapper =
         RowMapper { rs: ResultSet, _: Int ->

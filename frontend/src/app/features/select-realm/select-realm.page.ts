@@ -7,7 +7,7 @@ import {
   PLATFORM_ID,
   signal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { SearchInputComponent } from '@ui';
 
 import { Realm } from '../../api/generated';
@@ -15,13 +15,15 @@ import { RealmSelectionService } from '@core/services/realm-selection.service';
 
 @Component({
   selector: 'app-select-realm-page',
-  imports: [SearchInputComponent],
+  imports: [RouterLink, SearchInputComponent],
   templateUrl: './select-realm.page.html',
+  host: {
+    class: 'flex min-h-0 flex-1 flex-col',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SelectRealmPage {
   private readonly selection = inject(RealmSelectionService);
-  private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
 
   protected readonly query = signal('');
@@ -69,9 +71,8 @@ export class SelectRealmPage {
     this.query.set(value);
   }
 
-  protected select(realm: Realm): void {
+  protected rememberSelection(realm: Realm): void {
     this.selection.select(realm);
-    void this.router.navigate(['/', realm.region, realm.slug]);
   }
 
   protected trackByKey(_: number, realm: Realm): string {
