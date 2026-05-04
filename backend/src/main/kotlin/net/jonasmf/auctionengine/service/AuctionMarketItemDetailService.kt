@@ -1,6 +1,5 @@
 package net.jonasmf.auctionengine.service
 
-import net.jonasmf.auctionengine.dbo.rds.realm.ConnectedRealm
 import net.jonasmf.auctionengine.generated.model.AuctionListingKey
 import net.jonasmf.auctionengine.generated.model.AuctionMarketItem
 import net.jonasmf.auctionengine.generated.model.AuctionMarketItemCrafting
@@ -238,21 +237,23 @@ class AuctionMarketItemDetailService(
         context: MarketContext,
         redundant: Boolean,
     ): List<MarketDataSource> {
-        val selected = context.selectedConnectedRealm.toMarketDataSource()
+        val selected =
+            MarketDataSource(
+                connectedRealmId = context.selectedSnapshot.connectedRealmId,
+                auctionHouseLastModified =
+                    OffsetDateTime.ofInstant(context.selectedAuctionHouseLastModified, ZoneOffset.UTC),
+            )
         return if (redundant) {
             listOf(selected)
         } else {
-            listOf(selected, context.communityConnectedRealm.toMarketDataSource())
+            val community =
+                MarketDataSource(
+                    connectedRealmId = context.communitySnapshot.connectedRealmId,
+                    auctionHouseLastModified =
+                        OffsetDateTime.ofInstant(context.communityAuctionHouseLastModified, ZoneOffset.UTC),
+                )
+            listOf(selected, community)
         }
-    }
-
-    private fun ConnectedRealm.toMarketDataSource(): MarketDataSource {
-        val lm = auctionHouse.lastModified
-        return MarketDataSource(
-            connectedRealmId = id,
-            auctionHouseLastModified =
-                lm?.let { OffsetDateTime.ofInstant(it, ZoneOffset.UTC) },
-        )
     }
 
     private fun buildSummary(

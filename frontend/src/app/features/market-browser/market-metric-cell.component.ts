@@ -25,18 +25,6 @@ import { CurrencyAmountComponent, MarketItemRow } from '@ui';
           <ee-currency-amount class="justify-self-end opacity-80" [amount]="row().marketValue" />
         }
       }
-      @case ('communityPrice') {
-        <ee-currency-amount class="justify-self-end opacity-80" [amount]="row().regionalAverage" />
-      }
-      @case ('communityQuantity') {
-        <div class="justify-self-end ee-data text-tertiary-container">
-          {{
-            row().communityQuantity !== undefined
-              ? row().communityQuantity
-              : row().saleRate.toFixed(2)
-          }}
-        </div>
-      }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

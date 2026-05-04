@@ -410,7 +410,10 @@ function readSortBy(value: string | null): MarketBrowserQueryState['sortBy'] {
     'selectedQuantity',
     'communityQuantity',
   ] as const;
-  return allowed.find((candidate) => candidate === value) ?? 'itemName';
+  const raw = allowed.find((candidate) => candidate === value) ?? 'itemName';
+  if (raw === 'communityPrice') return 'selectedPrice';
+  if (raw === 'communityQuantity') return 'selectedQuantity';
+  return raw;
 }
 
 function stableQueryStringFromState(state: MarketBrowserQueryState): string {
@@ -540,6 +543,9 @@ function nonemptyName(value: string | null | undefined): string | undefined {
 }
 
 function toMarketRow(row: AuctionMarketSearchRow): MarketItemRow {
+  const listingPriceCopper = row.selectedRealm?.price ?? row.community?.price;
+  const listingQuantity = row.selectedRealm?.quantity ?? row.community?.quantity;
+  const mergedCurrency = copperToCurrencyAmount(listingPriceCopper);
   return {
     id: String(row.item.id),
     name: row.item.name,
@@ -554,12 +560,11 @@ function toMarketRow(row: AuctionMarketSearchRow): MarketItemRow {
     itemSubclassName: nonemptyName(row.item.itemSubclass?.name),
     quality: toQuality(row.item.quality?.type ?? row.item.quality?.name),
     iconUrl: row.item.mediaUrl ?? undefined,
-    minBuyout: copperToCurrencyAmount(row.selectedRealm?.price),
+    minBuyout: mergedCurrency,
     marketValue: {},
-    regionalAverage: copperToCurrencyAmount(row.community?.price),
+    regionalAverage: mergedCurrency,
     saleRate: 0,
-    selectedQuantity: row.selectedRealm?.quantity ?? undefined,
-    communityQuantity: row.community?.quantity ?? undefined,
+    selectedQuantity: listingQuantity ?? undefined,
   };
 }
 

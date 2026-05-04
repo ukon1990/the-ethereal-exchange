@@ -7,6 +7,8 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Repository
 import java.sql.ResultSet
 import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import net.jonasmf.auctionengine.constant.Locale as WowLocale
 
 data class RealmCatalogRow(
@@ -130,7 +132,16 @@ class RealmCatalogJdbcRepository(
             communityNextUpdate = getInstant("communityNextUpdate"),
         )
 
-    private fun ResultSet.getInstant(column: String): Instant? = getTimestamp(column)?.toInstant()
+    /**
+     * `auction_house` stores `DATETIME` without timezone; treat the wall clock as UTC so snapshot
+     * hours match `auction_stats_hourly` columns regardless of JVM default zone.
+     */
+    private fun ResultSet.getInstant(column: String): Instant? {
+        val str = getString(column)?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        val normalized = if ('T' in str) str else str.replace(' ', 'T')
+        val ldt = LocalDateTime.parse(normalized)
+        return ldt.atOffset(ZoneOffset.UTC).toInstant()
+    }
 
     private fun ResultSet.getLocaleValue(column: String): String = WowLocale.entries[getInt(column)].value
 

@@ -3,6 +3,7 @@ package net.jonasmf.auctionengine.service
 import net.jonasmf.auctionengine.config.IntegrationTestBase
 import net.jonasmf.auctionengine.testsupport.MarketSearchTestFixtures
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -115,6 +116,38 @@ class AuctionMarketSearchServiceTest : IntegrationTestBase() {
                 .community
                 ?.price,
         )
+    }
+
+    @Test
+    fun `search includes commodity-only items with null selected realm price`() {
+        seedMarketSearchData()
+        MarketSearchTestFixtures.seedCommodityOnlyItem(jdbcTemplate)
+
+        val result =
+            service.search(
+                regionCode = "eu",
+                realmSlug = "argent-dawn",
+                localeOverride = null,
+                page = 0,
+                pageSize = 10,
+                sortBy = "itemName",
+                sortDirection = "asc",
+                query = "copper dust",
+                qualityIds = null,
+                itemClassIds = null,
+                itemSubclassIds = null,
+                recipeOnly = null,
+                minPrice = null,
+                maxPrice = null,
+                minQuantity = null,
+                maxQuantity = null,
+            )
+
+        val row = result.items.single { it.item.id == 19020 }
+        assertNull(row.selectedRealm?.price)
+        assertNull(row.selectedRealm?.quantity)
+        assertEquals(555L, row.community?.price)
+        assertEquals(99L, row.community?.quantity)
     }
 
     @Test

@@ -4,14 +4,14 @@ import org.springframework.jdbc.core.JdbcTemplate
 
 object MarketSearchTestFixtures {
     fun seedMarketSearchData(jdbcTemplate: JdbcTemplate) {
-        jdbcTemplate.update("INSERT INTO region (id, name, type) VALUES (1, 'Europe', 1)")
+        jdbcTemplate.update("INSERT INTO region (id, name, type) VALUES (2, 'Europe', 1)")
         insertAuctionHouse(jdbcTemplate, id = 100, connectedId = 1084, lastModified = "2026-05-01 11:15:00")
         insertAuctionHouse(jdbcTemplate, id = 101, connectedId = -2, lastModified = "2026-05-01 10:30:00")
         jdbcTemplate.update("INSERT INTO connected_realm (id, auction_house_id) VALUES (1084, 100), (-2, 101)")
         jdbcTemplate.update(
             """
             INSERT INTO realm (id, category, game_build, locale, name, slug, timezone, region_id)
-            VALUES (200, 'normal', 0, 5, 'Argent Dawn', 'argent-dawn', 'UTC', 1)
+            VALUES (200, 'normal', 0, 5, 'Argent Dawn', 'argent-dawn', 'UTC', 2)
             """.trimIndent(),
         )
         jdbcTemplate.update("INSERT INTO connected_realm_realms (connected_realm_id, realms_id) VALUES (1084, 200)")
@@ -60,6 +60,27 @@ object MarketSearchTestFixtures {
             INSERT INTO auction_stats_hourly (
                 connected_realm_id, item_id, date, pet_species_id, modifier_key, bonus_key, price10, quantity10
             ) VALUES (-2, 19019, '2026-05-01', -1, '', '', 900, 8)
+            """.trimIndent(),
+        )
+    }
+
+    /** Item present only on regional commodity (`connected_realm_id` negative), not on the selected realm. */
+    fun seedCommodityOnlyItem(jdbcTemplate: JdbcTemplate) {
+        val itemName = insertLocale(jdbcTemplate, 6, "Copper Dust", "Kupferstaub", "ITEM", "19020", "name")
+        jdbcTemplate.update(
+            """
+            INSERT INTO item (
+                id, is_equippable, is_stackable, level, max_count, media_url, purchase_price, purchase_quantity,
+                required_level, sell_price, item_class_id, item_subclass_id, name_id, quality_id
+            ) VALUES (19020, 0, 1, 1, 0, 'https://media.example/dust.png', 0, 1, 1, 0, 2, 501, ?, 3)
+            """.trimIndent(),
+            itemName,
+        )
+        jdbcTemplate.update(
+            """
+            INSERT INTO auction_stats_hourly (
+                connected_realm_id, item_id, date, pet_species_id, modifier_key, bonus_key, price10, quantity10
+            ) VALUES (-2, 19020, '2026-05-01', -1, '', '', 555, 99)
             """.trimIndent(),
         )
     }

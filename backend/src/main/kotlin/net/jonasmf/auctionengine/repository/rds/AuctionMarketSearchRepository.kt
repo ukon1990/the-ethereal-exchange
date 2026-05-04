@@ -86,15 +86,13 @@ class AuctionMarketSearchRepository(
     fun search(request: AuctionMarketSearchRequest): AuctionMarketSearchResult {
         val totalStartNanos = System.nanoTime()
         val params = ArrayList<Any?>()
-        val fromSql = buildFromSql(request, params)
+        val (withSql, fromSql) = buildWithAndFromSql(request, params)
         val whereSql = buildWhereSql(request, params)
-        val sortColumn = sortColumns[request.sortBy] ?: sortColumns.getValue("itemName")
-        val sortDirection = if (request.sortDirection.equals("desc", ignoreCase = true)) "DESC" else "ASC"
         val offset = request.page * request.pageSize
         params.add(request.pageSize)
         params.add(offset)
 
-        val sql = buildSearchPagedSql(request, fromSql, whereSql, sortColumn, sortDirection)
+        val sql = buildSearchPagedSql(request, withSql, fromSql, whereSql)
         val queryStartNanos = System.nanoTime()
         val pairs =
             jdbcTemplate.query(
@@ -168,12 +166,12 @@ class AuctionMarketSearchRepository(
 
     private fun buildSearchPagedSql(
         request: AuctionMarketSearchRequest,
+        withSql: String,
         fromSql: String,
         whereSql: String,
-        sortColumn: String,
-        sortDirection: String,
     ): String =
         """
+        $withSql
         SELECT
             wrapped.item_id,
             wrapped.item_name,
@@ -213,9 +211,9 @@ class AuctionMarketSearchRepository(
                 d.recipe_id,
                 COALESCE(d.recipe_name_${request.localeColumnSuffix}, d.recipe_name_en_gb, d.recipe_name_en_us) AS recipe_name,
                 d.recipe_media_url,
-                s.bonus_key AS selected_bonus_key,
-                s.modifier_key AS selected_modifier_key,
-                s.pet_species_id AS selected_pet_species_id,
+                COALESCE(s.bonus_key, c.bonus_key) AS selected_bonus_key,
+                COALESCE(s.modifier_key, c.modifier_key) AS selected_modifier_key,
+                COALESCE(s.pet_species_id, c.pet_species_id) AS selected_pet_species_id,
                 s.price AS selected_price,
                 s.quantity AS selected_quantity,
                 c.price AS community_price,
@@ -224,24 +222,77 @@ class AuctionMarketSearchRepository(
             $fromSql
             $whereSql
         ) wrapped
-        ORDER BY wrapped.$sortColumn $sortDirection, wrapped.item_name ASC, wrapped.item_id ASC
+        ${buildOrderBySql(request)}
         LIMIT ? OFFSET ?
         """.trimIndent()
 
-    private fun buildFromSql(
+    /**
+     * Single listing price/quantity for sort: realm and commodity are mutually exclusive in the UI,
+     * so `selectedPrice` / `communityPrice` (and quantity counterparts) share the same ORDER BY.
+     */
+    private fun buildOrderBySql(request: AuctionMarketSearchRequest): String {
+        val dir = if (request.sortDirection.equals("desc", ignoreCase = true)) "DESC" else "ASC"
+        val primary =
+            when (request.sortBy) {
+                "selectedPrice", "communityPrice" ->
+                    "COALESCE(wrapped.selected_price, wrapped.community_price) $dir NULLS LAST"
+                "selectedQuantity", "communityQuantity" ->
+                    "COALESCE(wrapped.selected_quantity, wrapped.community_quantity) $dir NULLS LAST"
+                else -> {
+                    val col = sortColumns[request.sortBy] ?: sortColumns.getValue("itemName")
+                    "wrapped.$col $dir"
+                }
+            }
+        return "ORDER BY $primary, wrapped.item_name ASC, wrapped.item_id ASC"
+    }
+
+    /**
+     * One ranked hourly snapshot per side (`sel`, `com`) as CTEs, then `u` = union of item ids so
+     * commodity-only listings appear. Join `d` from `u` (not only from realm stats).
+     */
+    private fun buildWithAndFromSql(
         request: AuctionMarketSearchRequest,
         params: MutableList<Any?>,
-    ): String {
-        // Drive from hourly aggregates (tens of k rows per realm/day), not from `item`:
-        // without STRAIGHT_JOIN the optimizer merges the view and full-scans `item` (~all items)
-        // before probing stats, multiplying recipe/locale lookups (see ANALYZE on local DB).
+    ): Pair<String, String> {
         val selectedDate = java.sql.Date.valueOf(request.selectedDate)
         val communityDate = java.sql.Date.valueOf(request.communityDate)
-        return """
-            FROM (${buildHourlyAggregateSql(request.selectedHour, request.selectedConnectedRealmId, selectedDate, request, params)}) s
-                     STRAIGHT_JOIN v_auction_market_item_details d ON d.item_id = s.item_id
-                     LEFT JOIN (${buildHourlyAggregateSql(request.communityHour, request.communityConnectedRealmId, communityDate, request, params)}) c ON c.item_id = d.item_id
+        val selCtes =
+            buildHourlyAggregateCtes(
+                "sel",
+                request.selectedHour,
+                request.selectedConnectedRealmId,
+                selectedDate,
+                request,
+                params,
+            )
+        val comCtes =
+            buildHourlyAggregateCtes(
+                "com",
+                request.communityHour,
+                request.communityConnectedRealmId,
+                communityDate,
+                request,
+                params,
+            )
+        val withSql =
+            """
+            WITH
+            $selCtes,
+            $comCtes,
+            u AS (
+                SELECT item_id FROM sel
+                UNION
+                SELECT item_id FROM com
+            )
             """.trimIndent()
+        val fromSql =
+            """
+            FROM u
+                     STRAIGHT_JOIN v_auction_market_item_details d ON d.item_id = u.item_id
+                     LEFT JOIN sel s ON s.item_id = u.item_id
+                     LEFT JOIN com c ON c.item_id = u.item_id
+            """.trimIndent()
+        return Pair(withSql, fromSql)
     }
 
     /**
@@ -254,7 +305,8 @@ class AuctionMarketSearchRepository(
             request.itemSubclassIds.isNotEmpty() ||
             request.recipeOnly == true
 
-    private fun buildHourlyAggregateSql(
+    private fun buildHourlyAggregateCtes(
+        ctePrefix: String,
         hour: Int,
         connectedRealmId: Int,
         date: java.sql.Date,
@@ -267,7 +319,7 @@ class AuctionMarketSearchRepository(
         val useItemJoin = pushesItemDimensionFiltersIntoHourlyAggregate(request)
         val itemJoin =
             if (useItemJoin) {
-                "INNER JOIN item i ON i.id = ash.item_id\n            "
+                "INNER JOIN item i ON i.id = ash.item_id\n                "
             } else {
                 ""
             }
@@ -278,7 +330,7 @@ class AuctionMarketSearchRepository(
             appendItemDimensionFilterParams(params, request)
         }
         return """
-            WITH base AS (
+            ${ctePrefix}_base AS (
                 SELECT
                     ash.item_id,
                     ash.bonus_key,
@@ -293,7 +345,7 @@ class AuctionMarketSearchRepository(
                   AND ash.$priceColumn IS NOT NULL
                 $itemFilterSql
             ),
-            ranked AS (
+            ${ctePrefix}_ranked AS (
                 SELECT
                     item_id,
                     bonus_key,
@@ -305,11 +357,13 @@ class AuctionMarketSearchRepository(
                         PARTITION BY item_id
                         ORDER BY price ASC, bonus_key, modifier_key, pet_species_id
                     ) AS rn
-                FROM base
+                FROM ${ctePrefix}_base
+            ),
+            $ctePrefix AS (
+                SELECT item_id, bonus_key, modifier_key, pet_species_id, price, quantity
+                FROM ${ctePrefix}_ranked
+                WHERE rn = 1
             )
-            SELECT item_id, bonus_key, modifier_key, pet_species_id, price, quantity
-            FROM ranked
-            WHERE rn = 1
             """.trimIndent()
     }
 
@@ -373,19 +427,19 @@ class AuctionMarketSearchRepository(
             }
         }
         request.minPrice?.let {
-            predicates.add("s.price >= ?")
+            predicates.add("COALESCE(s.price, c.price) >= ?")
             params.add(it)
         }
         request.maxPrice?.let {
-            predicates.add("s.price <= ?")
+            predicates.add("COALESCE(s.price, c.price) <= ?")
             params.add(it)
         }
         request.minQuantity?.let {
-            predicates.add("s.quantity >= ?")
+            predicates.add("COALESCE(s.quantity, c.quantity) >= ?")
             params.add(it)
         }
         request.maxQuantity?.let {
-            predicates.add("s.quantity <= ?")
+            predicates.add("COALESCE(s.quantity, c.quantity) <= ?")
             params.add(it)
         }
 
@@ -467,14 +521,15 @@ class AuctionMarketSearchRepository(
     /** For integration tests: `EXPLAIN` / `EXPLAIN ANALYZE` against real MariaDB. */
     internal fun buildMarketSearchPagedSqlForExplain(request: AuctionMarketSearchRequest): Pair<String, Array<Any?>> {
         val params = ArrayList<Any?>()
-        val fromSql = buildFromSql(request, params)
+        val (withSql, fromSql) = buildWithAndFromSql(request, params)
         val whereSql = buildWhereSql(request, params)
-        val sortColumn = sortColumns[request.sortBy] ?: sortColumns.getValue("itemName")
-        val sortDirection = if (request.sortDirection.equals("desc", ignoreCase = true)) "DESC" else "ASC"
         val offset = request.page * request.pageSize
         params.add(request.pageSize)
         params.add(offset)
-        return Pair(buildSearchPagedSql(request, fromSql, whereSql, sortColumn, sortDirection), params.toTypedArray())
+        return Pair(
+            buildSearchPagedSql(request, withSql, fromSql, whereSql),
+            params.toTypedArray(),
+        )
     }
 
     internal fun buildQualityOptionsSqlForExplain(request: AuctionMarketSearchRequest): Pair<String, Array<Any?>> =

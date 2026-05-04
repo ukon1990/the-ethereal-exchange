@@ -2,13 +2,12 @@ package net.jonasmf.auctionengine.service
 
 import net.jonasmf.auctionengine.constant.Locale
 import net.jonasmf.auctionengine.constant.Region
-import net.jonasmf.auctionengine.dbo.rds.realm.ConnectedRealm
-import net.jonasmf.auctionengine.dbo.rds.realm.Realm
-import net.jonasmf.auctionengine.repository.rds.ConnectedRealmRepository
-import net.jonasmf.auctionengine.utility.resolveZone
+import net.jonasmf.auctionengine.repository.rds.RealmCatalogJdbcRepository
+import net.jonasmf.auctionengine.utility.defaultAuctionHouseZone
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
+import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneId
@@ -21,18 +20,18 @@ data class MarketSnapshot(
 )
 
 data class MarketContext(
-    val selectedConnectedRealm: ConnectedRealm,
-    val selectedRealm: Realm,
-    val communityConnectedRealm: ConnectedRealm,
     val locale: Locale,
     val localeColumnSuffix: String,
+    val selectedRealmTimezone: String,
     val selectedSnapshot: MarketSnapshot,
     val communitySnapshot: MarketSnapshot,
+    val selectedAuctionHouseLastModified: Instant,
+    val communityAuctionHouseLastModified: Instant,
 )
 
 @Service
 class AuctionMarketContextService(
-    private val connectedRealmRepository: ConnectedRealmRepository,
+    private val realmCatalogJdbcRepository: RealmCatalogJdbcRepository,
 ) {
     fun resolve(
         regionCode: String,
@@ -42,47 +41,61 @@ class AuctionMarketContextService(
         val region =
             runCatching { Region.fromString(regionCode) }
                 .getOrElse { throw ResponseStatusException(HttpStatus.BAD_REQUEST, it.message, it) }
-        val (selectedConnectedRealm, selectedRealm) =
-            connectedRealmRepository
-                .findAllByRegion(region)
-                .firstNotNullOfOrNull { connectedRealm ->
-                    connectedRealm.realms
-                        .firstOrNull { it.slug.equals(realmSlug, ignoreCase = true) }
-                        ?.let { connectedRealm to it }
-                } ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Realm not found: $regionCode/$realmSlug")
-        val communityConnectedRealm =
-            connectedRealmRepository
-                .findById(CommunityRealms.idFor(region))
-                .orElseThrow {
-                    ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Community realm not found for $regionCode",
-                    )
-                }
-        val locale = localeOverride?.takeIf { it.isNotBlank() }?.parseLocale() ?: selectedRealm.locale
+        val detail =
+            realmCatalogJdbcRepository.findRealmDetailRow(region, realmSlug)
+                ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Realm not found: $regionCode/$realmSlug")
+
+        val realmLocale =
+            Locale.getAllValues()[detail.locale]
+                ?: throw ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Unknown realm locale string: ${detail.locale}",
+                )
+        val locale = localeOverride?.takeIf { it.isNotBlank() }?.parseLocale() ?: realmLocale
+
+        val selectedLastModified =
+            detail.lastModified
+                ?: throw ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Auction house for connected realm ${detail.connectedRealmId} has no last modified timestamp",
+                )
+        val communityLastModified =
+            detail.communityLastModified
+                ?: throw ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Community auction house for $regionCode has no last modified timestamp",
+                )
 
         return MarketContext(
-            selectedConnectedRealm = selectedConnectedRealm,
-            selectedRealm = selectedRealm,
-            communityConnectedRealm = communityConnectedRealm,
             locale = locale,
             localeColumnSuffix = locale.columnSuffix,
-            selectedSnapshot = selectedConnectedRealm.snapshotFor(selectedRealm.timezone),
-            communitySnapshot = communityConnectedRealm.snapshotFor(null),
+            selectedRealmTimezone = detail.timezone,
+            selectedSnapshot =
+                snapshotFrom(
+                    lastModified = selectedLastModified,
+                    connectedRealmId = detail.connectedRealmId,
+                    preferredTimezone = detail.timezone,
+                ),
+            communitySnapshot =
+                snapshotFrom(
+                    lastModified = communityLastModified,
+                    connectedRealmId = detail.communityConnectedRealmId,
+                    preferredTimezone = null,
+                ),
+            selectedAuctionHouseLastModified = selectedLastModified,
+            communityAuctionHouseLastModified = communityLastModified,
         )
     }
 
-    private fun ConnectedRealm.snapshotFor(preferredTimezone: String?): MarketSnapshot {
-        val lastModified =
-            auctionHouse.lastModified
-                ?: throw ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Auction house ${auctionHouse.connectedId} has no last modified timestamp",
-                )
-        val zone = preferredTimezone?.toZoneIdOrNull() ?: resolveZone()
+    private fun snapshotFrom(
+        lastModified: Instant,
+        connectedRealmId: Int,
+        preferredTimezone: String?,
+    ): MarketSnapshot {
+        val zone = preferredTimezone?.toZoneIdOrNull() ?: defaultAuctionHouseZone
         val local = lastModified.atZone(zone)
         return MarketSnapshot(
-            connectedRealmId = id,
+            connectedRealmId = connectedRealmId,
             date = local.toLocalDate(),
             hour = local.hour,
             timestamp = local.toOffsetDateTime(),
