@@ -120,8 +120,9 @@ import { SymbolIconComponent } from '../primitives/symbol-icon.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TableComponent<TData extends RowData> {
-  readonly data = input.required<readonly TData[]>();
-  readonly columns = input.required<ColumnDef<TData, unknown>[]>();
+  /** Defaults avoid NG0950 during SSR when TanStack reads inputs before parent bindings run. */
+  readonly data = input<readonly TData[]>([]);
+  readonly columns = input<ColumnDef<TData, unknown>[]>([]);
 
   readonly sectionAriaLabel = input<string>('Data table');
   readonly emptyMessage = input<string>('No rows to display.');

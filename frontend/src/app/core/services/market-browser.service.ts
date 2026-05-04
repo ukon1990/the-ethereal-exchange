@@ -137,6 +137,13 @@ export class MarketBrowserService {
               filterSections: toFilterSections(this.cachedFilters, this.queryState),
             }));
           },
+          error: () => {
+            if (currentFilterRequestId !== this.filterRequestId) return;
+            this.marketBrowser.update((vm) => ({
+              ...vm,
+              filterSections: [],
+            }));
+          },
         });
     }
 
