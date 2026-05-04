@@ -326,9 +326,18 @@ class AuctionMarketSearchService(
                 filters =
                     listOf(
                         AuctionMarketFilter(
-                            id = "query",
-                            label = "Search",
-                            type = AuctionMarketFilter.Type.TEXT,
+                            id = "price",
+                            label = "Price",
+                            type = AuctionMarketFilter.Type.RANGE,
+                            min = range.minPrice,
+                            max = range.maxPrice,
+                        ),
+                        AuctionMarketFilter(
+                            id = "quantity",
+                            label = "Quantity",
+                            type = AuctionMarketFilter.Type.RANGE,
+                            min = range.minQuantity,
+                            max = range.maxQuantity,
                         ),
                         AuctionMarketFilter(
                             id = "qualityIds",
@@ -352,20 +361,6 @@ class AuctionMarketSearchService(
                             id = "recipeOnly",
                             label = "Has Recipe",
                             type = AuctionMarketFilter.Type.BOOLEAN,
-                        ),
-                        AuctionMarketFilter(
-                            id = "price",
-                            label = "Price",
-                            type = AuctionMarketFilter.Type.RANGE,
-                            min = range.minPrice,
-                            max = range.maxPrice,
-                        ),
-                        AuctionMarketFilter(
-                            id = "quantity",
-                            label = "Quantity",
-                            type = AuctionMarketFilter.Type.RANGE,
-                            min = range.minQuantity,
-                            max = range.maxQuantity,
                         ),
                     ),
             )
