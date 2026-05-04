@@ -3,7 +3,6 @@ package net.jonasmf.auctionengine.service
 import net.jonasmf.auctionengine.config.IntegrationTestBase
 import net.jonasmf.auctionengine.testsupport.MarketSearchTestFixtures
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -162,7 +161,12 @@ class AuctionMarketSearchServiceTest : IntegrationTestBase() {
         assertTrue(quality.options.orEmpty().any { it.id == "3" && it.label == "Rare" })
         val itemSubclass = result.filters.single { it.id == "itemSubclassIds" }
         assertTrue(itemSubclass.options.orEmpty().any { it.id == "7" && it.parentId == "2" })
-        assertNotNull(result.filters.single { it.id == "price" }.min)
+        val priceFilter = result.filters.single { it.id == "price" }
+        assertEquals(null, priceFilter.min)
+        assertEquals(null, priceFilter.max)
+        val quantityFilter = result.filters.single { it.id == "quantity" }
+        assertEquals(null, quantityFilter.min)
+        assertEquals(null, quantityFilter.max)
     }
 
     @Test

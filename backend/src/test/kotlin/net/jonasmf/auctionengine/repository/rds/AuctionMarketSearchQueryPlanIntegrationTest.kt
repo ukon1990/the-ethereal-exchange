@@ -25,15 +25,6 @@ class AuctionMarketSearchQueryPlanIntegrationTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `price and quantity range sql explains successfully`() {
-        MarketSearchTestFixtures.seedMarketSearchData(jdbcTemplate)
-        val request = sampleRequest()
-        val (sql, args) = repository.buildPriceAndQuantityRangeSqlForExplain(request)
-        val rows = jdbcTemplate.queryForList("EXPLAIN $sql", *args)
-        assertTrue(rows.isNotEmpty(), "EXPLAIN should return at least one plan row")
-    }
-
-    @Test
     fun `filter option sql explains successfully`() {
         MarketSearchTestFixtures.seedMarketSearchData(jdbcTemplate)
         val request = sampleRequest()

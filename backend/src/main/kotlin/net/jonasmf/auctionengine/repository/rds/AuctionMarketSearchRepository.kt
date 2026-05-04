@@ -62,13 +62,6 @@ data class AuctionMarketFilterOptionRow(
     val parentId: String? = null,
 )
 
-data class AuctionMarketRange(
-    val minPrice: Long?,
-    val maxPrice: Long?,
-    val minQuantity: Long?,
-    val maxQuantity: Long?,
-)
-
 @Repository
 class AuctionMarketSearchRepository(
     private val jdbcTemplate: JdbcTemplate,
@@ -446,23 +439,6 @@ class AuctionMarketSearchRepository(
         params.add(request.pageSize)
         params.add(offset)
         return Pair(buildSearchPagedSql(request, fromSql, whereSql, sortColumn, sortDirection), params.toTypedArray())
-    }
-
-    internal fun buildPriceAndQuantityRangeSqlForExplain(
-        request: AuctionMarketSearchRequest,
-    ): Pair<String, Array<Any?>> {
-        val params = mutableListOf<Any?>()
-        val selectedDate = java.sql.Date.valueOf(request.selectedDate)
-        val sql =
-            """
-            SELECT
-                MIN(s.price) AS min_price,
-                MAX(s.price) AS max_price,
-                MIN(s.quantity) AS min_quantity,
-                MAX(s.quantity) AS max_quantity
-            FROM (${buildHourlyAggregateSql(request.selectedHour, request.selectedConnectedRealmId, selectedDate, request, params)}) s
-            """.trimIndent()
-        return Pair(sql, params.toTypedArray())
     }
 
     internal fun buildQualityOptionsSqlForExplain(request: AuctionMarketSearchRequest): Pair<String, Array<Any?>> =

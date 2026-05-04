@@ -20,7 +20,6 @@ import net.jonasmf.auctionengine.generated.model.AuctionMarketSearchPage
 import net.jonasmf.auctionengine.generated.model.AuctionMarketSearchRow
 import net.jonasmf.auctionengine.generated.model.AuctionMarketSort
 import net.jonasmf.auctionengine.generated.model.PageMetadata
-import net.jonasmf.auctionengine.repository.rds.AuctionMarketRange
 import net.jonasmf.auctionengine.repository.rds.AuctionMarketSearchRepository
 import net.jonasmf.auctionengine.repository.rds.AuctionMarketSearchRequest
 import net.jonasmf.auctionengine.repository.rds.ConnectedRealmRepository
@@ -55,7 +54,6 @@ private data class MarketSnapshot(
 )
 
 private data class FiltersRepositoryRows(
-    val range: AuctionMarketRange,
     val qualityOptions: List<AuctionMarketFilterOption>,
     val itemClassOptions: List<AuctionMarketFilterOption>,
     val itemSubclassOptions: List<AuctionMarketFilterOption>,
@@ -283,12 +281,6 @@ class AuctionMarketSearchService(
         val filterRows =
             runBlocking {
                 coroutineScope {
-                    val rangeDef =
-                        async {
-                            withAuctionMdc(mdcSnapshot) {
-                                AuctionMarketRange(null, null, null, null)
-                            }
-                        }
                     val qualityDef =
                         async {
                             withAuctionMdc(mdcSnapshot) {
@@ -308,14 +300,12 @@ class AuctionMarketSearchService(
                             }
                         }
                     FiltersRepositoryRows(
-                        range = rangeDef.await(),
                         qualityOptions = qualityDef.await(),
                         itemClassOptions = itemClassDef.await(),
                         itemSubclassOptions = itemSubclassDef.await(),
                     )
                 }
             }
-        val range = filterRows.range
         val qualityOptions = filterRows.qualityOptions
         val itemClassOptions = filterRows.itemClassOptions
         val itemSubclassOptions = filterRows.itemSubclassOptions
@@ -329,15 +319,15 @@ class AuctionMarketSearchService(
                             id = "price",
                             label = "Price",
                             type = AuctionMarketFilter.Type.RANGE,
-                            min = range.minPrice,
-                            max = range.maxPrice,
+                            min = null,
+                            max = null,
                         ),
                         AuctionMarketFilter(
                             id = "quantity",
                             label = "Quantity",
                             type = AuctionMarketFilter.Type.RANGE,
-                            min = range.minQuantity,
-                            max = range.maxQuantity,
+                            min = null,
+                            max = null,
                         ),
                         AuctionMarketFilter(
                             id = "qualityIds",
