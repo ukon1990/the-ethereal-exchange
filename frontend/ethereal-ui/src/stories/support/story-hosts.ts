@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { JsonPipe, KeyValuePipe } from '@angular/common';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import type { ColumnDef } from '@tanstack/angular-table';
 
 import {
   AdminEditableCellComponent,
@@ -15,7 +16,6 @@ import {
   ItemStatCardComponent,
   ItemTooltipCardComponent,
   MarketItemRow,
-  MarketTableComponent,
   NavItem,
   PageFrameComponent,
   PillToggleComponent,
@@ -26,7 +26,7 @@ import {
   ChartPanelComponent,
   ChartSeries,
   SymbolIconComponent,
-  TableColumn,
+  TableComponent,
   TextInputComponent,
   TopNavComponent,
 } from '../../public-api';
@@ -74,15 +74,6 @@ export const filters: readonly FilterSection[] = [
   },
 ];
 
-export const columns: readonly TableColumn[] = [
-  { id: 'item', label: 'Item' },
-  { id: 'quality', label: 'Quality' },
-  { id: 'min-buyout', label: 'Min Buyout', align: 'right' },
-  { id: 'market-value', label: 'Market Value', align: 'right' },
-  { id: 'regional-average', label: 'Regional Avg', align: 'right' },
-  { id: 'sale-rate', label: 'Sale Rate', align: 'right' },
-];
-
 export const rows: readonly MarketItemRow[] = [
   {
     id: 'dracothyst',
@@ -104,6 +95,72 @@ export const rows: readonly MarketItemRow[] = [
     selected: true,
   },
 ];
+
+const STORY_MARKET_TABLE_MIN = 'min-w-[56rem]';
+
+const STORY_MARKET_TABLE_HEADER_ROW =
+  'grid grid-cols-[minmax(14rem,3fr)_7rem_minmax(7rem,1.5fr)_minmax(7rem,1.5fr)_minmax(7rem,1.5fr)_6rem] gap-4 border-b border-white/10 bg-surface-container-high px-6 py-4 ee-label text-outline';
+
+const STORY_MARKET_TABLE_BODY_ROW =
+  'grid w-full grid-cols-[minmax(14rem,3fr)_7rem_minmax(7rem,1.5fr)_minmax(7rem,1.5fr)_minmax(7rem,1.5fr)_6rem] items-center gap-4 px-6 py-3 text-left transition hover:bg-white/5';
+
+function storyCurrencyLabel(amount: CurrencyAmount): string {
+  const g = amount.gold ?? 0;
+  const s = amount.silver ?? 0;
+  const c = amount.copper ?? 0;
+  if (g) return `${g}g`;
+  if (s) return `${s}s`;
+  if (c) return `${c}c`;
+  return '—';
+}
+
+/** TanStack column defs for Storybook (string cells only; no Wowhead). */
+export function createMarketStoryTableColumns(): ColumnDef<MarketItemRow, unknown>[] {
+  return [
+    {
+      id: 'item',
+      accessorKey: 'name',
+      header: 'Item',
+      meta: { align: 'left' },
+    },
+    {
+      id: 'quality',
+      accessorKey: 'quality',
+      header: 'Quality',
+      meta: { align: 'left' },
+    },
+    {
+      id: 'min-buyout',
+      header: 'Min Buyout',
+      meta: { align: 'right' },
+      cell: ({ row }) => storyCurrencyLabel(row.original.minBuyout),
+    },
+    {
+      id: 'market-value',
+      header: 'Market Value',
+      meta: { align: 'right' },
+      cell: ({ row }) => storyCurrencyLabel(row.original.marketValue),
+    },
+    {
+      id: 'regional-average',
+      header: 'Regional Avg',
+      meta: { align: 'right' },
+      cell: ({ row }) => storyCurrencyLabel(row.original.regionalAverage),
+    },
+    {
+      id: 'sale-rate',
+      header: 'Sale Rate',
+      meta: { align: 'right' },
+      cell: ({ row }) => row.original.saleRate.toFixed(2),
+    },
+  ];
+}
+
+function storyMarketRowClass(row: MarketItemRow): string {
+  return row.selected
+    ? `${STORY_MARKET_TABLE_BODY_ROW} border-l-2 border-primary bg-primary/10`
+    : STORY_MARKET_TABLE_BODY_ROW;
+}
 
 @Component({
   imports: [CurrencyAmountComponent],
@@ -493,10 +550,10 @@ export class PageFrameStoryHostComponent {}
 @Component({
   imports: [
     FilterPanelComponent,
-    MarketTableComponent,
     PageFrameComponent,
     SearchInputComponent,
     SideNavComponent,
+    TableComponent,
     TopNavComponent,
   ],
   template: `
@@ -522,10 +579,18 @@ export class PageFrameStoryHostComponent {}
           <ee-search-input />
           <div class="flex min-h-0 flex-1 gap-element-gap overflow-hidden">
             <ee-filter-panel [sections]="filters" />
-            <ee-market-table
-              [columns]="columns"
-              [rows]="rows"
-              summary="Showing 1-2 of 1,248 items"
+            <ee-table
+              [data]="rows"
+              [columns]="storyColumns"
+              [getRowId]="storyGetRowId"
+              sectionAriaLabel="Market items"
+              emptyMessage="No market items available."
+              [contentMinWidthClass]="storyTableMin"
+              [headerRowClass]="storyTableHeader"
+              [bodyRowClassFn]="storyRowClassFn"
+              [showFooter]="true"
+              footerSummary="Showing 1-2 of 1,248 items"
+              [showPagination]="true"
             />
           </div>
         </ee-page-frame>
@@ -539,8 +604,12 @@ export class MarketBrowserStoryHostComponent {
   readonly professionItems = professionItems;
   readonly character = character;
   readonly filters = filters;
-  readonly columns = columns;
   readonly rows = rows;
+  readonly storyColumns = createMarketStoryTableColumns();
+  readonly storyTableMin = STORY_MARKET_TABLE_MIN;
+  readonly storyTableHeader = STORY_MARKET_TABLE_HEADER_ROW;
+  readonly storyRowClassFn = storyMarketRowClass;
+  readonly storyGetRowId = (row: MarketItemRow) => row.id;
   protected readonly mobileNavOpen = signal(false);
 
   protected toggleMobileNav(): void {
