@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideRouter, Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
 import { Realm, RealmApiService } from '../../api/generated';
@@ -76,31 +76,28 @@ describe('SelectRealmPage', () => {
   });
 
   it('renders all realms after the API resolves', () => {
-    const buttons = fixture.nativeElement.querySelectorAll('li button');
-    expect(buttons.length).toBe(3);
+    const links = fixture.nativeElement.querySelectorAll('li a');
+    expect(links.length).toBe(3);
+    expect(links[0].getAttribute('href')).toContain('/eu/stormrage');
   });
 
   it('filters realms by name, slug, or region (case-insensitive)', async () => {
     component['onQueryChanged']('storm');
     fixture.detectChanges();
-    let buttons = fixture.nativeElement.querySelectorAll('li button');
-    expect(buttons.length).toBe(1);
-    expect(buttons[0].textContent).toContain('Stormrage');
+    let links = fixture.nativeElement.querySelectorAll('li a');
+    expect(links.length).toBe(1);
+    expect(links[0].textContent).toContain('Stormrage');
 
     component['onQueryChanged']('US');
     fixture.detectChanges();
-    buttons = fixture.nativeElement.querySelectorAll('li button');
-    expect(buttons.length).toBe(1);
-    expect(buttons[0].textContent).toContain('Illidan');
+    links = fixture.nativeElement.querySelectorAll('li a');
+    expect(links.length).toBe(1);
+    expect(links[0].textContent).toContain('Illidan');
   });
 
-  it('navigates to /:region/:slug and persists the selection when a realm is chosen', () => {
-    const router = TestBed.inject(Router);
-    const navigate = vitest.spyOn(router, 'navigate').mockResolvedValue(true);
+  it('persists the selection when a realm link is activated', () => {
+    component['rememberSelection'](realmsFixture[0]);
 
-    component['select'](realmsFixture[0]);
-
-    expect(navigate).toHaveBeenCalledWith(['/', 'eu', 'stormrage']);
     expect(localStorage.getItem('wae.selectedRealm')).toBe(
       JSON.stringify({ region: 'eu', slug: 'stormrage' }),
     );
