@@ -40,6 +40,7 @@ class ProfessionRecipeSyncService(
     private val recipeApiClient: RecipeApiClient,
     private val modifiedCraftingApiClient: ModifiedCraftingApiClient,
     private val professionRecipeBulkSyncService: ProfessionRecipeBulkSyncService,
+    private val blizzardMediaService: BlizzardMediaService,
 ) {
     private val log = LoggerFactory.getLogger(ProfessionRecipeSyncService::class.java)
 
@@ -80,7 +81,7 @@ class ProfessionRecipeSyncService(
         )
 
         val professionFetchStartTime = System.currentTimeMillis()
-        val professions = professionApiClient.getAll(region)
+        val professions = professionApiClient.getAll(region).map { blizzardMediaService.resolveProfession(region, it) }
         log.info(
             "Fetched professions for region {} count={} tiers={} in {}ms",
             region,
@@ -147,7 +148,10 @@ class ProfessionRecipeSyncService(
                         .collectList()
                         .block()
                         .orEmpty()
-                val fetchedTierRecipes = recipeOutcomes.mapNotNull(RecipeFetchOutcome::recipe)
+                val fetchedTierRecipes =
+                    recipeOutcomes
+                        .mapNotNull(RecipeFetchOutcome::recipe)
+                        .map { recipe -> blizzardMediaService.resolveRecipe(region, recipe) }
                 val tierRecipeFailures = recipeOutcomes.filter { it.error != null }
                 tierRecipeFailures.forEach { failure ->
                     log.warn(

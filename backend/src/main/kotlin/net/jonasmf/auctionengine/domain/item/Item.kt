@@ -35,6 +35,7 @@ data class Item(
     val level: Int,
     val requiredLevel: Int,
     val mediaUrl: String,
+    val mediaSourceUrl: String? = null,
     val itemClass: ItemClass,
     val itemSubclass: ItemSubclass,
     val inventoryType: InventoryType,

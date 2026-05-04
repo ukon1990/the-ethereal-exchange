@@ -26,6 +26,7 @@ data class Recipe(
     val name: LocaleDTO,
     val description: LocaleDTO? = null,
     val mediaUrl: String? = null,
+    val mediaSourceUrl: String? = null,
     val lastModified: Instant? = null,
     val rank: Int? = null,
     val craftedItemId: Int? = null,

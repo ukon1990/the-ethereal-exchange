@@ -25,4 +25,5 @@ class ItemAppearanceDBO(
     @JoinColumn(name = "item_appearance_id")
     val items: MutableList<ItemSummaryDBO> = mutableListOf(),
     val mediaUrl: String,
+    val mediaSourceUrl: String? = null,
 )

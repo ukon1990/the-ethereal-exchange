@@ -602,6 +602,7 @@ class ItemJdbcRepository(
                     level,
                     required_level,
                     media_url,
+                    media_source_url,
                     item_class_id,
                     item_subclass_id,
                     inventory_type_id,
@@ -612,13 +613,14 @@ class ItemJdbcRepository(
                     is_equippable,
                     is_stackable,
                     purchase_quantity
-                ) VALUES ${chunk.joinToString(",") { "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" }}
+                ) VALUES ${chunk.joinToString(",") { "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" }}
                 ON DUPLICATE KEY UPDATE
                     name_id = VALUES(name_id),
                     quality_id = VALUES(quality_id),
                     level = VALUES(level),
                     required_level = VALUES(required_level),
                     media_url = VALUES(media_url),
+                    media_source_url = VALUES(media_source_url),
                     item_class_id = VALUES(item_class_id),
                     item_subclass_id = VALUES(item_subclass_id),
                     inventory_type_id = VALUES(inventory_type_id),
@@ -639,6 +641,7 @@ class ItemJdbcRepository(
                         item.level,
                         item.requiredLevel,
                         item.mediaUrl,
+                        item.mediaSourceUrl,
                         item.itemClass.id,
                         itemSubclassIds.getValue(subclassKey(item.itemSubclass.classId, item.itemSubclass.subclassId)),
                         inventoryTypeIds.getValue(item.inventoryType.type),

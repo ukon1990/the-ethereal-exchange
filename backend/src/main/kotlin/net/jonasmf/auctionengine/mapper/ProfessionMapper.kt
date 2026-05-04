@@ -15,6 +15,7 @@ fun ProfessionDTO.toDomain(
     name = name,
     description = description,
     mediaUrl = media.key.href,
+    mediaSourceUrl = media.key.href,
     lastModified = lastModified,
     skillTiers = skillTiers,
 )
@@ -25,6 +26,7 @@ fun Profession.toDBO() =
         name = name.toDBO(LocaleSourceType.PROFESSION, localeSourceKey(id), "name"),
         description = description.toDBO(LocaleSourceType.PROFESSION, localeSourceKey(id), "description"),
         mediaUrl = mediaUrl,
+        mediaSourceUrl = mediaSourceUrl,
         lastModified = lastModified,
         skillTiers = skillTiers.map { it.toDBO() }.toMutableList(),
     )
@@ -35,6 +37,7 @@ fun ProfessionDBO.toDomain() =
         name = name.toDTO(),
         description = description.toDTO(),
         mediaUrl = mediaUrl,
+        mediaSourceUrl = mediaSourceUrl,
         lastModified = lastModified,
         skillTiers = skillTiers.map { it.toDomain() },
     )
