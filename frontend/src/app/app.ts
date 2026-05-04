@@ -18,8 +18,14 @@ const FALLBACK_CHARACTER: CharacterSummary = {
   selector: 'app-root',
   imports: [RouterOutlet, TopNavComponent, WowheadTooltipLayer],
   template: `
-    <div class="flex h-screen flex-col overflow-hidden bg-background text-on-surface">
+    <div class="flex h-dvh flex-col overflow-hidden bg-background text-on-surface">
       <app-wowhead-tooltip-layer />
+      <a
+        href="#page-main"
+        class="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[200] focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:font-medium focus:text-on-primary focus:shadow-lg"
+      >
+        Skip to main content
+      </a>
       <ee-top-nav
         [items]="menu.links()"
         [activeId]="'dashboard'"
@@ -28,7 +34,9 @@ const FALLBACK_CHARACTER: CharacterSummary = {
         (toggleMobileDrawer)="toggleMobileNav()"
         (navSelected)="onPrimaryNavSelected($event)"
       />
-      <router-outlet />
+      <div class="flex min-h-0 min-w-0 flex-1 flex-col">
+        <router-outlet />
+      </div>
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

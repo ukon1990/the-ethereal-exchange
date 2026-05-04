@@ -50,6 +50,9 @@ data class AuctionMarketRow(
     val recipeId: Int?,
     val recipeName: String?,
     val recipeMediaUrl: String?,
+    val selectedBonusKey: String,
+    val selectedModifierKey: String,
+    val selectedPetSpeciesId: Int,
     val selectedPrice: Long?,
     val selectedQuantity: Long?,
     val communityPrice: Long?,
@@ -185,6 +188,9 @@ class AuctionMarketSearchRepository(
             wrapped.recipe_id,
             wrapped.recipe_name,
             wrapped.recipe_media_url,
+            wrapped.selected_bonus_key,
+            wrapped.selected_modifier_key,
+            wrapped.selected_pet_species_id,
             wrapped.selected_price,
             wrapped.selected_quantity,
             wrapped.community_price,
@@ -207,6 +213,9 @@ class AuctionMarketSearchRepository(
                 d.recipe_id,
                 COALESCE(d.recipe_name_${request.localeColumnSuffix}, d.recipe_name_en_gb, d.recipe_name_en_us) AS recipe_name,
                 d.recipe_media_url,
+                s.bonus_key AS selected_bonus_key,
+                s.modifier_key AS selected_modifier_key,
+                s.pet_species_id AS selected_pet_species_id,
                 s.price AS selected_price,
                 s.quantity AS selected_quantity,
                 c.price AS community_price,
@@ -269,14 +278,38 @@ class AuctionMarketSearchRepository(
             appendItemDimensionFilterParams(params, request)
         }
         return """
-            SELECT ash.item_id, MIN(ash.$priceColumn) AS price, SUM(ash.$quantityColumn) AS quantity
-            FROM auction_stats_hourly ash
-            $itemJoin
-            WHERE ash.connected_realm_id = ?
-              AND ash.date = ?
-              AND ash.$priceColumn IS NOT NULL
-            $itemFilterSql
-            GROUP BY ash.item_id
+            WITH base AS (
+                SELECT
+                    ash.item_id,
+                    ash.bonus_key,
+                    ash.modifier_key,
+                    ash.pet_species_id,
+                    ash.$priceColumn AS price,
+                    ash.$quantityColumn AS quantity
+                FROM auction_stats_hourly ash
+                $itemJoin
+                WHERE ash.connected_realm_id = ?
+                  AND ash.date = ?
+                  AND ash.$priceColumn IS NOT NULL
+                $itemFilterSql
+            ),
+            ranked AS (
+                SELECT
+                    item_id,
+                    bonus_key,
+                    modifier_key,
+                    pet_species_id,
+                    price,
+                    quantity,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY item_id
+                        ORDER BY price ASC, bonus_key, modifier_key, pet_species_id
+                    ) AS rn
+                FROM base
+            )
+            SELECT item_id, bonus_key, modifier_key, pet_species_id, price, quantity
+            FROM ranked
+            WHERE rn = 1
             """.trimIndent()
     }
 
@@ -393,6 +426,9 @@ class AuctionMarketSearchRepository(
                 recipeId = rs.getNullableInt("recipe_id"),
                 recipeName = rs.getString("recipe_name"),
                 recipeMediaUrl = rs.getString("recipe_media_url"),
+                selectedBonusKey = rs.getString("selected_bonus_key") ?: "",
+                selectedModifierKey = rs.getString("selected_modifier_key") ?: "",
+                selectedPetSpeciesId = rs.getInt("selected_pet_species_id"),
                 selectedPrice = rs.getNullableLong("selected_price"),
                 selectedQuantity = rs.getNullableLong("selected_quantity"),
                 communityPrice = rs.getNullableLong("community_price"),

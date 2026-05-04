@@ -1,0 +1,64 @@
+type: object
+required:
+    - item
+    - listingKey
+    - rollupListing
+    - regionalMetricsRedundant
+    - marketDataSources
+    - selectedRealm
+    - community
+    - summary
+    - dailySeriesRealm
+    - dailySeriesCommunity
+    - hourlySeriesRealm
+    - hourlySeriesCommunity
+    - quantityPieRealm
+    - quantityPieCommunity
+properties:
+    item:
+        $ref: ./auction-market-item.yml
+    listingKey:
+        $ref: ./auction-listing-key.yml
+        description: Effective listing key used for all queries (defaults applied when query omitted).
+    rollupListing:
+        type: boolean
+        description: True when bonus/modifier/pet defaults mean item-wide rollup (no explicit variant in request).
+    regionalMetricsRedundant:
+        type: boolean
+    marketDataSources:
+        type: array
+        items:
+            $ref: ./market-data-source.yml
+    selectedRealm:
+        $ref: ./auction-market-metrics.yml
+    community:
+        $ref: ./auction-market-metrics.yml
+    summary:
+        $ref: ./auction-market-item-detail-summary.yml
+    dailySeriesRealm:
+        type: array
+        items:
+            $ref: ./auction-market-item-detail-point.yml
+    dailySeriesCommunity:
+        type: array
+        items:
+            $ref: ./auction-market-item-detail-point.yml
+    hourlySeriesRealm:
+        type: array
+        items:
+            $ref: ./auction-market-item-hourly-point.yml
+    hourlySeriesCommunity:
+        type: array
+        items:
+            $ref: ./auction-market-item-hourly-point.yml
+    quantityPieRealm:
+        type: array
+        items:
+            $ref: ./auction-market-quantity-pie-slice.yml
+    quantityPieCommunity:
+        type: array
+        items:
+            $ref: ./auction-market-quantity-pie-slice.yml
+    crafting:
+        $ref: ./auction-market-item-crafting.yml
+        nullable: true

@@ -71,7 +71,11 @@ const QUALITY_MIN_WIDTH = 1200;
         (primarySelected)="onPrimaryNavSelected($event)"
         (selected)="onProfessionSelected($event)"
       />*/}}-->
-      <ee-page-frame [title]="'Market Browser'" [eyebrow]="'Search the auction house'">
+      <ee-page-frame
+        [title]="'Market Browser'"
+        [eyebrow]="'Search the auction house'"
+        bodyLayout="fill"
+      >
         <div class="flex items-center gap-2">
           <ee-search-input
             class="min-w-0 flex-1"
@@ -106,6 +110,7 @@ const QUALITY_MIN_WIDTH = 1200;
             [manualSorting]="true"
             [sorting]="marketTableSorting()"
             (sortingChange)="onTableSortingChange($event)"
+            [clickableRows]="false"
             [loading]="viewModel().loading"
             [skeletonRowCount]="viewModel().pageSize"
             [skeletonRowClass]="marketSkeletonRowClass"
@@ -215,7 +220,8 @@ export class MarketBrowserPage {
     }
 
     this.marketBrowserService.bindRoute(this.route);
-    combineLatest([this.route.parent?.paramMap ?? this.route.paramMap, this.route.queryParamMap])
+    const realmRoute = realmAncestorRoute(this.route);
+    combineLatest([realmRoute.paramMap, this.route.queryParamMap])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([paramMap, queryParamMap]) => {
         this.marketBrowserService.loadFromRoute(paramMap, queryParamMap);
@@ -312,4 +318,16 @@ function activeColumnIdsForViewport(width: number): Set<string> {
   if (width >= SUBCLASS_MIN_WIDTH) active.add('itemSubclass');
   if (width >= QUALITY_MIN_WIDTH) active.add('quality');
   return active;
+}
+
+function realmAncestorRoute(route: ActivatedRoute): ActivatedRoute {
+  let r: ActivatedRoute | null = route;
+  while (r) {
+    const m = r.snapshot.paramMap;
+    if (m.has('region') && m.has('realm')) {
+      return r;
+    }
+    r = r.parent;
+  }
+  return route;
 }

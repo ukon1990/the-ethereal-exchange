@@ -91,10 +91,12 @@ describe('chart helpers', () => {
     expect(d['k']!.max).toBeGreaterThan(d['k']!.min);
   });
 
-  it('xToSvg and yToSvg map to margins', () => {
+  it('xToSvg maps to category centers and yToSvg maps to margins', () => {
     const xd = [0, 100];
-    expect(xToSvg(0, xd)).toBeCloseTo(DEFAULT_PLOT_MARGINS.innerLeft);
-    expect(xToSvg(100, xd)).toBeCloseTo(DEFAULT_PLOT_MARGINS.innerRight);
+    const innerW = DEFAULT_PLOT_MARGINS.innerRight - DEFAULT_PLOT_MARGINS.innerLeft;
+    const step = innerW / 2;
+    expect(xToSvg(0, xd)).toBeCloseTo(DEFAULT_PLOT_MARGINS.innerLeft + step / 2);
+    expect(xToSvg(100, xd)).toBeCloseTo(DEFAULT_PLOT_MARGINS.innerLeft + step * 1.5);
     const yd = { min: 0, max: 100 };
     expect(yToSvg(0, yd)).toBeCloseTo(DEFAULT_PLOT_MARGINS.innerBottom);
     expect(yToSvg(100, yd)).toBeCloseTo(DEFAULT_PLOT_MARGINS.innerTop);
@@ -108,7 +110,7 @@ describe('chart helpers', () => {
     const xd = [0, 10];
     const yd = { min: 0, max: 100 };
     const s = linePolylinePoints(pts, xd, yd);
-    expect(s.startsWith('4,')).toBe(true);
+    expect(s.startsWith('27,')).toBe(true);
     expect(s.includes(',')).toBe(true);
     const first = s.split(' ')[0]!;
     const second = s.split(' ')[1]!;

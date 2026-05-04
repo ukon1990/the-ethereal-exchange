@@ -23,3 +23,5 @@ paths:
     $ref: ./paths/auction-market-search.yml
   /auctions/market-search/filters:
     $ref: ./paths/auction-market-search-filters.yml
+  /auctions/market-items/detail:
+    $ref: ./paths/auction-market-item-detail.yml

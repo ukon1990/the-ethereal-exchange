@@ -2,7 +2,9 @@ package net.jonasmf.auctionengine.controller
 
 import net.jonasmf.auctionengine.generated.api.AuctionMarketApi
 import net.jonasmf.auctionengine.generated.model.AuctionMarketFilterResponse
+import net.jonasmf.auctionengine.generated.model.AuctionMarketItemDetailResponse
 import net.jonasmf.auctionengine.generated.model.AuctionMarketSearchPage
+import net.jonasmf.auctionengine.service.AuctionMarketItemDetailService
 import net.jonasmf.auctionengine.service.AuctionMarketSearchService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RestController
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class AuctionMarketController(
     private val auctionMarketSearchService: AuctionMarketSearchService,
+    private val auctionMarketItemDetailService: AuctionMarketItemDetailService,
 ) : AuctionMarketApi {
     override fun getAuctionMarketFilters(
         region: String,
@@ -60,6 +63,27 @@ class AuctionMarketController(
                 maxPrice = maxPrice,
                 minQuantity = minQuantity,
                 maxQuantity = maxQuantity,
+            ),
+        )
+
+    override fun getAuctionMarketItemDetail(
+        region: String,
+        realmSlug: String,
+        itemId: Int,
+        bonusKey: String,
+        modifierKey: String,
+        petSpeciesId: Int,
+        locale: String?,
+    ): ResponseEntity<AuctionMarketItemDetailResponse> =
+        ResponseEntity.ok(
+            auctionMarketItemDetailService.itemDetail(
+                regionCode = region,
+                realmSlug = realmSlug,
+                itemId = itemId,
+                bonusKey = bonusKey,
+                modifierKey = modifierKey,
+                petSpeciesId = petSpeciesId,
+                localeOverride = locale,
             ),
         )
 }

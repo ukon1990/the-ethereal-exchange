@@ -1,0 +1,45 @@
+type: object
+required:
+    - statDate
+    - pointTimestamp
+properties:
+    statDate:
+        type: string
+        format: date
+        description: Calendar date in realm-local sense for this bucket.
+    pointTimestamp:
+        type: string
+        format: date-time
+        description: Chart x-axis instant (start of statDate in UTC or documented convention).
+    minPrice:
+        type: integer
+        format: int64
+        nullable: true
+    avgPrice:
+        type: number
+        format: double
+        nullable: true
+    p25Price:
+        type: integer
+        format: int64
+        nullable: true
+    p75Price:
+        type: integer
+        format: int64
+        nullable: true
+    maxPrice:
+        type: integer
+        format: int64
+        nullable: true
+    minQuantity:
+        type: integer
+        format: int64
+        nullable: true
+    avgQuantity:
+        type: number
+        format: double
+        nullable: true
+    maxQuantity:
+        type: integer
+        format: int64
+        nullable: true

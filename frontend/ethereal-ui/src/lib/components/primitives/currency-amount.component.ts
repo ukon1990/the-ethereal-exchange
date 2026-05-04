@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-import { formatCurrencyPart, hasCurrencyValue } from '../../helpers/currency';
+import { formatCurrencyAmount, formatCurrencyPart, hasCurrencyValue } from '../../helpers/currency';
 import { CurrencyAmount } from '../../models/ui-models';
 
 @Component({
@@ -50,7 +50,6 @@ export class CurrencyAmountComponent {
   }
 
   protected ariaLabel(): string {
-    const amount = this.amount();
-    return `${amount.gold ?? 0} gold, ${amount.silver ?? 0} silver, ${amount.copper ?? 0} copper`;
+    return formatCurrencyAmount(this.amount());
   }
 }

@@ -1,0 +1,26 @@
+type: object
+required:
+    - recipeId
+properties:
+    recipeId:
+        type: integer
+        format: int32
+    recipeName:
+        type: string
+    reagentCost:
+        type: integer
+        format: int64
+        nullable: true
+    buyout:
+        type: integer
+        format: int64
+        nullable: true
+        description: Crafted item unit price at snapshot (variant or rollup).
+    profit:
+        type: integer
+        format: int64
+        nullable: true
+    roiPercent:
+        type: number
+        format: double
+        nullable: true

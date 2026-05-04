@@ -1,0 +1,33 @@
+type: object
+description: Card metrics and day-over-day hints for the selected snapshot.
+properties:
+    selectedRealmPrice:
+        type: integer
+        format: int64
+        nullable: true
+    selectedRealmQuantity:
+        type: integer
+        format: int64
+        nullable: true
+    communityPrice:
+        type: integer
+        format: int64
+        nullable: true
+    communityQuantity:
+        type: integer
+        format: int64
+        nullable: true
+    selectedRealmPriceChangePercent:
+        type: number
+        format: double
+        nullable: true
+        description: vs previous day aggregate (null if not computable).
+    communityPriceChangePercent:
+        type: number
+        format: double
+        nullable: true
+    realmVsCommunityPricePercent:
+        type: number
+        format: double
+        nullable: true
+        description: Positive if realm price above community.

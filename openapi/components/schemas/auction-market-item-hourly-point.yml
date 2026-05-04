@@ -1,0 +1,37 @@
+type: object
+required:
+    - timestamp
+    - hourOfDay
+properties:
+    timestamp:
+        type: string
+        format: date-time
+    hourOfDay:
+        type: integer
+        format: int32
+        minimum: 0
+        maximum: 23
+    minPrice:
+        type: integer
+        format: int64
+        nullable: true
+    avgPrice:
+        type: number
+        format: double
+        nullable: true
+    p25Price:
+        type: integer
+        format: int64
+        nullable: true
+    p75Price:
+        type: integer
+        format: int64
+        nullable: true
+    maxPrice:
+        type: integer
+        format: int64
+        nullable: true
+    totalQuantity:
+        type: integer
+        format: int64
+        nullable: true

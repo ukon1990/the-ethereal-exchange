@@ -43,6 +43,7 @@ export type {
     <section
       #panelRoot
       class="ee-glass relative w-full min-w-0 overflow-visible rounded-lg p-inner-padding"
+      [style.z-index]="tooltipPointerReady() ? 500 : 0"
     >
       <div class="mb-6 flex items-center justify-between gap-4">
         <h2 class="ee-section-heading flex items-center gap-2 text-on-surface">

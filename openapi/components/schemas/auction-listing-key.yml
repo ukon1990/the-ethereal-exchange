@@ -1,0 +1,14 @@
+type: object
+required:
+    - bonusKey
+    - modifierKey
+    - petSpeciesId
+description: Identifies one row in auction_stats_hourly / v_auction_house_prices.
+properties:
+    bonusKey:
+        type: string
+    modifierKey:
+        type: string
+    petSpeciesId:
+        type: integer
+        format: int32

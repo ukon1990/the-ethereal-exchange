@@ -1,0 +1,18 @@
+type: object
+required:
+    - hourOfDay
+    - fraction
+properties:
+    hourOfDay:
+        type: integer
+        format: int32
+        minimum: 0
+        maximum: 23
+    quantity:
+        type: integer
+        format: int64
+        nullable: true
+    fraction:
+        type: number
+        format: double
+        description: Share of total quantity for the day (0..1).

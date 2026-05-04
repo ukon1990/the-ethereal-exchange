@@ -51,9 +51,16 @@ export interface TableColumn {
   readonly align?: 'left' | 'right';
 }
 
+export interface MarketListingKey {
+  readonly bonusKey: string;
+  readonly modifierKey: string;
+  readonly petSpeciesId: number;
+}
+
 export interface MarketItemRow {
   readonly id: string;
   readonly name: string;
+  readonly listingKey?: MarketListingKey;
   readonly itemClassName?: string;
   readonly itemSubclassName?: string;
   readonly quality: ItemQuality;

@@ -6,9 +6,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import net.jonasmf.auctionengine.constant.Locale
-import net.jonasmf.auctionengine.constant.Region
-import net.jonasmf.auctionengine.dbo.rds.realm.ConnectedRealm
-import net.jonasmf.auctionengine.dbo.rds.realm.Realm
+import net.jonasmf.auctionengine.generated.model.AuctionListingKey
 import net.jonasmf.auctionengine.generated.model.AuctionMarketFilter
 import net.jonasmf.auctionengine.generated.model.AuctionMarketFilterOption
 import net.jonasmf.auctionengine.generated.model.AuctionMarketFilterResponse
@@ -22,8 +20,6 @@ import net.jonasmf.auctionengine.generated.model.AuctionMarketSort
 import net.jonasmf.auctionengine.generated.model.PageMetadata
 import net.jonasmf.auctionengine.repository.rds.AuctionMarketSearchRepository
 import net.jonasmf.auctionengine.repository.rds.AuctionMarketSearchRequest
-import net.jonasmf.auctionengine.repository.rds.ConnectedRealmRepository
-import net.jonasmf.auctionengine.utility.resolveZone
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import org.springframework.http.HttpStatus
@@ -32,26 +28,7 @@ import org.springframework.web.server.ResponseStatusException
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
-import java.time.OffsetDateTime
-import java.time.ZoneId
 import java.util.concurrent.ConcurrentHashMap
-
-private data class MarketContext(
-    val selectedConnectedRealm: ConnectedRealm,
-    val selectedRealm: Realm,
-    val communityConnectedRealm: ConnectedRealm,
-    val locale: Locale,
-    val localeColumnSuffix: String,
-    val selectedSnapshot: MarketSnapshot,
-    val communitySnapshot: MarketSnapshot,
-)
-
-private data class MarketSnapshot(
-    val connectedRealmId: Int,
-    val date: LocalDate,
-    val hour: Int,
-    val timestamp: OffsetDateTime,
-)
 
 private data class FiltersRepositoryRows(
     val qualityOptions: List<AuctionMarketFilterOption>,
@@ -78,7 +55,7 @@ private data class CachedFiltersResponse(
 
 @Service
 class AuctionMarketSearchService(
-    private val connectedRealmRepository: ConnectedRealmRepository,
+    private val auctionMarketContextService: AuctionMarketContextService,
     private val auctionMarketSearchRepository: AuctionMarketSearchRepository,
 ) {
     private val log = LoggerFactory.getLogger(AuctionMarketSearchService::class.java)
@@ -106,7 +83,7 @@ class AuctionMarketSearchService(
 
         val totalStartNanos = System.nanoTime()
         val resolveContextStartNanos = System.nanoTime()
-        val context = resolveContext(regionCode, realmSlug, localeOverride)
+        val context = auctionMarketContextService.resolve(regionCode, realmSlug, localeOverride)
         val resolveContextMs = elapsedMs(resolveContextStartNanos)
         val normalizedPage = page.coerceAtLeast(0)
         val normalizedPageSize = pageSize.coerceIn(1, 100)
@@ -187,6 +164,12 @@ class AuctionMarketSearchService(
                                             )
                                         },
                                 ),
+                            listingKey =
+                                AuctionListingKey(
+                                    bonusKey = row.selectedBonusKey,
+                                    modifierKey = row.selectedModifierKey,
+                                    petSpeciesId = row.selectedPetSpeciesId,
+                                ),
                             selectedRealm =
                                 context.selectedSnapshot.toMetrics(
                                     price = row.selectedPrice,
@@ -237,7 +220,7 @@ class AuctionMarketSearchService(
     ): AuctionMarketFilterResponse {
         val totalStartNanos = System.nanoTime()
         val resolveContextStartNanos = System.nanoTime()
-        val context = resolveContext(regionCode, realmSlug, localeOverride)
+        val context = auctionMarketContextService.resolve(regionCode, realmSlug, localeOverride)
         val resolveContextMs = elapsedMs(resolveContextStartNanos)
         val cacheKey = buildFiltersCacheKey(regionCode, realmSlug, context)
         val now = Instant.now()
@@ -370,68 +353,6 @@ class AuctionMarketSearchService(
         return response
     }
 
-    private fun resolveContext(
-        regionCode: String,
-        realmSlug: String,
-        localeOverride: String?,
-    ): MarketContext {
-        val region =
-            runCatching { Region.fromString(regionCode) }
-                .getOrElse { throw ResponseStatusException(HttpStatus.BAD_REQUEST, it.message, it) }
-        val (selectedConnectedRealm, selectedRealm) =
-            connectedRealmRepository
-                .findAllByRegion(region)
-                .firstNotNullOfOrNull { connectedRealm ->
-                    connectedRealm.realms
-                        .firstOrNull { it.slug.equals(realmSlug, ignoreCase = true) }
-                        ?.let { connectedRealm to it }
-                } ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Realm not found: $regionCode/$realmSlug")
-        val communityConnectedRealm =
-            connectedRealmRepository
-                .findById(CommunityRealms.idFor(region))
-                .orElseThrow {
-                    ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Community realm not found for $regionCode",
-                    )
-                }
-        val locale = localeOverride?.takeIf { it.isNotBlank() }?.parseLocale() ?: selectedRealm.locale
-
-        return MarketContext(
-            selectedConnectedRealm = selectedConnectedRealm,
-            selectedRealm = selectedRealm,
-            communityConnectedRealm = communityConnectedRealm,
-            locale = locale,
-            localeColumnSuffix = locale.columnSuffix,
-            selectedSnapshot = selectedConnectedRealm.snapshotFor(selectedRealm.timezone),
-            communitySnapshot = communityConnectedRealm.snapshotFor(null),
-        )
-    }
-
-    private fun ConnectedRealm.snapshotFor(preferredTimezone: String?): MarketSnapshot {
-        val lastModified =
-            auctionHouse.lastModified
-                ?: throw ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Auction house ${auctionHouse.connectedId} has no last modified timestamp",
-                )
-        val zone = preferredTimezone?.toZoneIdOrNull() ?: resolveZone()
-        val local = lastModified.atZone(zone)
-        return MarketSnapshot(
-            connectedRealmId = id,
-            date = local.toLocalDate(),
-            hour = local.hour,
-            timestamp = local.toOffsetDateTime(),
-        )
-    }
-
-    private fun String.toZoneIdOrNull(): ZoneId? = runCatching { ZoneId.of(this) }.getOrNull()
-
-    private fun String.parseLocale(): Locale =
-        runCatching { Locale.getAllValues().getValue(this) }
-            .recoverCatching { Locale.fromCompactString(this) }
-            .getOrElse { throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported locale: $this", it) }
-
     private fun validateRange(
         label: String,
         min: Long?,
@@ -467,9 +388,6 @@ class AuctionMarketSearchService(
                 parentId = it.parentId,
             )
         }
-
-    private val Locale.columnSuffix: String
-        get() = value.lowercase()
 
     private fun elapsedMs(startNanos: Long): Long = (System.nanoTime() - startNanos) / 1_000_000
 

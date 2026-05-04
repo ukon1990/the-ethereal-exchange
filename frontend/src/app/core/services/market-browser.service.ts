@@ -1,7 +1,13 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 
-import { CurrencyAmount, FilterSection, ItemQuality, MarketItemRow, type SortingState } from '@ui';
+import {
+  copperToCurrencyAmount,
+  FilterSection,
+  ItemQuality,
+  MarketItemRow,
+  type SortingState,
+} from '@ui';
 import {
   AuctionMarketApiService,
   AuctionMarketFilter,
@@ -537,25 +543,23 @@ function toMarketRow(row: AuctionMarketSearchRow): MarketItemRow {
   return {
     id: String(row.item.id),
     name: row.item.name,
+    listingKey: row.listingKey
+      ? {
+          bonusKey: row.listingKey.bonusKey,
+          modifierKey: row.listingKey.modifierKey,
+          petSpeciesId: row.listingKey.petSpeciesId,
+        }
+      : undefined,
     itemClassName: nonemptyName(row.item.itemClass?.name),
     itemSubclassName: nonemptyName(row.item.itemSubclass?.name),
     quality: toQuality(row.item.quality?.type ?? row.item.quality?.name),
     iconUrl: row.item.mediaUrl ?? undefined,
-    minBuyout: toCurrency(row.selectedRealm?.price ?? undefined),
+    minBuyout: copperToCurrencyAmount(row.selectedRealm?.price),
     marketValue: {},
-    regionalAverage: toCurrency(row.community?.price ?? undefined),
+    regionalAverage: copperToCurrencyAmount(row.community?.price),
     saleRate: 0,
     selectedQuantity: row.selectedRealm?.quantity ?? undefined,
     communityQuantity: row.community?.quantity ?? undefined,
-  };
-}
-
-function toCurrency(copper: number | undefined): CurrencyAmount {
-  if (copper === undefined || copper === null) return {};
-  return {
-    gold: Math.floor(copper / 10_000) || undefined,
-    silver: Math.floor((copper % 10_000) / 100) || undefined,
-    copper: copper % 100 || undefined,
   };
 }
 

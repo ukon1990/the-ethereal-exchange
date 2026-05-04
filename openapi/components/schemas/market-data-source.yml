@@ -1,0 +1,12 @@
+type: object
+required:
+    - connectedRealmId
+properties:
+    connectedRealmId:
+        type: integer
+        format: int32
+    auctionHouseLastModified:
+        type: string
+        format: date-time
+        nullable: true
+        description: Blizzard auction dump lastModified for this connected realm (cache invalidation).

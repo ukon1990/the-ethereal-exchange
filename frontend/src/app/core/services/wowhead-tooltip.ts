@@ -9,7 +9,7 @@ import {
   wowheadLocaleFromBlizzardLocale,
   type WowheadTooltipType,
 } from '@core/utils/wowhead-tooltip-url';
-import type { CurrencyAmount } from '@ui';
+import { formatCurrencyPart, hasCurrencyValue, type CurrencyAmount } from '@ui';
 
 export interface WowheadTooltipOverlay {
   readonly safeHtml: SafeHtml;
@@ -116,14 +116,6 @@ function renderMoney(amount: CurrencyAmount): string {
     amount.silver ? `<span class="moneysilver">${formatCurrencyPart(amount.silver)}</span>` : '',
     amount.copper ? `<span class="moneycopper">${formatCurrencyPart(amount.copper)}</span>` : '',
   ].join('');
-}
-
-function hasCurrencyValue(amount: CurrencyAmount | null | undefined): amount is CurrencyAmount {
-  return Boolean(amount?.gold || amount?.silver || amount?.copper);
-}
-
-function formatCurrencyPart(value: number): string {
-  return new Intl.NumberFormat('en-US').format(value);
 }
 
 function pointerOffset(event: MouseEvent | FocusEvent): { leftPx: number; topPx: number } {

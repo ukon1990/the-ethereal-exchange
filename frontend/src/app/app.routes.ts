@@ -28,9 +28,23 @@ export const routes: TitledRoutes = [
         title: 'Auctions',
         icon: 'travel_explore',
         loadComponent: () =>
-          import('./features/market-browser/market-browser.page').then(
-            (module) => module.MarketBrowserPage,
-          ),
+          import('./features/auctions/auctions-shell.page').then((m) => m.AuctionsShellPage),
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./features/market-browser/market-browser.page').then(
+                (module) => module.MarketBrowserPage,
+              ),
+          },
+          {
+            path: 'item/:itemId',
+            loadComponent: () =>
+              import('./features/market-browser/market-item-detail.page').then(
+                (m) => m.MarketItemDetailPage,
+              ),
+          },
+        ],
       },
     ],
   },

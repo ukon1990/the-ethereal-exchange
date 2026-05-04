@@ -66,7 +66,13 @@ describe('MarketBrowserPage', () => {
         {
           provide: ActivatedRoute,
           useValue: {
+            snapshot: {
+              paramMap: convertToParamMap({}),
+            },
             parent: {
+              snapshot: {
+                paramMap: convertToParamMap({ region: 'eu', realm: 'argent-dawn' }),
+              },
               paramMap: of(convertToParamMap({ region: 'eu', realm: 'argent-dawn' })),
             },
             queryParamMap: of(convertToParamMap({})),

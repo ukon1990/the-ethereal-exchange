@@ -17,7 +17,7 @@ const GRID_HEADER =
   'grid w-full gap-4 border-b border-white/10 bg-surface-container-high px-container-padding py-4 ee-label text-outline';
 
 const GRID_ROW =
-  'grid w-full items-center gap-4 px-container-padding py-3 text-left transition hover:bg-white/5';
+  'grid w-full items-center gap-4 px-container-padding py-3 text-left transition hover:bg-white/5 select-text';
 
 const GRID_ROW_SKELETON = 'grid w-full items-center gap-4 px-container-padding py-3 text-left';
 

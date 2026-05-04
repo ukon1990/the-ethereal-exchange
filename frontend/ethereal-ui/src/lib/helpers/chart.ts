@@ -86,6 +86,9 @@ export function buildYDomainsByKey(
   const byKey = new Map<string, number[]>();
   for (const s of series) {
     const ys = byKey.get(s.yScaleKey) ?? [];
+    if (s.kind === 'column') {
+      ys.push(0);
+    }
     for (const p of s.points) {
       ys.push(p.y);
     }
@@ -131,11 +134,11 @@ export function xToSvg(
   if (xDomain.length === 0) {
     return margins.innerLeft;
   }
-  const xMin = xDomain[0]!;
-  const xMax = xDomain[xDomain.length - 1]!;
-  const spread = xMax - xMin || 1;
+  const exactIndex = indexInXDomain(x, xDomain);
+  const categoryIndex = exactIndex >= 0 ? exactIndex : 0;
   const innerWidth = margins.innerRight - margins.innerLeft;
-  return margins.innerLeft + ((x - xMin) / spread) * innerWidth;
+  const step = innerWidth / xDomain.length;
+  return margins.innerLeft + (categoryIndex + 0.5) * step;
 }
 
 /** Higher data `y` maps toward smaller SVG `y` (top of chart). */

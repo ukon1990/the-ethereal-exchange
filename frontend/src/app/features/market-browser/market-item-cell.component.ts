@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { injectFlexRenderContext } from '@tanstack/angular-table';
 import type { CellContext } from '@tanstack/table-core';
 
@@ -7,9 +8,15 @@ import { MarketItemRow, qualityToneClasses, SymbolIconComponent } from '@ui';
 
 @Component({
   selector: 'app-market-item-cell',
-  imports: [SymbolIconComponent, WowheadItemTooltipDirective],
+  imports: [RouterLink, SymbolIconComponent, WowheadItemTooltipDirective],
   template: `
-    <div class="flex min-w-0 items-center gap-3">
+    <a
+      [routerLink]="['item', itemId()]"
+      [relativeTo]="auctionsRoute"
+      [queryParams]="variantQueryParams()"
+      [state]="backNavState()"
+      class="flex min-w-0 items-center gap-3 rounded no-underline text-inherit outline-none transition hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-primary/60"
+    >
       <div [class]="iconClass()">
         @if (row().iconUrl) {
           <img
@@ -29,12 +36,17 @@ import { MarketItemRow, qualityToneClasses, SymbolIconComponent } from '@ui';
         [class]="nameClass()"
         >{{ row().name }}</span
       >
-    </div>
+    </a>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MarketItemCellComponent {
   protected readonly ctx = injectFlexRenderContext<CellContext<MarketItemRow, unknown>>();
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  /** Parent `auctions` route so `item/:id` resolves under the same segment. */
+  protected readonly auctionsRoute = this.route.parent!;
 
   protected row(): MarketItemRow {
     return this.ctx.row.original;
@@ -43,6 +55,20 @@ export class MarketItemCellComponent {
   protected itemId(): number {
     const n = Number.parseInt(this.row().id, 10);
     return Number.isFinite(n) ? n : 0;
+  }
+
+  protected variantQueryParams(): Record<string, string | number> | undefined {
+    const lk = this.row().listingKey;
+    if (!lk) return undefined;
+    return {
+      bonusKey: lk.bonusKey,
+      modifierKey: lk.modifierKey,
+      petSpeciesId: lk.petSpeciesId,
+    };
+  }
+
+  protected backNavState(): { returnUrl: string; returnLabel: string } {
+    return { returnUrl: this.router.url, returnLabel: 'Market' };
   }
 
   protected iconClass(): string {

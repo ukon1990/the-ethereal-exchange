@@ -1,8 +1,28 @@
-import { formatCurrencyPart, hasCurrencyValue } from './currency';
+import {
+  copperToCurrencyAmount,
+  formatCopperCurrency,
+  formatCurrencyAmount,
+  formatCurrencyPart,
+  hasCurrencyValue,
+} from './currency';
 
 describe('currency helpers', () => {
   it('formats currency parts with thousands separators', () => {
     expect(formatCurrencyPart(3450)).toBe('3,450');
+  });
+
+  it('converts copper into gold, silver and copper parts', () => {
+    expect(copperToCurrencyAmount(12_345_678)).toEqual({
+      gold: 1234,
+      silver: 56,
+      copper: 78,
+    });
+  });
+
+  it('formats copper as a game currency label', () => {
+    expect(formatCopperCurrency(12_345_678)).toBe('1,234g 56s 78c');
+    expect(formatCurrencyAmount({ silver: 1 })).toBe('1s');
+    expect(formatCopperCurrency(null)).toBe('—');
   });
 
   it('detects empty currency amounts', () => {
