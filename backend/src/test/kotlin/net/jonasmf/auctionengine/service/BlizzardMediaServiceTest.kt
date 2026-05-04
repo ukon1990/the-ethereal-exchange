@@ -66,6 +66,44 @@ class BlizzardMediaServiceTest {
     }
 
     @Test
+    fun `resolve uploads when database already has S3 url but object is missing`() {
+        val media =
+            BlizzardMediaDTO(
+                links = Links(Link("https://eu.api.blizzard.com/data/wow/media/item/19019")),
+                assets = listOf(BlizzardMediaAssetDTO("icon", "https://render.example.test/icon.png")),
+            )
+
+        every {
+            mediaApiClient.getMedia(
+                "item",
+                19019,
+                Region.Europe,
+                "https://eu.api.blizzard.com/data/wow/media/item/19019",
+            )
+        } returns media
+        every { amazonS3Service.objectExists(Region.Europe, "media/item/19019.png") } returns false
+        every { mediaApiClient.downloadAsset("https://render.example.test/icon.png") } returns
+            DownloadedMediaAsset(byteArrayOf(1, 2, 3), "image/png")
+        every {
+            amazonS3Service.uploadBytes(Region.Europe, "media/item/19019.png", byteArrayOf(1, 2, 3), "image/png")
+        } returns "https://wah-data-eu.s3.eu-west-1.amazonaws.com/media/item/19019.png"
+
+        val resolved =
+            service.resolve(
+                region = Region.Europe,
+                type = BlizzardMediaType.ITEM,
+                id = 19019,
+                sourceHref = "https://eu.api.blizzard.com/data/wow/media/item/19019",
+            )
+
+        assertEquals("https://wah-data-eu.s3.eu-west-1.amazonaws.com/media/item/19019.png", resolved?.mediaUrl)
+        verify(exactly = 1) { mediaApiClient.downloadAsset("https://render.example.test/icon.png") }
+        verify(exactly = 1) {
+            amazonS3Service.uploadBytes(Region.Europe, "media/item/19019.png", byteArrayOf(1, 2, 3), "image/png")
+        }
+    }
+
+    @Test
     fun `resolve returns null when media has no assets`() {
         every { mediaApiClient.getMedia("profession", 164, Region.Europe, null) } returns
             BlizzardMediaDTO(assets = emptyList())
