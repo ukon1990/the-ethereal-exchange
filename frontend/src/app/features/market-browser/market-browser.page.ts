@@ -57,7 +57,7 @@ import {
         (primarySelected)="onPrimaryNavSelected($event)"
         (selected)="onProfessionSelected($event)"
       />*/}}-->
-      <ee-page-frame title="Market Browser" eyebrow="Search the auction house">
+      <ee-page-frame [title]="'Market Browser'" [eyebrow]="'Search the auction house'">
         <div class="flex items-center gap-2">
           <ee-search-input
             class="min-w-0 flex-1"
