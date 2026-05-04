@@ -4,10 +4,11 @@ import {
   ColumnDef,
   createAngularTable,
   FlexRenderDirective,
+  functionalUpdate,
   getCoreRowModel,
   type RowData,
 } from '@tanstack/angular-table';
-import type { Table } from '@tanstack/table-core';
+import type { Header, SortingState, Table } from '@tanstack/table-core';
 
 import { SymbolIconComponent } from '../primitives/symbol-icon.component';
 
@@ -25,65 +26,123 @@ import { SymbolIconComponent } from '../primitives/symbol-icon.component';
       <div class="min-h-0 flex-1 overflow-x-auto">
         <div class="flex h-full min-w-0 flex-col" [class]="contentMinWidthClass()">
           @for (headerGroup of table.getHeaderGroups(); track headerGroup.id) {
-            <div [class]="headerRowClass()" role="row">
+            <div
+              role="row"
+              [class]="headerRowClass()"
+              [style.grid-template-columns]="rowGridTemplateStyle()"
+            >
               @for (header of headerGroup.headers; track header.id) {
-                <div role="columnheader" [class]="headerColumnClass(header.column.columnDef.meta)">
+                <div
+                  role="columnheader"
+                  [attr.aria-sort]="headerAriaSort(header)"
+                  [class]="headerColumnClass(header.column.columnDef.meta)"
+                >
                   @if (!header.isPlaceholder) {
-                    <ng-container
-                      *flexRender="
-                        header.column.columnDef.header;
-                        props: header.getContext();
-                        let rendered
-                      "
-                    >
-                      {{ rendered }}
-                    </ng-container>
+                    @if (sortableHeader(header)) {
+                      <button
+                        type="button"
+                        [class]="sortHeaderButtonClass(header.column.columnDef.meta)"
+                        [disabled]="loading()"
+                        (click)="header.column.getToggleSortingHandler()?.($event)"
+                      >
+                        <span class="min-w-0 truncate">
+                          <ng-container
+                            *flexRender="
+                              header.column.columnDef.header;
+                              props: header.getContext();
+                              let rendered
+                            "
+                          >
+                            {{ rendered }}
+                          </ng-container>
+                        </span>
+                        <ee-symbol-icon
+                          [class]="sortIconClass(header)"
+                          [name]="sortIconName(header)"
+                        />
+                      </button>
+                    } @else {
+                      <ng-container
+                        *flexRender="
+                          header.column.columnDef.header;
+                          props: header.getContext();
+                          let rendered
+                        "
+                      >
+                        {{ rendered }}
+                      </ng-container>
+                    }
                   }
                 </div>
               }
             </div>
           }
           <div cdkScrollable class="min-h-0 flex-1 overflow-y-auto divide-y divide-white/5">
-            @for (row of table.getRowModel().rows; track row.id) {
-              @if (clickableRows()) {
-                <button
-                  type="button"
-                  [class]="bodyRowClassFn()(row.original)"
-                  (click)="rowClick.emit(row.original)"
+            @if (showSkeleton()) {
+              @for (r of skeletonRowIndices(); track r) {
+                <div
+                  role="row"
+                  aria-hidden="true"
+                  [class]="skeletonRowClass()"
+                  [style.grid-template-columns]="rowGridTemplateStyle()"
                 >
-                  @for (cell of row.getVisibleCells(); track cell.id) {
-                    <div [class]="bodyCellClass(cell.column.columnDef.meta)">
-                      <ng-container
-                        *flexRender="
-                          cell.column.columnDef.cell;
-                          props: cell.getContext();
-                          let rendered
-                        "
-                      >
-                        {{ rendered }}
-                      </ng-container>
-                    </div>
-                  }
-                </button>
-              } @else {
-                <div [class]="bodyRowClassFn()(row.original)" role="row">
-                  @for (cell of row.getVisibleCells(); track cell.id) {
-                    <div [class]="bodyCellClass(cell.column.columnDef.meta)">
-                      <ng-container
-                        *flexRender="
-                          cell.column.columnDef.cell;
-                          props: cell.getContext();
-                          let rendered
-                        "
-                      >
-                        {{ rendered }}
-                      </ng-container>
+                  @for (meta of skeletonColumnMetas(); track $index) {
+                    <div [class]="bodyCellClass(meta)">
+                      <div
+                        class="h-4 max-w-full rounded bg-white/10 animate-pulse"
+                        [class]="skeletonBarWidthClass($index)"
+                      ></div>
                     </div>
                   }
                 </div>
               }
-            } @empty {
-              <div class="p-8 text-center text-on-surface-variant">{{ emptyMessage() }}</div>
+            } @else {
+              @for (row of table.getRowModel().rows; track row.id) {
+                @if (clickableRows()) {
+                  <button
+                    type="button"
+                    [class]="bodyRowClassFn()(row.original)"
+                    [style.grid-template-columns]="rowGridTemplateStyle()"
+                    (click)="rowClick.emit(row.original)"
+                  >
+                    @for (cell of row.getVisibleCells(); track cell.id) {
+                      <div [class]="bodyCellClass(cell.column.columnDef.meta)">
+                        <ng-container
+                          *flexRender="
+                            cell.column.columnDef.cell;
+                            props: cell.getContext();
+                            let rendered
+                          "
+                        >
+                          {{ rendered }}
+                        </ng-container>
+                      </div>
+                    }
+                  </button>
+                } @else {
+                  <div
+                    role="row"
+                    [class]="bodyRowClassFn()(row.original)"
+                    [style.grid-template-columns]="rowGridTemplateStyle()"
+                  >
+                    @for (cell of row.getVisibleCells(); track cell.id) {
+                      <div [class]="bodyCellClass(cell.column.columnDef.meta)">
+                        <ng-container
+                          *flexRender="
+                            cell.column.columnDef.cell;
+                            props: cell.getContext();
+                            let rendered
+                          "
+                        >
+                          {{ rendered }}
+                        </ng-container>
+                      </div>
+                    }
+                  </div>
+                }
+              } @empty {
+                <div class="p-8 text-center text-on-surface-variant">{{ emptyMessage() }}</div>
+              }
             }
           </div>
         </div>
@@ -97,16 +156,18 @@ import { SymbolIconComponent } from '../primitives/symbol-icon.component';
             <div class="flex gap-2">
               <button
                 type="button"
-                class="rounded p-1 transition hover:text-primary"
+                class="rounded p-1 transition hover:text-primary enabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                 [attr.aria-label]="previousPageAriaLabel()"
+                [disabled]="loading()"
                 (click)="previousPage.emit()"
               >
                 <ee-symbol-icon name="chevron_left" />
               </button>
               <button
                 type="button"
-                class="rounded p-1 transition hover:text-primary"
+                class="rounded p-1 transition hover:text-primary enabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                 [attr.aria-label]="nextPageAriaLabel()"
+                [disabled]="loading()"
                 (click)="nextPage.emit()"
               >
                 <ee-symbol-icon name="chevron_right" />
@@ -137,30 +198,114 @@ export class TableComponent<TData extends RowData> {
   readonly clickableRows = input(true, { transform: booleanAttribute });
   readonly getRowId = input<(row: TData, index: number) => string>();
 
+  readonly manualSorting = input(false, { transform: booleanAttribute });
+  readonly sorting = input<SortingState>([]);
+  readonly loading = input(false, { transform: booleanAttribute });
+  readonly skeletonRowCount = input(0, { transform: Number });
+  readonly skeletonRowClass = input<string>('');
+  /** When set, drives `grid-template-columns` so layouts match visible column count (avoids brittle Tailwind arbitrary grids). */
+  readonly rowGridTemplateColumns = input<string | undefined>(undefined);
+
   readonly rowClick = output<TData>();
   readonly previousPage = output<void>();
   readonly nextPage = output<void>();
+  readonly sortingChange = output<SortingState>();
 
   /**
    * Cast for ng-packagr `.d.ts` emit: the real value is a TanStack `Table` plus an Angular `Signal` proxy.
    */
-  protected readonly table = createAngularTable<TData>(() => ({
-    data: [...this.data()],
-    columns: [...this.columns()],
-    getCoreRowModel: getCoreRowModel(),
-    getRowId: (originalRow, index) => {
-      const fn = this.getRowId();
-      return fn ? fn(originalRow as TData, index) : String(index);
-    },
-  })) as unknown as Table<TData>;
+  protected readonly table = createAngularTable<TData>(() => {
+    const base = {
+      data: [...this.data()],
+      columns: [...this.columns()],
+      getCoreRowModel: getCoreRowModel(),
+      getRowId: (originalRow: TData, index: number) => {
+        const fn = this.getRowId();
+        return fn ? fn(originalRow as TData, index) : String(index);
+      },
+    };
+    if (this.manualSorting()) {
+      return {
+        ...base,
+        manualSorting: true,
+        enableSortingRemoval: false,
+        state: {
+          sorting: [...this.sorting()],
+        },
+        onSortingChange: (updater) => {
+          const next = functionalUpdate(updater, this.sorting());
+          this.sortingChange.emit(next);
+        },
+      };
+    }
+    return base;
+  }) as unknown as Table<TData>;
+
+  protected showSkeleton(): boolean {
+    return this.loading() && this.skeletonRowCount() > 0 && this.skeletonRowClass() !== '';
+  }
+
+  protected skeletonRowIndices(): number[] {
+    return Array.from({ length: this.skeletonRowCount() }, (_, i) => i);
+  }
+
+  protected skeletonColumnMetas(): ReadonlyArray<{ align?: 'left' | 'right' } | undefined> {
+    return this.table
+      .getVisibleLeafColumns()
+      .map((c) => c.columnDef.meta as { align?: 'left' | 'right' });
+  }
+
+  protected skeletonBarWidthClass(index: number): string {
+    return index === 0 ? 'w-full' : 'w-full max-w-[5rem]';
+  }
+
+  protected rowGridTemplateStyle(): string | undefined {
+    const raw = this.rowGridTemplateColumns();
+    const trimmed = raw?.trim();
+    return trimmed && trimmed.length > 0 ? trimmed : undefined;
+  }
+
+  protected sortableHeader(header: Header<TData, unknown>): boolean {
+    return this.manualSorting() && header.column.getCanSort();
+  }
+
+  protected headerAriaSort(
+    header: Header<TData, unknown>,
+  ): 'ascending' | 'descending' | 'none' | null {
+    if (!this.sortableHeader(header)) return null;
+    const s = header.column.getIsSorted();
+    if (s === 'asc') return 'ascending';
+    if (s === 'desc') return 'descending';
+    return 'none';
+  }
+
+  protected sortHeaderButtonClass(meta: unknown): string {
+    const m = meta as { align?: 'left' | 'right' } | undefined;
+    const align = m?.align === 'right' ? 'justify-end text-right' : 'justify-start text-left';
+    return `flex w-full min-w-0 cursor-pointer items-center gap-1 rounded px-0.5 py-0.5 ee-label outline-none transition hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/60 disabled:cursor-not-allowed disabled:opacity-50 ${align}`;
+  }
+
+  protected sortIconName(header: Header<TData, unknown>): string {
+    const s = header.column.getIsSorted();
+    if (s === 'asc') return 'keyboard_arrow_up';
+    if (s === 'desc') return 'keyboard_arrow_down';
+    return 'import_export';
+  }
+
+  protected sortIconClass(header: Header<TData, unknown>): string {
+    const s = header.column.getIsSorted();
+    return s ? 'shrink-0 text-primary' : 'shrink-0 opacity-50';
+  }
 
   protected headerColumnClass(meta: unknown): string {
     const m = meta as { align?: 'left' | 'right' } | undefined;
-    return m?.align === 'right' ? 'text-right' : 'text-left';
+    return m?.align === 'right' ? 'min-w-0 text-right' : 'min-w-0 text-left';
   }
 
   protected bodyCellClass(meta: unknown): string {
     const m = meta as { align?: 'left' | 'right' } | undefined;
-    return m?.align === 'right' ? 'justify-self-end text-right' : 'text-left';
+    return m?.align === 'right'
+      ? 'min-w-0 justify-self-end text-right'
+      : 'min-w-0 overflow-hidden text-ellipsis text-left';
   }
 }

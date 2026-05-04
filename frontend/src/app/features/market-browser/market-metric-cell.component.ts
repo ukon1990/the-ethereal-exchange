@@ -9,14 +9,14 @@ import { CurrencyAmountComponent, MarketItemRow } from '@ui';
   imports: [CurrencyAmountComponent],
   template: `
     @switch (columnId()) {
-      @case ('selected-price') {
+      @case ('selectedPrice') {
         <ee-currency-amount
           class="justify-self-end"
           [amount]="row().minBuyout"
           [emphasis]="row().selected === true"
         />
       }
-      @case ('selected-quantity') {
+      @case ('selectedQuantity') {
         @if (row().selectedQuantity !== undefined) {
           <div class="justify-self-end ee-data text-on-surface">
             {{ row().selectedQuantity }}
@@ -25,10 +25,10 @@ import { CurrencyAmountComponent, MarketItemRow } from '@ui';
           <ee-currency-amount class="justify-self-end opacity-80" [amount]="row().marketValue" />
         }
       }
-      @case ('community-price') {
+      @case ('communityPrice') {
         <ee-currency-amount class="justify-self-end opacity-80" [amount]="row().regionalAverage" />
       }
-      @case ('community-quantity') {
+      @case ('communityQuantity') {
         <div class="justify-self-end ee-data text-tertiary-container">
           {{
             row().communityQuantity !== undefined

@@ -1,7 +1,7 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 
-import { CurrencyAmount, FilterSection, ItemQuality, MarketItemRow } from '@ui';
+import { CurrencyAmount, FilterSection, ItemQuality, MarketItemRow, type SortingState } from '@ui';
 import {
   AuctionMarketApiService,
   AuctionMarketFilter,
@@ -93,6 +93,9 @@ export class MarketBrowserService {
     searchQuery: '',
     page: 0,
     totalPages: 0,
+    pageSize: defaultQueryState.pageSize,
+    sortBy: defaultQueryState.sortBy,
+    sortDirection: defaultQueryState.sortDirection,
     loading: false,
   });
 
@@ -128,7 +131,11 @@ export class MarketBrowserService {
         ...vm,
         searchQuery: this.queryState.query,
         page: this.queryState.page,
+        pageSize: this.queryState.pageSize,
+        sortBy: this.queryState.sortBy,
+        sortDirection: this.queryState.sortDirection,
         loading: true,
+        paginationSummary: 'Loading...',
         filterSections: toFilterSections(filters, this.queryState),
       }));
     } else {
@@ -136,7 +143,11 @@ export class MarketBrowserService {
         ...vm,
         searchQuery: this.queryState.query,
         page: this.queryState.page,
+        pageSize: this.queryState.pageSize,
+        sortBy: this.queryState.sortBy,
+        sortDirection: this.queryState.sortDirection,
         loading: true,
+        paginationSummary: 'Loading...',
         filterSections: [],
       }));
       this.auctionMarketApi
@@ -147,6 +158,9 @@ export class MarketBrowserService {
             const filters = response.filters ?? [];
             this.marketBrowser.update((vm) => ({
               ...vm,
+              pageSize: this.queryState.pageSize,
+              sortBy: this.queryState.sortBy,
+              sortDirection: this.queryState.sortDirection,
               filterSections: toFilterSections(filters, this.queryState),
             }));
             if (version && this.realmSelection.marketDataVersion() === version) {
@@ -157,6 +171,9 @@ export class MarketBrowserService {
             if (filterReqId !== this.filterRequestId) return;
             this.marketBrowser.update((vm) => ({
               ...vm,
+              pageSize: this.queryState.pageSize,
+              sortBy: this.queryState.sortBy,
+              sortDirection: this.queryState.sortDirection,
               filterSections: [],
             }));
           },
@@ -205,6 +222,9 @@ export class MarketBrowserService {
               ...vm,
               loading: false,
               rows: [],
+              pageSize: this.queryState.pageSize,
+              sortBy: this.queryState.sortBy,
+              sortDirection: this.queryState.sortDirection,
               paginationSummary: 'No market items available.',
             }));
           },
@@ -291,6 +311,13 @@ export class MarketBrowserService {
     this.navigateWithState({ ...this.queryState, page: this.queryState.page + 1 });
   }
 
+  applyTableSort(sorting: SortingState): void {
+    const first = sorting[0];
+    const sortBy = first ? readSortBy(first.id) : defaultQueryState.sortBy;
+    const sortDirection: 'asc' | 'desc' = first?.desc ? 'desc' : 'asc';
+    this.navigateWithState({ ...this.queryState, sortBy, sortDirection, page: 0 });
+  }
+
   resetFilters(): void {
     this.navigateWithState({ ...defaultQueryState, pageSize: this.queryState.pageSize });
   }
@@ -307,6 +334,9 @@ export class MarketBrowserService {
       rows: (response.items ?? []).map(toMarketRow),
       page,
       totalPages: response.page.totalPages ?? 0,
+      pageSize,
+      sortBy: this.queryState.sortBy,
+      sortDirection: this.queryState.sortDirection,
       paginationSummary:
         totalItems === 0
           ? 'No market items available.'
@@ -483,10 +513,17 @@ function selectedRangeValue(
   return undefined;
 }
 
+function nonemptyName(value: string | null | undefined): string | undefined {
+  const t = value?.trim();
+  return t && t.length > 0 ? t : undefined;
+}
+
 function toMarketRow(row: AuctionMarketSearchRow): MarketItemRow {
   return {
     id: String(row.item.id),
     name: row.item.name,
+    itemClassName: nonemptyName(row.item.itemClass?.name),
+    itemSubclassName: nonemptyName(row.item.itemSubclass?.name),
     quality: toQuality(row.item.quality?.type ?? row.item.quality?.name),
     iconUrl: row.item.mediaUrl ?? undefined,
     minBuyout: toCurrency(row.selectedRealm?.price ?? undefined),

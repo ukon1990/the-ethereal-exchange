@@ -7,11 +7,18 @@ import { MarketItemCellComponent } from './market-item-cell.component';
 import { MarketMetricCellComponent } from './market-metric-cell.component';
 import { MarketQualityCellComponent } from './market-quality-cell.component';
 
-const GRID_HEADER =
-  'grid grid-cols-[minmax(14rem,3fr)_7rem_minmax(7rem,1.5fr)_minmax(7rem,1.5fr)_minmax(7rem,1.5fr)_6rem] gap-4 border-b border-white/10 bg-surface-container-high px-6 py-4 ee-label text-outline';
+/** Per-column CSS grid tracks (inline `grid-template-columns`; commas are valid here). */
+type MarketColumnMeta = {
+  readonly align: 'left' | 'right';
+  readonly gridTrack: string;
+};
 
-const GRID_ROW =
-  'grid w-full grid-cols-[minmax(14rem,3fr)_7rem_minmax(7rem,1.5fr)_minmax(7rem,1.5fr)_minmax(7rem,1.5fr)_6rem] items-center gap-4 px-6 py-3 text-left transition hover:bg-white/5';
+const GRID_HEADER =
+  'grid w-full gap-4 border-b border-white/10 bg-surface-container-high px-6 py-4 ee-label text-outline';
+
+const GRID_ROW = 'grid w-full items-center gap-4 px-6 py-3 text-left transition hover:bg-white/5';
+
+const GRID_ROW_SKELETON = 'grid w-full items-center gap-4 px-6 py-3 text-left';
 
 const SELECTED_ROW =
   'border-l-2 border-primary bg-primary/10 shadow-[inset_0_0_20px_rgba(236,185,19,0.05)]';
@@ -21,55 +28,72 @@ export function marketBrowserHeaderRowClass(): string {
 }
 
 export function marketBrowserContentMinWidthClass(): string {
-  return 'min-w-[56rem]';
+  return 'min-w-0 w-full';
 }
 
 export function marketBrowserRowClass(row: MarketItemRow): string {
   return row.selected ? `${GRID_ROW} ${SELECTED_ROW}` : GRID_ROW;
 }
 
+export function marketBrowserSkeletonRowClass(): string {
+  return GRID_ROW_SKELETON;
+}
+
+/** Builds `grid-template-columns` from column defs (pass the same array as `[columns]` on `ee-table`). */
+export function marketBrowserRowGridTemplateColumns(
+  cols: readonly ColumnDef<MarketItemRow, unknown>[],
+): string {
+  return cols.map((col) => (col.meta as MarketColumnMeta).gridTrack).join(' ');
+}
+
+function textCell(value: unknown): string {
+  if (value === null || value === undefined) return '—';
+  const s = String(value).trim();
+  return s.length > 0 ? s : '—';
+}
+
 export function createMarketBrowserTableColumns(): ColumnDef<MarketItemRow, unknown>[] {
   return [
     {
-      id: 'item',
+      id: 'itemName',
       accessorKey: 'name',
       header: 'Item',
-      meta: { align: 'left' },
+      meta: { align: 'left', gridTrack: 'minmax(14rem, 2fr)' } satisfies MarketColumnMeta,
       cell: () => flexRenderComponent(MarketItemCellComponent),
+    },
+    {
+      id: 'itemClass',
+      accessorKey: 'itemClassName',
+      header: 'Class',
+      meta: { align: 'left', gridTrack: 'minmax(5rem, 1fr)' } satisfies MarketColumnMeta,
+      cell: (info) => textCell(info.getValue()),
+    },
+    {
+      id: 'itemSubclass',
+      accessorKey: 'itemSubclassName',
+      header: 'Subclass',
+      meta: { align: 'left', gridTrack: 'minmax(5rem, 1fr)' } satisfies MarketColumnMeta,
+      cell: (info) => textCell(info.getValue()),
     },
     {
       id: 'quality',
       accessorKey: 'quality',
       header: 'Quality',
-      meta: { align: 'left' },
+      meta: { align: 'left', gridTrack: '7rem' } satisfies MarketColumnMeta,
       cell: () => flexRenderComponent(MarketQualityCellComponent),
     },
     {
-      id: 'selected-price',
+      id: 'selectedPrice',
       accessorKey: 'minBuyout',
-      header: 'Realm Price',
-      meta: { align: 'right' },
+      header: 'Price',
+      meta: { align: 'right', gridTrack: 'minmax(6rem, max-content)' } satisfies MarketColumnMeta,
       cell: () => flexRenderComponent(MarketMetricCellComponent),
     },
     {
-      id: 'selected-quantity',
+      id: 'selectedQuantity',
       accessorKey: 'selectedQuantity',
-      header: 'Realm Qty',
-      meta: { align: 'right' },
-      cell: () => flexRenderComponent(MarketMetricCellComponent),
-    },
-    {
-      id: 'community-price',
-      accessorKey: 'regionalAverage',
-      header: 'Region Price',
-      meta: { align: 'right' },
-      cell: () => flexRenderComponent(MarketMetricCellComponent),
-    },
-    {
-      id: 'community-quantity',
-      accessorKey: 'communityQuantity',
-      header: 'Region Qty',
-      meta: { align: 'right' },
+      header: 'Quantity',
+      meta: { align: 'right', gridTrack: 'minmax(4.5rem, max-content)' } satisfies MarketColumnMeta,
       cell: () => flexRenderComponent(MarketMetricCellComponent),
     },
   ];

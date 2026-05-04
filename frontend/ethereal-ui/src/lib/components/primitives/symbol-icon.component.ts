@@ -11,7 +11,10 @@ export type SymbolIconName =
   | 'diamond'
   | 'filter_alt'
   | 'help'
+  | 'import_export'
   | 'inventory_2'
+  | 'keyboard_arrow_down'
+  | 'keyboard_arrow_up'
   | 'close'
   | 'menu'
   | 'magic_button'
@@ -77,9 +80,18 @@ export type SymbolIconName =
           <path d="M9.8 9a2.6 2.6 0 1 1 3.4 2.5c-.8.3-1.2.9-1.2 1.8v.4" />
           <path d="M12 17h.01" />
         }
+        @case ('import_export') {
+          <path d="M8 7h8M8 7l2.5-2.5M8 7l2.5 2.5M16 17H8M16 17l-2.5 2.5M16 17l-2.5-2.5" />
+        }
         @case ('inventory_2') {
           <path d="M4 8h16v11H4V8Z" />
           <path d="M6 4h12l2 4H4l2-4ZM9 12h6" />
+        }
+        @case ('keyboard_arrow_down') {
+          <path d="M8 10l4 4 4-4" />
+        }
+        @case ('keyboard_arrow_up') {
+          <path d="M8 14l4-4 4 4" />
         }
         @case ('close') {
           <path d="M18 6 6 18M6 6l12 12" />

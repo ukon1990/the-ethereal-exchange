@@ -12,5 +12,16 @@ export interface MarketBrowserViewModel {
   readonly searchQuery: string;
   readonly page: number;
   readonly totalPages: number;
+  readonly pageSize: number;
+  readonly sortBy:
+    | 'itemName'
+    | 'quality'
+    | 'itemClass'
+    | 'itemSubclass'
+    | 'selectedPrice'
+    | 'communityPrice'
+    | 'selectedQuantity'
+    | 'communityQuantity';
+  readonly sortDirection: 'asc' | 'desc';
   readonly loading: boolean;
 }

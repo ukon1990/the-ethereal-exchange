@@ -54,6 +54,8 @@ export interface TableColumn {
 export interface MarketItemRow {
   readonly id: string;
   readonly name: string;
+  readonly itemClassName?: string;
+  readonly itemSubclassName?: string;
   readonly quality: ItemQuality;
   readonly minBuyout: CurrencyAmount;
   readonly marketValue: CurrencyAmount;

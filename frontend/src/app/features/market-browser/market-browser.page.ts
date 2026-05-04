@@ -9,7 +9,7 @@ import {
   SearchInputComponent,
   TableComponent,
 } from '@ui';
-import type { MarketItemRow } from '@ui';
+import type { MarketItemRow, SortingState } from '@ui';
 
 import { MarketBrowserService } from '@core/services/market-browser.service';
 
@@ -18,6 +18,8 @@ import {
   marketBrowserContentMinWidthClass,
   marketBrowserHeaderRowClass,
   marketBrowserRowClass,
+  marketBrowserRowGridTemplateColumns,
+  marketBrowserSkeletonRowClass,
 } from './market-browser-table.columns';
 
 @Component({
@@ -63,6 +65,13 @@ import {
             [data]="viewModel().rows"
             [columns]="marketColumns"
             [getRowId]="marketRowId"
+            [manualSorting]="true"
+            [sorting]="marketTableSorting()"
+            (sortingChange)="onTableSortingChange($event)"
+            [loading]="viewModel().loading"
+            [skeletonRowCount]="viewModel().pageSize"
+            [skeletonRowClass]="marketSkeletonRowClass"
+            [rowGridTemplateColumns]="marketRowGridTemplate"
             sectionAriaLabel="Market items"
             emptyMessage="No market items available."
             [contentMinWidthClass]="marketTableMinWidth"
@@ -89,10 +98,14 @@ export class MarketBrowserPage {
   private readonly searchChanged = new Subject<string>();
 
   protected readonly marketColumns = createMarketBrowserTableColumns();
+  protected readonly marketRowGridTemplate = marketBrowserRowGridTemplateColumns(
+    this.marketColumns,
+  );
   protected readonly marketRowClass = marketBrowserRowClass;
   protected readonly marketRowId = (row: MarketItemRow) => row.id;
   protected readonly marketTableMinWidth = marketBrowserContentMinWidthClass();
   protected readonly marketTableHeaderRow = marketBrowserHeaderRowClass();
+  protected readonly marketSkeletonRowClass = marketBrowserSkeletonRowClass();
 
   constructor() {
     this.marketBrowserService.bindRoute(this.route);
@@ -151,5 +164,14 @@ export class MarketBrowserPage {
 
   protected onNextPage(): void {
     this.marketBrowserService.goToNextPage();
+  }
+
+  protected marketTableSorting(): SortingState {
+    const vm = this.viewModel();
+    return [{ id: vm.sortBy, desc: vm.sortDirection === 'desc' }];
+  }
+
+  protected onTableSortingChange(sorting: SortingState): void {
+    this.marketBrowserService.applyTableSort(sorting);
   }
 }
