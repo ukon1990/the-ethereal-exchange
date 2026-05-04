@@ -78,6 +78,12 @@ describe('MarketBrowserPage', () => {
     const compiled = fixture.nativeElement as HTMLElement;
 
     expect(compiled.textContent).toContain('Market Browser');
+    expect(compiled.textContent).toContain('Item');
+    expect(compiled.textContent).toContain('Quality');
+    expect(compiled.textContent).toContain('Realm Price');
+    expect(compiled.textContent).toContain('Realm Qty');
+    expect(compiled.textContent).toContain('Region Price');
+    expect(compiled.textContent).toContain('Region Qty');
     expect(compiled.textContent).toContain('Healing Potion');
     expect(compiled.textContent).toContain('Showing 1-1 of 1 items');
     expect(serviceStub.loadFromRoute).toHaveBeenCalled();

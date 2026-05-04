@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterOutlet } from '@angular/router';
 import { CharacterSummary, TopNavComponent } from '@ui';
 
+import { WowheadTooltipLayer } from '@core/components/wowhead-tooltip-layer/wowhead-tooltip-layer';
 import { MenuService } from '@core/services/menu.service';
 import { RealmSelectionService } from '@core/services/realm-selection.service';
 
@@ -15,9 +16,10 @@ const FALLBACK_CHARACTER: CharacterSummary = {
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, TopNavComponent],
+  imports: [RouterOutlet, TopNavComponent, WowheadTooltipLayer],
   template: `
     <div class="flex h-screen flex-col overflow-hidden bg-background text-on-surface">
+      <app-wowhead-tooltip-layer />
       <ee-top-nav
         [items]="menu.links()"
         [activeId]="'dashboard'"

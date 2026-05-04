@@ -25,6 +25,7 @@ import { MarketItemRow, qualityToneClasses, SymbolIconComponent } from '@ui';
         appWowheadItemTooltip
         [itemId]="itemId()"
         linkType="item"
+        [currentBuyout]="row().minBuyout"
         [class]="nameClass()"
         >{{ row().name }}</span
       >

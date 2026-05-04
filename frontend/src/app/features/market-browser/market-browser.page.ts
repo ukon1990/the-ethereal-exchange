@@ -30,12 +30,13 @@ import {
     FilterPanelComponent,
     PageFrameComponent,
     SearchInputComponent,
-    SideNavComponent,
+    // SideNavComponent,
     TableComponent,
   ],
   template: `
     <div class="flex min-h-0 flex-1 overflow-hidden">
-      <ee-side-nav
+      <!-- TODO: Maybe add back later?
+       <ee-side-nav
         [items]="viewModel().professionNavItems"
         [activeId]="viewModel().activeProfessionId"
         [character]="viewModel().character"
@@ -45,7 +46,7 @@ import {
         (mobileOpenChange)="mobileNavOpen.set($event)"
         (primarySelected)="onPrimaryNavSelected($event)"
         (selected)="onProfessionSelected($event)"
-      />
+      />*/}}-->
       <ee-page-frame title="Market Browser" eyebrow="Exchange Intelligence">
         <ee-search-input
           [value]="viewModel().searchQuery"
