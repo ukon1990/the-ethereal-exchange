@@ -1,14 +1,24 @@
+import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
   computed,
   inject,
+  PLATFORM_ID,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { Subject, combineLatest, debounceTime, distinctUntilChanged } from 'rxjs';
+import {
+  Subject,
+  combineLatest,
+  debounceTime,
+  distinctUntilChanged,
+  fromEvent,
+  map,
+  startWith,
+} from 'rxjs';
 
 import {
   FilterPanelComponent,
@@ -23,12 +33,16 @@ import { MarketBrowserService } from '@core/services/market-browser.service';
 
 import {
   createMarketBrowserTableColumns,
-  marketBrowserContentMinWidthClass,
   marketBrowserHeaderRowClass,
   marketBrowserRowClass,
   marketBrowserRowGridTemplateColumns,
   marketBrowserSkeletonRowClass,
 } from './market-browser-table.columns';
+
+const DEFAULT_VIEWPORT_WIDTH = 1280;
+const CLASS_MIN_WIDTH = 860;
+const SUBCLASS_MIN_WIDTH = 1040;
+const QUALITY_MIN_WIDTH = 1200;
 
 @Component({
   selector: 'app-market-browser-page',
@@ -87,7 +101,7 @@ import {
           />
           <ee-table
             [data]="viewModel().rows"
-            [columns]="marketColumns"
+            [columns]="activeMarketColumns()"
             [getRowId]="marketRowId"
             [manualSorting]="true"
             [sorting]="marketTableSorting()"
@@ -95,7 +109,7 @@ import {
             [loading]="viewModel().loading"
             [skeletonRowCount]="viewModel().pageSize"
             [skeletonRowClass]="marketSkeletonRowClass"
-            [rowGridTemplateColumns]="marketRowGridTemplate"
+            [rowGridTemplateColumns]="marketRowGridTemplate()"
             sectionAriaLabel="Market items"
             emptyMessage="No market items available."
             [contentMinWidthClass]="marketTableMinWidth"
@@ -160,18 +174,25 @@ export class MarketBrowserPage {
   private readonly marketBrowserService = inject(MarketBrowserService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly platformId = inject(PLATFORM_ID);
   protected readonly viewModel = this.marketBrowserService.viewModel;
   protected readonly mobileNavOpen = signal(false);
   protected readonly mobileFiltersOpen = signal(false);
+  protected readonly viewportWidth = signal(DEFAULT_VIEWPORT_WIDTH);
   private readonly searchChanged = new Subject<string>();
 
   protected readonly marketColumns = createMarketBrowserTableColumns();
-  protected readonly marketRowGridTemplate = marketBrowserRowGridTemplateColumns(
-    this.marketColumns,
+  protected readonly activeMarketColumns = computed(() =>
+    this.marketColumns.filter((column) =>
+      activeColumnIdsForViewport(this.viewportWidth()).has(String(column.id ?? '')),
+    ),
+  );
+  protected readonly marketRowGridTemplate = computed(() =>
+    marketBrowserRowGridTemplateColumns(this.activeMarketColumns()),
   );
   protected readonly marketRowClass = marketBrowserRowClass;
   protected readonly marketRowId = (row: MarketItemRow) => row.id;
-  protected readonly marketTableMinWidth = marketBrowserContentMinWidthClass();
+  protected readonly marketTableMinWidth = 'min-w-0 w-full';
   protected readonly marketTableHeaderRow = marketBrowserHeaderRowClass();
   protected readonly marketSkeletonRowClass = marketBrowserSkeletonRowClass();
   protected readonly marketTableSorting = computed<SortingState>(() => {
@@ -180,6 +201,19 @@ export class MarketBrowserPage {
   });
 
   constructor() {
+    if (isPlatformBrowser(this.platformId)) {
+      fromEvent(window, 'resize')
+        .pipe(
+          startWith(null),
+          map(() => window.innerWidth),
+          distinctUntilChanged(),
+          takeUntilDestroyed(this.destroyRef),
+        )
+        .subscribe((width) => {
+          this.viewportWidth.set(width);
+        });
+    }
+
     this.marketBrowserService.bindRoute(this.route);
     combineLatest([this.route.parent?.paramMap ?? this.route.paramMap, this.route.queryParamMap])
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -270,4 +304,12 @@ export class MarketBrowserPage {
   protected onTableSortingChange(sorting: SortingState): void {
     this.marketBrowserService.applyTableSort(sorting);
   }
+}
+
+function activeColumnIdsForViewport(width: number): Set<string> {
+  const active = new Set<string>(['itemName', 'selectedPrice', 'selectedQuantity']);
+  if (width >= CLASS_MIN_WIDTH) active.add('itemClass');
+  if (width >= SUBCLASS_MIN_WIDTH) active.add('itemSubclass');
+  if (width >= QUALITY_MIN_WIDTH) active.add('quality');
+  return active;
 }
