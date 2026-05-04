@@ -5,7 +5,7 @@ import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
 
-import { Realm, RealmApiService } from '../../api/generated';
+import { Realm, RealmApiService, RealmDetail } from '@api/generated';
 
 const STORAGE_KEY = 'wae.selectedRealm';
 
@@ -15,6 +15,12 @@ const REALM_PATH = /^\/(us|eu|kr|tw)\/([^/]+)/i;
 interface PersistedSelection {
   readonly region: Realm.RegionEnum;
   readonly slug: string;
+}
+
+function composeMarketDataVersion(detail: RealmDetail): string {
+  const ah = detail.auctionHouse?.lastModified ?? '';
+  const community = detail.community?.lastModified ?? '';
+  return `ah=${ah}|community=${community}`;
 }
 
 function toRegionEnum(region: string): Realm.RegionEnum | null {
@@ -32,12 +38,16 @@ export class RealmSelectionService {
 
   private readonly realmsSignal = signal<readonly Realm[]>([]);
   private readonly selectedSignal = signal<Realm | null>(null);
+  /** Composed from selected-realm and community `lastModified`; null until `getRealm` succeeds in the browser. */
+  private readonly marketDataVersionSignal = signal<string | null>(null);
   private catalogPromise: Promise<readonly Realm[]> | null = null;
   private inflightHydrate: Promise<boolean> | null = null;
   private inflightHydrateKey: string | null = null;
 
   readonly realms = this.realmsSignal.asReadonly();
   readonly selected = this.selectedSignal.asReadonly();
+  /** When set, market browser may serve cached search/filter responses for this snapshot. */
+  readonly marketDataVersion = this.marketDataVersionSignal.asReadonly();
 
   constructor() {
     const stored = this.readStoredSelection();
@@ -73,6 +83,7 @@ export class RealmSelectionService {
           const hydrated = this.findIn(list, current.region, current.slug);
           if (hydrated) {
             this.selectedSignal.set(hydrated);
+            this.marketDataVersionSignal.set(null);
           } else {
             this.clearStoredSelection();
             this.selectedSignal.set(null);
@@ -102,7 +113,9 @@ export class RealmSelectionService {
 
     const promise = firstValueFrom(this.realmApi.getRealm(r, slug))
       .then((detail) => {
-        this.select(detail.realm);
+        this.selectedSignal.set(detail.realm);
+        this.persistSelection({ region: detail.realm.region, slug: detail.realm.slug });
+        this.marketDataVersionSignal.set(composeMarketDataVersion(detail));
         return true;
       })
       .catch(() => false);
@@ -124,6 +137,7 @@ export class RealmSelectionService {
     const r = toRegionEnum(region);
     if (!r) return;
     this.selectedSignal.set(this.placeholderRealm(r, slug));
+    this.marketDataVersionSignal.set(null);
   }
 
   findBy(region: string, slug: string): Realm | null {
@@ -133,11 +147,13 @@ export class RealmSelectionService {
   select(realm: Realm): void {
     this.selectedSignal.set(realm);
     this.persistSelection({ region: realm.region, slug: realm.slug });
+    this.marketDataVersionSignal.set(null);
   }
 
   clear(): void {
     this.selectedSignal.set(null);
     this.clearStoredSelection();
+    this.marketDataVersionSignal.set(null);
   }
 
   private placeholderRealm(region: Realm.RegionEnum, slug: string): Realm {

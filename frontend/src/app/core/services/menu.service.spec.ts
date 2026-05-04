@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, provideRouter, RouterStateSnapshot } from '@angular/router';
 import { of } from 'rxjs';
 
-import { Realm, RealmApiService } from '../../api/generated';
+import { Realm, RealmApiService } from '@api/generated';
 import { MenuService } from './menu.service';
 
 const realmFixture: Realm = {

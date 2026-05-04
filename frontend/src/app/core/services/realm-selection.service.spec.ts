@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 
-import { Realm, RealmApiService } from '../../api/generated';
+import { Realm, RealmApiService } from '@api/generated';
 import { RealmSelectionService } from './realm-selection.service';
 
 const realmFixture: Realm = {

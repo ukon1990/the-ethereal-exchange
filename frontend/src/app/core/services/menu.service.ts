@@ -19,7 +19,7 @@ import {
 import { NavItem } from '@ui';
 import { firstValueFrom, isObservable } from 'rxjs';
 
-import { Realm } from '../../api/generated';
+import { Realm } from '@api/generated';
 import { routes, TitledRoutes } from '../../app.routes';
 import { RealmSelectionService } from './realm-selection.service';
 

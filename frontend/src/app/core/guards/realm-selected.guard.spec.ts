@@ -10,7 +10,7 @@ import {
 } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 
-import { Realm, RealmApiService } from '../../api/generated';
+import { Realm, RealmApiService } from '@api/generated';
 import { realmSelectedGuard } from './realm-selected.guard';
 import { RealmSelectionService } from '../services/realm-selection.service';
 

@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
-import { Realm } from '../../api/generated';
+import { Realm } from '@api/generated';
 import { RealmSelectionService } from '../services/realm-selection.service';
 import { WowheadTooltipService } from '../services/wowhead-tooltip';
 import { WowheadItemTooltipDirective } from './wowhead-item-tooltip';

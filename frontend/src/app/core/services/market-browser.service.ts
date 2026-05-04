@@ -7,8 +7,10 @@ import {
   AuctionMarketFilter,
   AuctionMarketSearchPage,
   AuctionMarketSearchRow,
-} from '../../api/generated';
+} from '@api/generated';
 import { MarketBrowserViewModel } from '../models/market-browser.models';
+import { MarketBrowserCache } from './market-browser.cache';
+import { RealmSelectionService } from './realm-selection.service';
 
 interface MarketBrowserQueryState {
   readonly query: string;
@@ -56,11 +58,11 @@ const defaultQueryState: MarketBrowserQueryState = {
 export class MarketBrowserService {
   private readonly auctionMarketApi = inject(AuctionMarketApiService);
   private readonly router = inject(Router);
+  private readonly realmSelection = inject(RealmSelectionService);
+  private readonly marketBrowserCache = inject(MarketBrowserCache);
   private route: ActivatedRoute | null = null;
   private filterRequestId = 0;
   private searchRequestId = 0;
-  private filterCacheKey: string | null = null;
-  private cachedFilters: readonly AuctionMarketFilter[] = [];
   private queryState: MarketBrowserQueryState = defaultQueryState;
   private routeRegion: 'us' | 'eu' | 'kr' | 'tw' | null = null;
   private routeRealmSlug: string | null = null;
@@ -107,38 +109,52 @@ export class MarketBrowserService {
     this.routeRegion = region;
     this.routeRealmSlug = realmSlug;
     this.queryState = readQueryState(queryParamMap);
-    const filterCacheKey = `${region}:${realmSlug}`;
-    const hasCachedFiltersForRoute = this.filterCacheKey === filterCacheKey;
-    this.marketBrowser.update((vm) => ({
-      ...vm,
-      searchQuery: this.queryState.query,
-      page: this.queryState.page,
-      loading: true,
-      filterSections: hasCachedFiltersForRoute
-        ? toFilterSections(this.cachedFilters, this.queryState)
-        : [],
-    }));
 
-    if (!hasCachedFiltersForRoute) {
-      this.filterCacheKey = filterCacheKey;
-      this.cachedFilters = [];
-      this.marketBrowser.update((vm) => ({ ...vm, filterSections: [] }));
-      const currentFilterRequestId = ++this.filterRequestId;
+    const filterReqId = ++this.filterRequestId;
+    const searchReqId = ++this.searchRequestId;
+
+    const routeKey = `${region}:${realmSlug.toLowerCase()}`;
+    const queryString = stableQueryStringFromState(this.queryState);
+    const searchKey = `${routeKey}:${queryString}`;
+    const version = this.realmSelection.marketDataVersion();
+
+    const cachedFilterEnvelope = version
+      ? this.marketBrowserCache.getFilters(routeKey, version)
+      : undefined;
+
+    if (cachedFilterEnvelope) {
+      const filters = cachedFilterEnvelope.filters ?? [];
+      this.marketBrowser.update((vm) => ({
+        ...vm,
+        searchQuery: this.queryState.query,
+        page: this.queryState.page,
+        loading: true,
+        filterSections: toFilterSections(filters, this.queryState),
+      }));
+    } else {
+      this.marketBrowser.update((vm) => ({
+        ...vm,
+        searchQuery: this.queryState.query,
+        page: this.queryState.page,
+        loading: true,
+        filterSections: [],
+      }));
       this.auctionMarketApi
-        .getAuctionMarketFilters(region, realmSlug, undefined, 'body', false, {
-          transferCache: false,
-        })
+        .getAuctionMarketFilters(region, realmSlug, undefined, 'body', false)
         .subscribe({
           next: (response) => {
-            if (currentFilterRequestId !== this.filterRequestId) return;
-            this.cachedFilters = response.filters ?? [];
+            if (filterReqId !== this.filterRequestId) return;
+            const filters = response.filters ?? [];
             this.marketBrowser.update((vm) => ({
               ...vm,
-              filterSections: toFilterSections(this.cachedFilters, this.queryState),
+              filterSections: toFilterSections(filters, this.queryState),
             }));
+            if (version && this.realmSelection.marketDataVersion() === version) {
+              this.marketBrowserCache.setFilters(routeKey, version, response);
+            }
           },
           error: () => {
-            if (currentFilterRequestId !== this.filterRequestId) return;
+            if (filterReqId !== this.filterRequestId) return;
             this.marketBrowser.update((vm) => ({
               ...vm,
               filterSections: [],
@@ -147,44 +163,53 @@ export class MarketBrowserService {
         });
     }
 
-    const currentSearchRequestId = ++this.searchRequestId;
-    this.auctionMarketApi
-      .searchAuctionMarket(
-        region,
-        realmSlug,
-        undefined,
-        this.queryState.page,
-        this.queryState.pageSize,
-        this.queryState.sortBy,
-        this.queryState.sortDirection,
-        this.queryState.query || undefined,
-        this.queryState.qualityIds.length ? [...this.queryState.qualityIds] : undefined,
-        this.queryState.itemClassIds.length ? [...this.queryState.itemClassIds] : undefined,
-        this.queryState.itemSubclassIds.length ? [...this.queryState.itemSubclassIds] : undefined,
-        this.queryState.recipeOnly ?? undefined,
-        this.queryState.minPrice ?? undefined,
-        this.queryState.maxPrice ?? undefined,
-        this.queryState.minQuantity ?? undefined,
-        this.queryState.maxQuantity ?? undefined,
-        'body',
-        false,
-        { transferCache: false },
-      )
-      .subscribe({
-        next: (response) => {
-          if (currentSearchRequestId !== this.searchRequestId) return;
-          this.applySearchPage(response);
-        },
-        error: () => {
-          if (currentSearchRequestId !== this.searchRequestId) return;
-          this.marketBrowser.update((vm) => ({
-            ...vm,
-            loading: false,
-            rows: [],
-            paginationSummary: 'No market items available.',
-          }));
-        },
-      });
+    const cachedSearchPage = version
+      ? this.marketBrowserCache.getSearch(searchKey, version)
+      : undefined;
+    if (cachedSearchPage) {
+      if (searchReqId !== this.searchRequestId) return;
+      this.applySearchPage(cachedSearchPage);
+    } else {
+      this.auctionMarketApi
+        .searchAuctionMarket(
+          region,
+          realmSlug,
+          undefined,
+          this.queryState.page,
+          this.queryState.pageSize,
+          this.queryState.sortBy,
+          this.queryState.sortDirection,
+          this.queryState.query || undefined,
+          this.queryState.qualityIds.length ? [...this.queryState.qualityIds] : undefined,
+          this.queryState.itemClassIds.length ? [...this.queryState.itemClassIds] : undefined,
+          this.queryState.itemSubclassIds.length ? [...this.queryState.itemSubclassIds] : undefined,
+          this.queryState.recipeOnly ?? undefined,
+          this.queryState.minPrice ?? undefined,
+          this.queryState.maxPrice ?? undefined,
+          this.queryState.minQuantity ?? undefined,
+          this.queryState.maxQuantity ?? undefined,
+          'body',
+          false,
+        )
+        .subscribe({
+          next: (response) => {
+            if (searchReqId !== this.searchRequestId) return;
+            this.applySearchPage(response);
+            if (version && this.realmSelection.marketDataVersion() === version) {
+              this.marketBrowserCache.setSearch(searchKey, version, response);
+            }
+          },
+          error: () => {
+            if (searchReqId !== this.searchRequestId) return;
+            this.marketBrowser.update((vm) => ({
+              ...vm,
+              loading: false,
+              rows: [],
+              paginationSummary: 'No market items available.',
+            }));
+          },
+        });
+    }
   }
 
   setActivePrimaryNavId(id: string): void {
@@ -345,6 +370,27 @@ function readSortBy(value: string | null): MarketBrowserQueryState['sortBy'] {
     'communityQuantity',
   ] as const;
   return allowed.find((candidate) => candidate === value) ?? 'itemName';
+}
+
+function stableQueryStringFromState(state: MarketBrowserQueryState): string {
+  const params = toQueryParams(state) as Record<
+    string,
+    string | number | boolean | readonly number[] | null
+  >;
+  const keys = Object.keys(params).sort();
+  const usp = new URLSearchParams();
+  for (const key of keys) {
+    const v = params[key];
+    if (v === null || v === undefined) continue;
+    if (Array.isArray(v)) {
+      for (const item of [...v].sort((a, b) => a - b)) {
+        usp.append(key, String(item));
+      }
+    } else {
+      usp.append(key, String(v));
+    }
+  }
+  return usp.toString();
 }
 
 function toQueryParams(

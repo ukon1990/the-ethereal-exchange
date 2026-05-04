@@ -4,7 +4,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
-import { Realm, RealmApiService } from '../../api/generated';
+import { Realm, RealmApiService } from '@api/generated';
 import { RealmSelectionService } from '../../core/services/realm-selection.service';
 import { SelectRealmPage } from './select-realm.page';
 

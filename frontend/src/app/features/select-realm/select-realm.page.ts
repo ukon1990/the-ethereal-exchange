@@ -10,7 +10,7 @@ import {
 import { RouterLink } from '@angular/router';
 import { SearchInputComponent } from '@ui';
 
-import { Realm } from '../../api/generated';
+import { Realm } from '@api/generated';
 import { RealmSelectionService } from '@core/services/realm-selection.service';
 
 @Component({

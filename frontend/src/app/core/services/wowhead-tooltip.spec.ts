@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { Realm } from '../../api/generated';
+import { Realm } from '@api/generated';
 import { RealmSelectionService } from './realm-selection.service';
 import { WowheadTooltipService } from './wowhead-tooltip';
 

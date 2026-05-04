@@ -5,6 +5,7 @@
   "compilerOptions": {
     "paths": {
       "@ui": ["./ethereal-ui/src/public-api.ts"],
+      "@api/*": ["./src/app/api/*"],
       "@core/*": ["./src/app/core/*"],
       "@features/*": ["./src/app/features/*"]
     },

@@ -2,7 +2,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { inject, PLATFORM_ID } from '@angular/core';
 import { CanActivateFn, Router, UrlTree } from '@angular/router';
 
-import { Realm } from '../../api/generated';
+import { Realm } from '@api/generated';
 import { RealmSelectionService } from '../services/realm-selection.service';
 
 function isApiRegionCode(region: string): boolean {
