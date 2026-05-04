@@ -309,6 +309,10 @@ Resources:
 
           REGISTRY="$(printf '%s\n' "$IMAGE_URI" | cut -d/ -f1)"
           NETWORK_NAME="$(printenv NETWORK_NAME || true)"
+          CPU_LIMIT="$(printenv CPU_LIMIT || true)"
+          MEM_LIMIT="$(printenv MEM_LIMIT || true)"
+          MEM_RESERVATION="$(printenv MEM_RESERVATION || true)"
+          PIDS_LIMIT="$(printenv PIDS_LIMIT || true)"
 
           aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$REGISTRY"
 
@@ -344,6 +348,22 @@ Resources:
             set -- "$@" --network "$NETWORK_NAME"
           fi
 
+          if [[ -n "$CPU_LIMIT" ]]; then
+            set -- "$@" --cpus "$CPU_LIMIT"
+          fi
+
+          if [[ -n "$MEM_LIMIT" ]]; then
+            set -- "$@" --memory "$MEM_LIMIT"
+          fi
+
+          if [[ -n "$MEM_RESERVATION" ]]; then
+            set -- "$@" --memory-reservation "$MEM_RESERVATION"
+          fi
+
+          if [[ -n "$PIDS_LIMIT" ]]; then
+            set -- "$@" --pids-limit "$PIDS_LIMIT"
+          fi
+
           if [[ -n "$(printenv BACKEND_ORIGIN || true)" ]]; then
             set -- "$@" -e "BACKEND_ORIGIN=$BACKEND_ORIGIN"
           fi
@@ -368,7 +388,7 @@ Resources:
           [Service]
           Type=oneshot
           RemainAfterExit=yes
-          ExecStart=/bin/bash -lc '/opt/${AppName}/bin/write-env-file.sh && APP_NAME=${AppName}-backend AWS_REGION=${AWS::Region} IMAGE_URI=${AppRepository.RepositoryUri}:master ENV_FILE_PATH=/opt/${AppName}/config/app.env CONTAINER_PORT=${ContainerPort} NETWORK_NAME=${AppName}-network LOG_GROUP=/aws/ec2/${AppName}/${Environment}/${RegionCode} /opt/${AppName}/bin/restart-container.sh'
+          ExecStart=/bin/bash -lc '/opt/${AppName}/bin/write-env-file.sh && APP_NAME=${AppName}-backend AWS_REGION=${AWS::Region} IMAGE_URI=${AppRepository.RepositoryUri}:master ENV_FILE_PATH=/opt/${AppName}/config/app.env CONTAINER_PORT=${ContainerPort} NETWORK_NAME=${AppName}-network LOG_GROUP=/aws/ec2/${AppName}/${Environment}/${RegionCode} CPU_LIMIT=1.0 MEM_LIMIT=1024m MEM_RESERVATION=768m PIDS_LIMIT=512 /opt/${AppName}/bin/restart-container.sh'
           Restart=on-failure
           RestartSec=30
 
@@ -385,7 +405,7 @@ Resources:
           [Service]
           Type=oneshot
           RemainAfterExit=yes
-          ExecStart=/bin/bash -lc 'APP_NAME=${AppName}-frontend AWS_REGION=${AWS::Region} IMAGE_URI=${FrontendRepository.RepositoryUri}:master CONTAINER_PORT=${FrontendContainerPort} HOST_PORT=${FrontendHostPort} NETWORK_NAME=${AppName}-network BACKEND_ORIGIN=http://${AppName}-backend:${ContainerPort} NG_ALLOWED_HOSTS=${AppElasticIp} LOG_GROUP=/aws/ec2/${AppName}/${Environment}/${RegionCode} /opt/${AppName}/bin/restart-container.sh'
+          ExecStart=/bin/bash -lc 'APP_NAME=${AppName}-frontend AWS_REGION=${AWS::Region} IMAGE_URI=${FrontendRepository.RepositoryUri}:master CONTAINER_PORT=${FrontendContainerPort} HOST_PORT=${FrontendHostPort} NETWORK_NAME=${AppName}-network BACKEND_ORIGIN=http://${AppName}-backend:${ContainerPort} NG_ALLOWED_HOSTS=${AppElasticIp} LOG_GROUP=/aws/ec2/${AppName}/${Environment}/${RegionCode} CPU_LIMIT=0.75 MEM_LIMIT=512m MEM_RESERVATION=256m PIDS_LIMIT=256 /opt/${AppName}/bin/restart-container.sh'
           Restart=on-failure
           RestartSec=30
 

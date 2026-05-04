@@ -19,6 +19,10 @@ LOG_GROUP="${LOG_GROUP:-/aws/ec2/${APP_NAME}}"
 HOST_PORT="${HOST_PORT:-}"
 REGISTRY="${IMAGE_URI%%/*}"
 NETWORK_NAME="${NETWORK_NAME:-}"
+CPU_LIMIT="${CPU_LIMIT:-}"
+MEM_LIMIT="${MEM_LIMIT:-}"
+MEM_RESERVATION="${MEM_RESERVATION:-}"
+PIDS_LIMIT="${PIDS_LIMIT:-}"
 
 aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$REGISTRY"
 
@@ -55,6 +59,22 @@ fi
 if [[ -n "$NETWORK_NAME" ]]; then
   docker network create "$NETWORK_NAME" >/dev/null 2>&1 || true
   set -- "$@" --network "$NETWORK_NAME"
+fi
+
+if [[ -n "$CPU_LIMIT" ]]; then
+  set -- "$@" --cpus "$CPU_LIMIT"
+fi
+
+if [[ -n "$MEM_LIMIT" ]]; then
+  set -- "$@" --memory "$MEM_LIMIT"
+fi
+
+if [[ -n "$MEM_RESERVATION" ]]; then
+  set -- "$@" --memory-reservation "$MEM_RESERVATION"
+fi
+
+if [[ -n "$PIDS_LIMIT" ]]; then
+  set -- "$@" --pids-limit "$PIDS_LIMIT"
 fi
 
 if [[ -n "${BACKEND_ORIGIN:-}" ]]; then
