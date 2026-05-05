@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 
 import type {
   AuctionMarketFilterResponse,
+  AuctionMarketItemCraftingAnalyticsResponse,
   AuctionMarketItemDetailResponse,
   AuctionMarketSearchPage,
 } from '@api/generated';
@@ -13,6 +14,7 @@ interface CachedEntry<T> {
 
 const MAX_SEARCH_ENTRIES = 50;
 const MAX_ITEM_DETAIL_ENTRIES = 50;
+const MAX_CRAFTING_ANALYTICS_ENTRIES = 50;
 
 @Injectable({ providedIn: 'root' })
 export class MarketBrowserCache {
@@ -21,6 +23,11 @@ export class MarketBrowserCache {
   private readonly searchLruKeys: string[] = [];
   private readonly itemDetail = new Map<string, CachedEntry<AuctionMarketItemDetailResponse>>();
   private readonly itemDetailLruKeys: string[] = [];
+  private readonly craftingAnalytics = new Map<
+    string,
+    CachedEntry<AuctionMarketItemCraftingAnalyticsResponse>
+  >();
+  private readonly craftingAnalyticsLruKeys: string[] = [];
 
   getFilters(routeKey: string, version: string): AuctionMarketFilterResponse | undefined {
     const entry = this.filters.get(routeKey);
@@ -62,6 +69,37 @@ export class MarketBrowserCache {
       const evictKey = this.itemDetailLruKeys.shift();
       if (evictKey) {
         this.itemDetail.delete(evictKey);
+      }
+    }
+  }
+
+  getCraftingAnalytics(
+    key: string,
+    version: string,
+  ): AuctionMarketItemCraftingAnalyticsResponse | undefined {
+    const entry = this.craftingAnalytics.get(key);
+    if (!entry || entry.version !== version) {
+      return undefined;
+    }
+    return entry.value;
+  }
+
+  setCraftingAnalytics(
+    key: string,
+    version: string,
+    value: AuctionMarketItemCraftingAnalyticsResponse,
+  ): void {
+    const existingIndex = this.craftingAnalyticsLruKeys.indexOf(key);
+    if (existingIndex >= 0) {
+      this.craftingAnalyticsLruKeys.splice(existingIndex, 1);
+    }
+    this.craftingAnalyticsLruKeys.push(key);
+    this.craftingAnalytics.set(key, { version, value });
+
+    while (this.craftingAnalyticsLruKeys.length > MAX_CRAFTING_ANALYTICS_ENTRIES) {
+      const evictKey = this.craftingAnalyticsLruKeys.shift();
+      if (evictKey) {
+        this.craftingAnalytics.delete(evictKey);
       }
     }
   }

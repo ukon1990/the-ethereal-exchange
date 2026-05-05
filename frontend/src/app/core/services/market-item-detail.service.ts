@@ -78,18 +78,39 @@ export class MarketItemDetailService {
     variant: ItemDetailVariantParams,
     locale?: string,
   ): Observable<AuctionMarketItemCraftingAnalyticsResponse> {
-    return this.auctionMarketApi.getAuctionMarketItemCraftingAnalytics(
-      region,
-      realmSlug,
-      itemId,
-      recipeId,
-      variant.bonusKey,
-      variant.modifierKey,
-      variant.petSpeciesId,
-      locale,
-      'body',
-      false,
-      { transferCache: false },
-    );
+    const routeKey = `${region}:${realmSlug.toLowerCase()}`;
+    const variantKey = `${variant.bonusKey}|${variant.modifierKey}|${variant.petSpeciesId}`;
+    const localeKey = locale?.trim() ? `:${locale.trim()}` : '';
+    const analyticsKey = `${routeKey}:item:${itemId}:recipe:${recipeId}:v:${variantKey}${localeKey}`;
+    const version = this.realmSelection.marketDataVersion();
+
+    const cached = version
+      ? this.marketBrowserCache.getCraftingAnalytics(analyticsKey, version)
+      : undefined;
+    if (cached) {
+      return of(cached);
+    }
+
+    return this.auctionMarketApi
+      .getAuctionMarketItemCraftingAnalytics(
+        region,
+        realmSlug,
+        itemId,
+        recipeId,
+        variant.bonusKey,
+        variant.modifierKey,
+        variant.petSpeciesId,
+        locale,
+        'body',
+        false,
+        { transferCache: false },
+      )
+      .pipe(
+        tap((response) => {
+          if (version && this.realmSelection.marketDataVersion() === version) {
+            this.marketBrowserCache.setCraftingAnalytics(analyticsKey, version, response);
+          }
+        }),
+      );
   }
 }

@@ -44,11 +44,9 @@ import {
   craftingBrowserRowGridTemplateColumns,
   craftingBrowserSkeletonRowClass,
 } from './crafting-browser-table.columns';
+import { activeColumnIdsForViewport, realmAncestorRoute } from './crafting-browser.helpers';
 
 const DEFAULT_VIEWPORT_WIDTH = 1280;
-const RECIPE_MIN = 900;
-const PROF_MIN = 1040;
-const TREND_MIN = 1200;
 
 @Component({
   selector: 'app-crafting-browser-page',
@@ -63,111 +61,7 @@ const TREND_MIN = 1200;
     SymbolIconComponent,
     TableComponent,
   ],
-  template: `
-    <div class="flex min-h-0 flex-1 overflow-hidden">
-      <ee-page-frame [title]="'Crafting'" [eyebrow]="'Recipe economics'" bodyLayout="fill">
-        <div class="flex items-center gap-2">
-          <ee-search-input
-            class="min-w-0 flex-1"
-            [value]="viewModel().searchQuery"
-            (valueChanged)="onSearchChanged($event)"
-          />
-          <button
-            #mobileFiltersTrigger
-            type="button"
-            class="inline-flex shrink-0 items-center gap-2 rounded border border-white/10 bg-surface-container-high px-4 py-2 ee-label text-on-surface transition hover:bg-surface-container-highest lg:hidden"
-            aria-label="Open filters"
-            aria-haspopup="dialog"
-            [attr.aria-expanded]="mobileFiltersOpen()"
-            (click)="openMobileFilters()"
-          >
-            <ee-symbol-icon class="text-base" name="filter_alt" aria-hidden="true" />
-            Filters
-          </button>
-        </div>
-        <div class="flex min-h-0 min-w-0 flex-1 gap-element-gap overflow-hidden">
-          <ee-filter-panel
-            class="hidden lg:flex"
-            [sections]="viewModel().filterSections"
-            (optionToggled)="onFilterToggled($event)"
-            (optionSelected)="onFilterSelected($event)"
-            (rangeChanged)="onRangeChanged($event)"
-            (reset)="onFiltersReset()"
-          />
-          <ee-table
-            [data]="viewModel().rows"
-            [columns]="activeColumns()"
-            [getRowId]="rowId"
-            [manualSorting]="true"
-            [sorting]="tableSorting()"
-            (sortingChange)="onTableSortingChange($event)"
-            [clickableRows]="false"
-            [loading]="viewModel().loading"
-            [skeletonRowCount]="viewModel().pageSize"
-            [skeletonRowClass]="skeletonRowClass"
-            [rowGridTemplateColumns]="rowGridTemplate()"
-            sectionAriaLabel="Crafting recipes"
-            emptyMessage="No recipes available."
-            [contentMinWidthClass]="tableMinWidth"
-            [headerRowClass]="headerRowClass"
-            [bodyRowClassFn]="bodyRowClass"
-            [showFooter]="true"
-            [footerSummary]="viewModel().paginationSummary"
-            [showPagination]="true"
-            (previousPage)="onPreviousPage()"
-            (nextPage)="onNextPage()"
-          />
-        </div>
-        <div
-          class="fixed inset-0 z-50 flex transition-opacity duration-300 lg:hidden"
-          [class.pointer-events-none]="!mobileFiltersOpen()"
-          [class.opacity-0]="!mobileFiltersOpen()"
-          [class.opacity-100]="mobileFiltersOpen()"
-          [attr.inert]="mobileFiltersOpen() ? null : ''"
-          [attr.aria-hidden]="!mobileFiltersOpen()"
-          [attr.role]="mobileFiltersOpen() ? 'dialog' : null"
-          [attr.aria-modal]="mobileFiltersOpen() ? 'true' : null"
-          [attr.aria-label]="mobileFiltersOpen() ? 'Filter options' : null"
-          (keydown.escape)="closeMobileFilters()"
-        >
-          <button
-            type="button"
-            class="flex-1 bg-black/60 transition-opacity duration-300"
-            aria-label="Close filters"
-            (click)="closeMobileFilters()"
-          ></button>
-          <div
-            class="flex h-full min-h-0 w-[min(22rem,90vw)] flex-col overflow-hidden border-l border-white/10 bg-surface p-4 transition-transform duration-300 ease-out"
-            [class.translate-x-full]="!mobileFiltersOpen()"
-            [class.translate-x-0]="mobileFiltersOpen()"
-            [cdkTrapFocus]="mobileFiltersOpen()"
-            [cdkTrapFocusAutoCapture]="mobileFiltersOpen()"
-          >
-            <div class="mb-3 flex items-center justify-between gap-2">
-              <h2 class="ee-section-heading text-primary">Filters</h2>
-              <button
-                #mobileFiltersClose
-                type="button"
-                class="rounded border border-white/10 bg-surface-container-high px-3 py-1.5 ee-label text-on-surface transition hover:bg-surface-container-highest"
-                (click)="closeMobileFilters()"
-              >
-                Close
-              </button>
-            </div>
-            <ee-filter-panel
-              class="flex min-h-0 flex-1"
-              panelClass="ee-glass flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-lg"
-              [sections]="viewModel().filterSections"
-              (optionToggled)="onMobileFilterToggled($event)"
-              (optionSelected)="onMobileFilterSelected($event)"
-              (rangeChanged)="onMobileRangeChanged($event)"
-              (reset)="onMobileFiltersReset()"
-            />
-          </div>
-        </div>
-      </ee-page-frame>
-    </div>
-  `,
+  templateUrl: './crafting-browser.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CraftingBrowserPage implements AfterViewInit {
@@ -305,28 +199,4 @@ export class CraftingBrowserPage implements AfterViewInit {
   protected onTableSortingChange(sorting: SortingState): void {
     this.craftingBrowserService.applyTableSort(sorting);
   }
-}
-
-function activeColumnIdsForViewport(width: number): Set<string> {
-  const active = new Set<string>(['itemName', 'outputPrice', 'profit']);
-  if (width >= RECIPE_MIN) active.add('recipeName');
-  if (width >= PROF_MIN) active.add('professionName');
-  active.add('reagentCost');
-  if (width >= TREND_MIN) {
-    active.add('roiPercent');
-    active.add('outputPriceChangePercent');
-  }
-  return active;
-}
-
-function realmAncestorRoute(route: ActivatedRoute): ActivatedRoute {
-  let r: ActivatedRoute | null = route;
-  while (r) {
-    const m = r.snapshot.paramMap;
-    if (m.has('region') && m.has('realm')) {
-      return r;
-    }
-    r = r.parent;
-  }
-  return route;
 }
