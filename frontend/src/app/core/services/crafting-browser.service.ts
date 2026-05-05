@@ -281,11 +281,25 @@ function readQueryState(queryParamMap: ParamMap): CraftingBrowserQueryState {
     minOutputPriceChangePercent: nullableNumber(queryParamMap.get('minOutputPriceChangePercent')),
     maxOutputPriceChangePercent: nullableNumber(queryParamMap.get('maxOutputPriceChangePercent')),
     requireCompleteReagentPricing: queryParamMap.get('requireCompleteReagentPricing') === 'true',
-    page: nullableNumber(queryParamMap.get('page')) ?? 0,
-    pageSize: nullableNumber(queryParamMap.get('pageSize')) ?? defaultQueryState.pageSize,
+    page: clampPage(nullableNumber(queryParamMap.get('page'))),
+    pageSize: clampPageSize(nullableNumber(queryParamMap.get('pageSize'))),
     sortBy: readSortBy(queryParamMap.get('sortBy')),
     sortDirection: queryParamMap.get('sortDirection') === 'desc' ? 'desc' : 'asc',
   };
+}
+
+const MAX_PAGE_SIZE = 200;
+
+function clampPage(value: number | null): number {
+  if (value == null || !Number.isFinite(value)) return 0;
+  return Math.max(0, Math.floor(value));
+}
+
+function clampPageSize(value: number | null): number {
+  if (value == null || !Number.isFinite(value) || value <= 0) {
+    return defaultQueryState.pageSize;
+  }
+  return Math.min(MAX_PAGE_SIZE, Math.floor(value));
 }
 
 function nullableNumber(value: string | null): number | null {
