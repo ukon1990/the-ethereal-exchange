@@ -1,15 +1,20 @@
 import { isPlatformBrowser } from '@angular/common';
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
   computed,
+  effect,
   inject,
   PLATFORM_ID,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
+import { A11yModule } from '@angular/cdk/a11y';
 import {
   Subject,
   combineLatest,
@@ -51,6 +56,7 @@ const TREND_MIN = 1200;
     class: 'flex min-h-0 flex-1 overflow-hidden',
   },
   imports: [
+    A11yModule,
     FilterPanelComponent,
     PageFrameComponent,
     SearchInputComponent,
@@ -67,6 +73,7 @@ const TREND_MIN = 1200;
             (valueChanged)="onSearchChanged($event)"
           />
           <button
+            #mobileFiltersTrigger
             type="button"
             class="inline-flex shrink-0 items-center gap-2 rounded border border-white/10 bg-surface-container-high px-4 py-2 ee-label text-on-surface transition hover:bg-surface-container-highest lg:hidden"
             aria-label="Open filters"
@@ -121,6 +128,7 @@ const TREND_MIN = 1200;
           [attr.role]="mobileFiltersOpen() ? 'dialog' : null"
           [attr.aria-modal]="mobileFiltersOpen() ? 'true' : null"
           [attr.aria-label]="mobileFiltersOpen() ? 'Filter options' : null"
+          (keydown.escape)="closeMobileFilters()"
         >
           <button
             type="button"
@@ -132,10 +140,13 @@ const TREND_MIN = 1200;
             class="flex h-full min-h-0 w-[min(22rem,90vw)] flex-col overflow-hidden border-l border-white/10 bg-surface p-4 transition-transform duration-300 ease-out"
             [class.translate-x-full]="!mobileFiltersOpen()"
             [class.translate-x-0]="mobileFiltersOpen()"
+            [cdkTrapFocus]="mobileFiltersOpen()"
+            [cdkTrapFocusAutoCapture]="mobileFiltersOpen()"
           >
             <div class="mb-3 flex items-center justify-between gap-2">
               <h2 class="ee-section-heading text-primary">Filters</h2>
               <button
+                #mobileFiltersClose
                 type="button"
                 class="rounded border border-white/10 bg-surface-container-high px-3 py-1.5 ee-label text-on-surface transition hover:bg-surface-container-highest"
                 (click)="closeMobileFilters()"
@@ -159,7 +170,7 @@ const TREND_MIN = 1200;
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CraftingBrowserPage {
+export class CraftingBrowserPage implements AfterViewInit {
   private readonly craftingBrowserService = inject(CraftingBrowserService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
@@ -168,6 +179,9 @@ export class CraftingBrowserPage {
   protected readonly mobileFiltersOpen = signal(false);
   protected readonly viewportWidth = signal(DEFAULT_VIEWPORT_WIDTH);
   private readonly searchChanged = new Subject<string>();
+  private readonly mobileFiltersTrigger =
+    viewChild<ElementRef<HTMLButtonElement>>('mobileFiltersTrigger');
+  private viewReady = false;
 
   protected readonly allColumns = createCraftingBrowserTableColumns();
   protected readonly activeColumns = computed(() =>
@@ -201,6 +215,15 @@ export class CraftingBrowserPage {
           this.viewportWidth.set(width);
         });
     }
+
+    effect(() => {
+      const open = this.mobileFiltersOpen();
+      if (!open && this.viewReady) {
+        // Restore focus to the trigger when the dialog closes (CDK trap auto-captures focus on
+        // open but does not always restore correctly when the trap is toggled via inputs).
+        this.mobileFiltersTrigger()?.nativeElement.focus();
+      }
+    });
 
     this.craftingBrowserService.bindRoute(this.route);
     const realmRoute = realmAncestorRoute(this.route);
@@ -236,6 +259,10 @@ export class CraftingBrowserPage {
 
   protected onFiltersReset(): void {
     this.craftingBrowserService.resetFilters();
+  }
+
+  ngAfterViewInit(): void {
+    this.viewReady = true;
   }
 
   protected openMobileFilters(): void {

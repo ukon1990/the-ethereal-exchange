@@ -314,16 +314,23 @@ interface TooltipRow {
             </div>
 
             @if (d.craftings.length > 1) {
-              <div class="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="Recipes">
-                @for (recipe of d.craftings; track recipe.recipeId) {
+              <div
+                class="mb-4 flex flex-wrap gap-2"
+                role="radiogroup"
+                aria-label="Recipes"
+                (keydown)="onRecipeRadioKeydown($event, d.craftings)"
+              >
+                @for (recipe of d.craftings; track recipe.recipeId; let i = $index) {
                   <button
                     type="button"
+                    role="radio"
                     class="rounded border border-white/10 px-3 py-1.5 ee-label transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
                     [class.bg-primary]="recipe.recipeId === selectedRecipeId()"
                     [class.text-on-primary]="recipe.recipeId === selectedRecipeId()"
                     [class.bg-surface-container-high]="recipe.recipeId !== selectedRecipeId()"
-                    [attr.aria-selected]="recipe.recipeId === selectedRecipeId()"
-                    role="tab"
+                    [attr.aria-checked]="recipe.recipeId === selectedRecipeId()"
+                    [attr.tabindex]="recipe.recipeId === selectedRecipeId() ? 0 : -1"
+                    [attr.data-recipe-index]="i"
                     (click)="selectRecipe(recipe.recipeId)"
                   >
                     {{ recipe.recipeName }}
@@ -682,6 +689,56 @@ export class MarketItemDetailPage {
     if (this.selectedRecipeId() === recipeId) return;
     this.selectedRecipeId.set(recipeId);
     this.loadSelectedRecipeAnalytics();
+  }
+
+  /**
+   * Implements the keyboard navigation contract of the WAI-ARIA radiogroup pattern for the recipe
+   * selector: Arrow keys move focus and selection between recipes, Home/End jump to first/last,
+   * Space/Enter activate the focused recipe (browsers already do this for buttons but we keep the
+   * branch consistent). The radiogroup uses roving tabindex via [attr.tabindex] on the buttons.
+   */
+  protected onRecipeRadioKeydown(
+    event: KeyboardEvent,
+    craftings: readonly { recipeId: number }[],
+  ): void {
+    const ARROW_KEYS = ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'Home', 'End'] as const;
+    if (!ARROW_KEYS.includes(event.key as (typeof ARROW_KEYS)[number])) return;
+    if (craftings.length === 0) return;
+
+    const current = this.selectedRecipeId();
+    const currentIndex = Math.max(
+      0,
+      craftings.findIndex((r) => r.recipeId === current),
+    );
+    let nextIndex = currentIndex;
+    switch (event.key) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+        nextIndex = (currentIndex + 1) % craftings.length;
+        break;
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        nextIndex = (currentIndex - 1 + craftings.length) % craftings.length;
+        break;
+      case 'Home':
+        nextIndex = 0;
+        break;
+      case 'End':
+        nextIndex = craftings.length - 1;
+        break;
+    }
+    if (nextIndex === currentIndex) return;
+    event.preventDefault();
+    const nextRecipe = craftings[nextIndex];
+    this.selectRecipe(nextRecipe.recipeId);
+
+    queueMicrotask(() => {
+      const target = event.currentTarget as HTMLElement | null;
+      const next = target?.querySelector<HTMLElement>(
+        `[role="radio"][data-recipe-index="${nextIndex}"]`,
+      );
+      next?.focus();
+    });
   }
 
   private loadSelectedRecipeAnalytics(): void {
