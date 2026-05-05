@@ -49,7 +49,10 @@ class AuctionMarketItemDetailService(
         preferredRecipeId: Int? = null,
     ): AuctionMarketItemDetailResponse {
         val context = auctionMarketContextService.resolve(regionCode, realmSlug, localeOverride)
-        val rollupListing = bonusKey.isEmpty() && modifierKey.isEmpty() && petSpeciesId == 0
+        // Both 0 and -1 are used in our data flows to mean "no pet species" for non-pet items.
+        // Treat both as rollup when bonus/modifier are empty so we do not over-filter hourly/daily
+        // series by a synthetic pet id and accidentally return all-null commodity/realm series.
+        val rollupListing = bonusKey.isEmpty() && modifierKey.isEmpty() && petSpeciesId <= 0
         val variant = !rollupListing
         val localeSuffix = context.localeColumnSuffix
 
@@ -436,7 +439,7 @@ class AuctionMarketItemDetailService(
                 "No recipe with id=$recipeId produces item with id=$itemId",
             )
         }
-        val rollupListing = bonusKey.isEmpty() && modifierKey.isEmpty() && petSpeciesId == 0
+        val rollupListing = bonusKey.isEmpty() && modifierKey.isEmpty() && petSpeciesId <= 0
         val variant = !rollupListing
         val from = context.selectedSnapshot.date.minusDays(13)
         val to = context.selectedSnapshot.date
