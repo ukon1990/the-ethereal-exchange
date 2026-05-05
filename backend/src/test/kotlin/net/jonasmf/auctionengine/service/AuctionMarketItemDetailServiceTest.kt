@@ -178,6 +178,34 @@ class AuctionMarketItemDetailServiceTest : IntegrationTestBase() {
     }
 
     @Test
+    fun `item detail does not duplicate reagents when reagent item is itself craftable by other recipes`() {
+        MarketSearchTestFixtures.seedMarketSearchData(jdbcTemplate)
+        MarketSearchTestFixtures.augmentMarketSearchDataForCrafting(jdbcTemplate)
+        addExtraRecipesProducingReagentPeacebloom()
+
+        val detail =
+            service.itemDetail(
+                regionCode = "eu",
+                realmSlug = "argent-dawn",
+                itemId = 19019,
+                bonusKey = "",
+                modifierKey = "",
+                petSpeciesId = 0,
+                scope = "realm",
+                localeOverride = null,
+                preferredRecipeId = 7001,
+            )
+
+        val crafting = detail.craftings.single { it.recipeId == 7001 }
+        assertEquals(
+            1,
+            crafting.reagents.size,
+            "reagent rows must be unique per (recipeId, itemId) even when the reagent is the output of other recipes",
+        )
+        assertEquals(19050, crafting.reagents.single().itemId)
+    }
+
+    @Test
     fun `crafting analytics returns 404 when recipe does not produce the requested item`() {
         MarketSearchTestFixtures.seedMarketSearchData(jdbcTemplate)
         MarketSearchTestFixtures.augmentMarketSearchDataForCrafting(jdbcTemplate)
@@ -284,6 +312,25 @@ class AuctionMarketItemDetailServiceTest : IntegrationTestBase() {
                 connected_realm_id, item_id, date, pet_species_id, modifier_key, bonus_key, price10, quantity10
             ) VALUES (-2, 19199, '2026-05-01', -1, '', '', 145, 30)
             """.trimIndent(),
+        )
+    }
+
+    private fun addExtraRecipesProducingReagentPeacebloom() {
+        val recipeAName = insertLocale(1300, "Recipe: Grow Peacebloom A", "Rezept: Friedensblume A", "RECIPE", "7200", "name")
+        val recipeBName = insertLocale(1301, "Recipe: Grow Peacebloom B", "Rezept: Friedensblume B", "RECIPE", "7201", "name")
+        jdbcTemplate.update(
+            """
+            INSERT INTO recipe (id, crafted_item_id, crafted_quantity, media_url, name_id)
+            VALUES (7200, 19050, 1, 'https://media.example/recipe7200.png', ?)
+            """.trimIndent(),
+            recipeAName,
+        )
+        jdbcTemplate.update(
+            """
+            INSERT INTO recipe (id, crafted_item_id, crafted_quantity, media_url, name_id)
+            VALUES (7201, 19050, 1, 'https://media.example/recipe7201.png', ?)
+            """.trimIndent(),
+            recipeBName,
         )
     }
 

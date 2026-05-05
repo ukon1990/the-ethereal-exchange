@@ -341,14 +341,15 @@ class AuctionMarketItemDetailRepository(
             SELECT
                 rr.recipe_id,
                 rr.item_id,
-                COALESCE(d.item_name_$localeColumnSuffix, d.item_name_en_gb, d.item_name_en_us, CONCAT('Item ', rr.item_id)) AS name,
-                d.item_media_url AS media_url,
+                COALESCE(i_l.$localeColumnSuffix, i_l.en_gb, i_l.en_us, CONCAT('Item ', rr.item_id)) AS name,
+                i.media_url AS media_url,
                 rr.quantity,
                 rp.price AS unit_price,
                 CASE WHEN rp.price IS NULL THEN NULL ELSE rp.price * rr.quantity END AS line_total
             FROM recipe_reagent rr
             LEFT JOIN reagent_price rp ON rp.item_id = rr.item_id
-            LEFT JOIN v_auction_market_item_details d ON d.item_id = rr.item_id
+            LEFT JOIN item i ON i.id = rr.item_id
+            LEFT JOIN locale i_l ON i_l.id = i.name_id
             WHERE rr.recipe_id IN ($placeholders)
             ORDER BY rr.recipe_id, name, rr.item_id
             """.trimIndent()
