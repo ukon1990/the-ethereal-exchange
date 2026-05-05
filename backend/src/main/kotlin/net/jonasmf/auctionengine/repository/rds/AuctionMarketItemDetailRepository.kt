@@ -1025,6 +1025,22 @@ class AuctionMarketItemDetailRepository(
         )
     }
 
+    /**
+     * Returns true when the given recipe exists and produces the given crafted item. Used to enforce
+     * the contract on `GET .../auction-market-item-crafting-analytics`, which requires the recipe and
+     * item to be a valid pair so the analytics can return 404 instead of an empty 200 payload.
+     */
+    fun recipeProducesItem(
+        recipeId: Int,
+        itemId: Int,
+    ): Boolean =
+        jdbcTemplate.queryForObject(
+            "SELECT EXISTS (SELECT 1 FROM recipe WHERE id = ? AND crafted_item_id = ?)",
+            Boolean::class.java,
+            recipeId,
+            itemId,
+        ) == true
+
     fun loadCraftingAnalyticsDaily(
         connectedRealmId: Int,
         commodityConnectedRealmId: Int,

@@ -8,8 +8,11 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.web.server.ResponseStatusException
 
 class AuctionMarketItemDetailServiceTest : IntegrationTestBase() {
     @Autowired
@@ -167,6 +170,27 @@ class AuctionMarketItemDetailServiceTest : IntegrationTestBase() {
         val heatmapCell = analytics.heatmap.single { it.dayOfWeek == latestDow && it.hourOfDay == 10 }
         assertEquals(1, heatmapCell.sampleCount)
         assertEquals(45.0, heatmapCell.profit!!, 0.01)
+    }
+
+    @Test
+    fun `crafting analytics returns 404 when recipe does not produce the requested item`() {
+        MarketSearchTestFixtures.seedMarketSearchData(jdbcTemplate)
+        MarketSearchTestFixtures.augmentMarketSearchDataForCrafting(jdbcTemplate)
+
+        val ex =
+            assertThrows<ResponseStatusException> {
+                service.craftingAnalytics(
+                    regionCode = "eu",
+                    realmSlug = "argent-dawn",
+                    itemId = 19019,
+                    recipeId = 999_999,
+                    bonusKey = "",
+                    modifierKey = "",
+                    petSpeciesId = 0,
+                    localeOverride = null,
+                )
+            }
+        assertEquals(HttpStatus.NOT_FOUND, ex.statusCode)
     }
 
     @Test

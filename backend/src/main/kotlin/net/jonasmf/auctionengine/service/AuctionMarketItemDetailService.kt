@@ -430,6 +430,12 @@ class AuctionMarketItemDetailService(
         localeOverride: String?,
     ): AuctionMarketItemCraftingAnalyticsResponse {
         val context = auctionMarketContextService.resolve(regionCode, realmSlug, localeOverride)
+        if (!detailRepository.recipeProducesItem(recipeId = recipeId, itemId = itemId)) {
+            throw ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "No recipe with id=$recipeId produces item with id=$itemId",
+            )
+        }
         val rollupListing = bonusKey.isEmpty() && modifierKey.isEmpty() && petSpeciesId == 0
         val variant = !rollupListing
         val from = context.selectedSnapshot.date.minusDays(13)
