@@ -1,6 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { Subject } from 'rxjs';
 
 import { Realm } from '@api/generated';
 import { RealmSelectionService } from '@core/services/realm-selection.service';
@@ -32,6 +34,7 @@ describe('WowheadTooltipLayer', () => {
             }),
           },
         },
+        { provide: Router, useValue: { events: new Subject().asObservable() } },
       ],
     }).compileComponents();
 

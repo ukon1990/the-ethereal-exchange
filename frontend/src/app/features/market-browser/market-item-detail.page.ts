@@ -9,19 +9,21 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   ChartPanelComponent,
   CopperToCurrencyPipe,
   CurrencyAmountComponent,
   formatCopperCurrency,
+  HeatmapGridComponent,
+  type HeatmapCell,
   ItemStatCardComponent,
   PageFrameComponent,
   SymbolIconComponent,
-  type ChartPoint,
-  type ChartSeries,
 } from '@ui';
 import {
+  AuctionMarketItemCraftingAnalyticsResponse,
+  AuctionMarketItemCraftingDetail,
   AuctionMarketItemDetailPoint,
   AuctionMarketItemDetailResponse,
   AuctionMarketItemDetailSummary,
@@ -43,8 +45,25 @@ import {
   MarketItemDetailService,
 } from '@core/services/market-item-detail.service';
 import { RealmSelectionService } from '@core/services/realm-selection.service';
-
-type RegionCode = 'us' | 'eu' | 'kr' | 'tw';
+import {
+  craftingAnalyticsToChartSeries,
+  dailyPointsToChartSeries,
+  formatRealmLabel,
+  hourlyPointsToChartSeries,
+  hourlyPriceHeatmapCellsFromPoints,
+  isRegion,
+  mergeCommodityScope,
+  priceChangeCaptionStatic,
+  realmAncestorRoute,
+  scopeFromQuery,
+  shouldFallbackToCommodityFetch,
+  shouldUseCommodityScopeByDefault,
+  showChartScopeToggleFn,
+  sortHourlyPoints,
+  type RegionCode,
+  variantEqual,
+  variantFromQuery,
+} from './market-item-detail.helpers';
 
 interface ItemDetailBackState {
   readonly returnUrl?: string;
@@ -53,7 +72,8 @@ interface ItemDetailBackState {
 
 interface TooltipRow {
   readonly label: string;
-  readonly value: string;
+  readonly value?: string;
+  readonly copperValue?: number | null;
 }
 
 @Component({
@@ -66,283 +86,12 @@ interface TooltipRow {
     PageFrameComponent,
     ChartPanelComponent,
     CopperToCurrencyPipe,
+    HeatmapGridComponent,
     CurrencyAmountComponent,
     ItemStatCardComponent,
     SymbolIconComponent,
   ],
-  template: `
-    <ee-page-frame
-      [title]="pageTitle()"
-      [eyebrow]="'Item Codex'"
-      [loading]="loading()"
-      titleId="item-codex-title"
-    >
-      @if (loading()) {
-        <div class="flex flex-wrap items-center gap-2" aria-hidden="true">
-          <div class="h-3 w-12 rounded bg-white/10 animate-pulse"></div>
-          <div class="h-3 w-20 rounded bg-white/10 animate-pulse"></div>
-          <div class="h-3 w-16 rounded bg-white/10 animate-pulse"></div>
-          <div class="h-3 w-28 rounded bg-white/10 animate-pulse"></div>
-        </div>
-      } @else {
-        <nav
-          class="ee-label flex flex-wrap items-center gap-x-1 gap-y-1 text-outline select-text"
-          aria-label="Breadcrumb"
-        >
-          <a
-            [routerLink]="['/', regionRealm().region, regionRealm().realm]"
-            class="rounded-sm hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-            >{{ regionRealm().regionLabel }}</a
-          >
-          <span aria-hidden="true">/</span>
-          <a
-            [routerLink]="['/', regionRealm().region, regionRealm().realm]"
-            class="rounded-sm hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-            >{{ regionRealm().realmLabel }}</a
-          >
-          <span aria-hidden="true">/</span>
-          <a
-            [routerLink]="['..']"
-            class="rounded-sm hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-            >Auctions</a
-          >
-          <span aria-hidden="true">/</span>
-          <span class="text-on-surface" aria-current="page">{{ itemTitle() }}</span>
-        </nav>
-      }
-
-      <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-        @if (loading()) {
-          <div class="h-9 w-36 rounded bg-white/10 animate-pulse" aria-hidden="true"></div>
-        } @else {
-          <button
-            type="button"
-            class="inline-flex w-fit items-center gap-2 rounded border border-white/10 bg-surface-container-high px-3 py-2 ee-label text-on-surface transition hover:bg-surface-container-highest focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-            (click)="goBack()"
-          >
-            <ee-symbol-icon class="text-base" name="arrow_back" aria-hidden="true" />
-            {{ backLabel() }}
-          </button>
-        }
-        @if (detail(); as d0) {
-          @if (showChartScopeToggle(d0)) {
-            <div
-              class="inline-flex w-fit max-w-full rounded border border-white/10 bg-surface-container-high p-0.5 ee-label"
-              role="group"
-              aria-label="Chart data scope"
-            >
-              <button
-                type="button"
-                class="rounded px-3 py-1.5 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-                [class.bg-primary]="chartScope() === 'realm'"
-                [class.text-on-primary]="chartScope() === 'realm'"
-                [attr.aria-pressed]="chartScope() === 'realm'"
-                [disabled]="commodityLoading()"
-                (click)="onScopeSelected('realm')"
-              >
-                Realm
-              </button>
-              <button
-                type="button"
-                class="rounded px-3 py-1.5 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-                [class.bg-primary]="chartScope() === 'commodity'"
-                [class.text-on-primary]="chartScope() === 'commodity'"
-                [attr.aria-pressed]="chartScope() === 'commodity'"
-                [disabled]="commodityLoading()"
-                (click)="onScopeSelected('commodity')"
-              >
-                Region
-              </button>
-            </div>
-          }
-        }
-      </div>
-
-      @if (loading()) {
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-hidden="true">
-          @for (i of skeletonCards; track i) {
-            <div class="ee-glass rounded-lg p-inner-padding">
-              <div class="mb-5 flex items-start justify-between gap-4">
-                <div class="h-3 w-24 rounded bg-white/10 animate-pulse"></div>
-                <div class="h-8 w-8 rounded-full bg-white/10 animate-pulse"></div>
-              </div>
-              <div class="h-7 w-32 rounded bg-white/10 animate-pulse"></div>
-              <div class="mt-3 h-3 w-28 rounded bg-white/10 animate-pulse"></div>
-            </div>
-          }
-        </div>
-        <div class="space-y-4" aria-hidden="true">
-          @for (i of skeletonCharts; track i) {
-            <section class="ee-glass rounded-lg p-inner-padding">
-              <div class="mb-6 flex items-center justify-between gap-4">
-                <div class="h-5 w-36 rounded bg-white/10 animate-pulse"></div>
-                <div class="h-3 w-16 rounded bg-white/10 animate-pulse"></div>
-              </div>
-              <div class="relative h-64 overflow-hidden border-b border-l border-white/10">
-                <div class="absolute inset-x-5 top-1/4 h-px bg-white/10"></div>
-                <div class="absolute inset-x-5 top-1/2 h-px bg-white/10"></div>
-                <div class="absolute inset-x-5 top-3/4 h-px bg-white/10"></div>
-                <div class="absolute inset-x-6 bottom-4 flex h-36 items-end gap-2">
-                  @for (bar of skeletonBars; track bar.index) {
-                    <div
-                      class="w-full rounded-t bg-white/10 animate-pulse"
-                      [style.height.%]="bar.height"
-                    ></div>
-                  }
-                </div>
-              </div>
-            </section>
-          }
-        </div>
-      } @else if (error()) {
-        <div class="ee-glass rounded-lg border border-error/40 p-inner-padding text-error">
-          Could not load this item. Try again from the market browser.
-        </div>
-      } @else if (detail(); as d) {
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <ee-item-stat-card
-            [label]="activeScopeLabel() + ' price'"
-            icon="payments"
-            [currency]="activeScopePrice(d.summary) | copperToCurrency"
-            [caption]="activeScopePriceCaption(d.summary)"
-            tone="primary"
-          />
-          <ee-item-stat-card
-            [label]="activeScopeLabel() + ' quantity'"
-            icon="inventory_2"
-            [value]="quantityLabel(activeScopeQuantity(d.summary))"
-            [caption]="''"
-          />
-        </div>
-
-        <p class="ee-data text-on-surface-variant select-text">
-          Snapshot: realm {{ d.selectedRealm.date ?? '—' }}, hour
-          {{ d.selectedRealm.hourOfDay ?? '—' }}
-          @if (showCommoditySnapshotLine(d) && chartScope() === 'commodity') {
-            <span>
-              · commodity {{ d.commodity.date ?? '—' }}, hour
-              {{ d.commodity.hourOfDay ?? '—' }}</span
-            >
-          }
-        </p>
-
-        @if (d.marketDataSources.length) {
-          <p class="ee-label text-outline select-text">
-            Data version:
-            @for (s of d.marketDataSources; track s.connectedRealmId) {
-              <span class="ml-2 font-mono text-[0.7rem]">{{
-                s.auctionHouseLastModified ?? '—'
-              }}</span>
-            }
-          </p>
-        }
-
-        <ng-template #dailyChartTip let-ctx>
-          <div
-            class="ee-glass min-w-64 rounded-md border border-white/15 bg-surface-container/95 px-3 py-2 text-left text-xs text-on-surface shadow-lg backdrop-blur-md"
-          >
-            <div class="ee-label text-outline mb-1.5">{{ dailyTooltipTitle(d, ctx.x) }}</div>
-            <div class="space-y-1 font-space-mono text-[11px]">
-              @for (row of dailyTooltipRows(d, ctx.x); track row.label) {
-                <div class="flex justify-between gap-4">
-                  <span class="text-outline">{{ row.label }}</span>
-                  <span class="text-on-surface">{{ row.value }}</span>
-                </div>
-              }
-              @if (!dailyTooltipRows(d, ctx.x).length) {
-                <div class="text-outline">No values for this day</div>
-              }
-            </div>
-          </div>
-        </ng-template>
-
-        <ng-template #hourlyChartTip let-ctx>
-          <div
-            class="ee-glass min-w-64 rounded-md border border-white/15 bg-surface-container/95 px-3 py-2 text-left text-xs text-on-surface shadow-lg backdrop-blur-md"
-          >
-            <div class="ee-label text-outline mb-1.5">{{ hourlyTooltipTitle(d, ctx.x) }}</div>
-            <div class="space-y-1 font-space-mono text-[11px]">
-              @for (row of hourlyTooltipRows(d, ctx.x); track row.label) {
-                <div class="flex justify-between gap-4">
-                  <span class="text-outline">{{ row.label }}</span>
-                  <span class="text-on-surface">{{ row.value }}</span>
-                </div>
-              }
-              @if (!hourlyTooltipRows(d, ctx.x).length) {
-                <div class="text-outline">No values for this hour</div>
-              }
-            </div>
-          </div>
-        </ng-template>
-
-        <ee-chart-panel
-          title="Daily market"
-          rangeLabel="14 days"
-          [series]="dailyChartSeries()"
-          [tooltipTemplate]="dailyChartTip"
-          description="Average quantity per hour as bars; buyout spread and average as lines."
-        />
-
-        <ee-chart-panel
-          title="Hourly market"
-          rangeLabel="14 days"
-          [series]="hourlyChartSeries()"
-          [tooltipTemplate]="hourlyChartTip"
-          description="Listed quantity per hour over 14 days as bars; buyout spread and average as lines."
-        />
-
-        @if (d.crafting) {
-          <section class="ee-glass rounded-lg p-inner-padding">
-            <h2 class="ee-section-heading mb-4 flex items-center gap-2 text-on-surface">
-              <ee-symbol-icon class="text-outline" name="handyman" />
-              Crafting
-            </h2>
-            <div class="overflow-x-auto">
-              <table class="w-full border-collapse ee-data text-left text-on-surface">
-                <thead>
-                  <tr class="border-b border-white/10 ee-label text-outline">
-                    <th class="py-2 pr-4">Recipe</th>
-                    <th class="py-2 pr-4 text-right">Reagent cost</th>
-                    <th class="py-2 pr-4 text-right">Buyout</th>
-                    <th class="py-2 pr-4 text-right">Profit</th>
-                    <th class="py-2 text-right">ROI</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr class="border-b border-white/5">
-                    <td class="py-3 pr-4 select-text">
-                      {{ d.crafting.recipeName ?? d.crafting.recipeId }}
-                    </td>
-                    <td class="py-3 pr-4 text-right tabular-nums select-text">
-                      <ee-currency-amount
-                        class="inline-flex justify-end"
-                        [amount]="d.crafting.reagentCost | copperToCurrency"
-                      />
-                    </td>
-                    <td class="py-3 pr-4 text-right tabular-nums select-text">
-                      <ee-currency-amount
-                        class="inline-flex justify-end"
-                        [amount]="d.crafting.buyout | copperToCurrency"
-                      />
-                    </td>
-                    <td class="py-3 pr-4 text-right tabular-nums select-text">
-                      <ee-currency-amount
-                        class="inline-flex justify-end"
-                        [amount]="d.crafting.profit | copperToCurrency"
-                      />
-                    </td>
-                    <td class="py-3 text-right tabular-nums select-text">
-                      {{ formatRoi(d.crafting.roiPercent) }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-        }
-      }
-    </ee-page-frame>
-  `,
+  templateUrl: './market-item-detail.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MarketItemDetailPage {
@@ -360,6 +109,17 @@ export class MarketItemDetailPage {
   protected readonly detail = signal<AuctionMarketItemDetailResponse | null>(null);
   protected readonly commodityLoaded = signal(false);
   protected readonly chartScope = signal<'realm' | 'commodity'>('realm');
+  protected readonly selectedRecipeId = signal<number | null>(null);
+  protected readonly craftingAnalytics = signal<AuctionMarketItemCraftingAnalyticsResponse | null>(
+    null,
+  );
+  protected readonly analyticsLoading = signal(false);
+  protected readonly analyticsError = signal(false);
+  private analyticsRequestId = 0;
+  protected readonly heatmapRowLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
+  protected readonly heatmapColumnLabels = Array.from({ length: 24 }, (_, h) =>
+    String(h).padStart(2, '0'),
+  );
   protected readonly skeletonCards = [0, 1, 2, 3] as const;
   protected readonly skeletonCharts = [0, 1] as const;
   protected readonly skeletonBars = [
@@ -376,6 +136,8 @@ export class MarketItemDetailPage {
     { index: 10, height: 46 },
     { index: 11, height: 66 },
   ] as const;
+  protected readonly heatmapSkeletonRows = Array.from({ length: 7 }, (_, i) => i);
+  protected readonly heatmapSkeletonCols = Array.from({ length: 24 }, (_, i) => i);
 
   private readonly backState = signal<ItemDetailBackState>({});
 
@@ -383,19 +145,31 @@ export class MarketItemDetailPage {
     region: RegionCode;
     realmSlug: string;
     itemId: number;
+    recipeId: string | null;
     variant: ItemDetailVariantParams;
+    listSegment: string;
+    listLabel: string;
   } | null>(null);
 
   protected readonly regionRealm = computed(() => {
     const ctx = this.routeCtx();
     if (!ctx) {
-      return { region: '', realm: '', realmLabel: '', regionLabel: '' };
+      return {
+        region: '',
+        realm: '',
+        realmLabel: '',
+        regionLabel: '',
+        marketListSegment: 'auctions',
+        marketListLabel: 'Auctions',
+      };
     }
     return {
       region: ctx.region,
       realm: ctx.realmSlug,
       realmLabel: formatRealmLabel(ctx.realmSlug),
       regionLabel: ctx.region.toUpperCase(),
+      marketListSegment: ctx.listSegment,
+      marketListLabel: ctx.listLabel,
     };
   });
 
@@ -414,13 +188,39 @@ export class MarketItemDetailPage {
   });
 
   protected readonly hourlyChartSeries = computed(() => {
-    const d = this.detail();
-    if (!d) return [];
-    const pts =
-      d.regionalMetricsRedundant || this.chartScope() === 'realm'
-        ? d.hourlySeriesRealm
-        : d.hourlySeriesCommodity;
+    const pts = this.hourlyPointsForActiveScope();
     return hourlyPointsToChartSeries(pts);
+  });
+
+  protected readonly selectedCrafting = computed<AuctionMarketItemCraftingDetail | null>(() => {
+    const craftings = this.detail()?.craftings ?? [];
+    if (!craftings.length) return null;
+    return craftings.find((c) => c.recipeId === this.selectedRecipeId()) ?? craftings[0];
+  });
+
+  protected readonly craftingAnalyticsSeries = computed(() => {
+    const analytics = this.craftingAnalytics();
+    if (!analytics) return [];
+    return craftingAnalyticsToChartSeries(analytics);
+  });
+
+  protected readonly craftingHeatmapCells = computed<HeatmapCell[]>(() =>
+    (this.craftingAnalytics()?.heatmap ?? []).map((cell) => ({
+      row: cell.dayOfWeek,
+      col: cell.hourOfDay,
+      value: cell.profit,
+      label: [
+        `profit ${formatCopperCurrency(cell.profit)}`,
+        `price ${formatCopperCurrency(cell.outputUnitPrice)}`,
+        `ROI ${this.formatRoi(cell.roiPercent)}`,
+        `n=${cell.sampleCount}`,
+      ].join(' · '),
+    })),
+  );
+
+  protected readonly hourlyPriceHeatmapCells = computed<HeatmapCell[]>(() => {
+    const points = this.hourlyPointsForActiveScope();
+    return hourlyPriceHeatmapCellsFromPoints(points);
   });
 
   constructor() {
@@ -434,12 +234,20 @@ export class MarketItemDetailPage {
 
     const realmRoute = realmAncestorRoute(this.route);
 
-    combineLatest([realmRoute.paramMap, this.route.paramMap, this.route.queryParamMap])
+    combineLatest([
+      realmRoute.paramMap,
+      this.route.paramMap,
+      this.route.data,
+      this.route.queryParamMap,
+    ])
       .pipe(
-        map(([realmPm, itemPm, q]) => ({
+        map(([realmPm, itemPm, data, q]) => ({
           region: realmPm.get('region'),
           realmSlug: realmPm.get('realm'),
           itemId: Number(itemPm.get('itemId')),
+          recipeId: itemPm.get('recipeId'),
+          listSegment: (data['marketListSegment'] as string | undefined) ?? 'auctions',
+          listLabel: (data['marketListLabel'] as string | undefined) ?? 'Auctions',
           variant: variantFromQuery(q),
           initialScope: scopeFromQuery(q),
         })),
@@ -448,6 +256,8 @@ export class MarketItemDetailPage {
             a.region === b.region &&
             a.realmSlug === b.realmSlug &&
             a.itemId === b.itemId &&
+            a.recipeId === b.recipeId &&
+            a.listSegment === b.listSegment &&
             a.initialScope === b.initialScope &&
             variantEqual(a.variant, b.variant),
         ),
@@ -463,14 +273,30 @@ export class MarketItemDetailPage {
             region: ctx.region,
             realmSlug: ctx.realmSlug,
             itemId: ctx.itemId,
+            recipeId: ctx.recipeId,
             variant: ctx.variant,
+            listSegment: ctx.listSegment,
+            listLabel: ctx.listLabel,
           });
           this.loading.set(true);
           this.error.set(false);
           this.commodityLoaded.set(false);
+          this.craftingAnalytics.set(null);
+          this.analyticsError.set(false);
+          this.selectedRecipeId.set(null);
           this.chartScope.set(ctx.initialScope);
+          const preferredRecipeId =
+            ctx.listSegment === 'crafting' && ctx.recipeId ? Number(ctx.recipeId) : undefined;
           return this.detailService
-            .loadItemDetail(ctx.region, ctx.realmSlug, ctx.itemId, ctx.variant, ctx.initialScope)
+            .loadItemDetail(
+              ctx.region,
+              ctx.realmSlug,
+              ctx.itemId,
+              ctx.variant,
+              ctx.initialScope,
+              undefined,
+              preferredRecipeId,
+            )
             .pipe(
               finalize(() => this.loading.set(false)),
               catchError(() => {
@@ -485,6 +311,8 @@ export class MarketItemDetailPage {
       .subscribe((res) => {
         if (res) {
           this.detail.set(res);
+          this.selectedRecipeId.set(res.craftings[0]?.recipeId ?? null);
+          this.loadSelectedRecipeAnalytics();
           if (shouldFallbackToCommodityFetch(res)) {
             this.onScopeSelected('commodity');
             return;
@@ -502,6 +330,92 @@ export class MarketItemDetailPage {
     return this.backState().returnLabel ?? 'Back to market';
   }
 
+  protected selectRecipe(recipeId: number): void {
+    if (this.selectedRecipeId() === recipeId) return;
+    this.selectedRecipeId.set(recipeId);
+    this.loadSelectedRecipeAnalytics();
+  }
+
+  /**
+   * Implements the keyboard navigation contract of the WAI-ARIA radiogroup pattern for the recipe
+   * selector: Arrow keys move focus and selection between recipes, Home/End jump to first/last,
+   * Space/Enter activate the focused recipe (browsers already do this for buttons but we keep the
+   * branch consistent). The radiogroup uses roving tabindex via [attr.tabindex] on the buttons.
+   */
+  protected onRecipeRadioKeydown(
+    event: KeyboardEvent,
+    craftings: readonly { recipeId: number }[],
+  ): void {
+    const ARROW_KEYS = ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'Home', 'End'] as const;
+    if (!ARROW_KEYS.includes(event.key as (typeof ARROW_KEYS)[number])) return;
+    if (craftings.length === 0) return;
+
+    const current = this.selectedRecipeId();
+    const currentIndex = Math.max(
+      0,
+      craftings.findIndex((r) => r.recipeId === current),
+    );
+    let nextIndex = currentIndex;
+    switch (event.key) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+        nextIndex = (currentIndex + 1) % craftings.length;
+        break;
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        nextIndex = (currentIndex - 1 + craftings.length) % craftings.length;
+        break;
+      case 'Home':
+        nextIndex = 0;
+        break;
+      case 'End':
+        nextIndex = craftings.length - 1;
+        break;
+    }
+    if (nextIndex === currentIndex) return;
+    event.preventDefault();
+    const nextRecipe = craftings[nextIndex];
+    this.selectRecipe(nextRecipe.recipeId);
+
+    queueMicrotask(() => {
+      const target = event.currentTarget as HTMLElement | null;
+      const next = target?.querySelector<HTMLElement>(
+        `[role="radio"][data-recipe-index="${nextIndex}"]`,
+      );
+      next?.focus();
+    });
+  }
+
+  private loadSelectedRecipeAnalytics(): void {
+    const ctx = this.routeCtx();
+    const recipeId = this.selectedRecipeId();
+    if (!ctx || recipeId == null) return;
+    const reqId = ++this.analyticsRequestId;
+    this.analyticsLoading.set(true);
+    this.analyticsError.set(false);
+    this.craftingAnalytics.set(null);
+    this.detailService
+      .loadCraftingAnalytics(ctx.region, ctx.realmSlug, ctx.itemId, recipeId, ctx.variant)
+      .pipe(
+        finalize(() => {
+          if (reqId === this.analyticsRequestId) {
+            this.analyticsLoading.set(false);
+          }
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (analytics) => {
+          if (reqId !== this.analyticsRequestId) return;
+          this.craftingAnalytics.set(analytics);
+        },
+        error: () => {
+          if (reqId !== this.analyticsRequestId) return;
+          this.analyticsError.set(true);
+        },
+      });
+  }
+
   protected onScopeSelected(scope: ItemDetailScope): void {
     if (scope === 'realm') {
       this.chartScope.set('realm');
@@ -515,7 +429,15 @@ export class MarketItemDetailPage {
     if (!ctx) return;
     this.commodityLoading.set(true);
     this.detailService
-      .loadItemDetail(ctx.region, ctx.realmSlug, ctx.itemId, ctx.variant, 'commodity')
+      .loadItemDetail(
+        ctx.region,
+        ctx.realmSlug,
+        ctx.itemId,
+        ctx.variant,
+        'commodity',
+        undefined,
+        ctx.recipeId ? Number(ctx.recipeId) : undefined,
+      )
       .pipe(
         finalize(() => this.commodityLoading.set(false)),
         takeUntilDestroyed(this.destroyRef),
@@ -564,11 +486,11 @@ export class MarketItemDetailPage {
       { label: 'avg quantity', value: this.numberDisplay(point.avgQuantity) },
       { label: 'min quantity', value: this.numberDisplay(point.minQuantity) },
       { label: 'max quantity', value: this.numberDisplay(point.maxQuantity) },
-      { label: 'min price', value: formatCopperCurrency(point.minPrice) },
-      { label: 'p25 price', value: formatCopperCurrency(point.p25Price) },
-      { label: 'avg price', value: formatCopperCurrency(point.avgPrice) },
-      { label: 'p75 price', value: formatCopperCurrency(point.p75Price) },
-      { label: 'max price', value: formatCopperCurrency(point.maxPrice) },
+      { label: 'min price', copperValue: point.minPrice },
+      { label: 'p25 price', copperValue: point.p25Price },
+      { label: 'avg price', copperValue: point.avgPrice },
+      { label: 'p75 price', copperValue: point.p75Price },
+      { label: 'max price', copperValue: point.maxPrice },
     ];
   }
 
@@ -586,11 +508,9 @@ export class MarketItemDetailPage {
       { label: 'hour', value: `${String(point.hourOfDay).padStart(2, '0')}:00` },
       { label: 'timestamp', value: point.timestamp ?? '—' },
       { label: 'quantity / hour', value: this.numberDisplay(point.totalQuantity) },
-      { label: 'min price', value: formatCopperCurrency(point.minPrice) },
-      { label: 'p25 price', value: formatCopperCurrency(point.p25Price) },
-      { label: 'avg price', value: formatCopperCurrency(point.avgPrice) },
-      { label: 'p75 price', value: formatCopperCurrency(point.p75Price) },
-      { label: 'max price', value: formatCopperCurrency(point.maxPrice) },
+      { label: 'min price', copperValue: point.minPrice },
+      { label: 'avg price', copperValue: point.avgPrice },
+      { label: 'max price', copperValue: point.maxPrice },
     ];
   }
 
@@ -656,16 +576,23 @@ export class MarketItemDetailPage {
   }
 
   private hourlyTooltipPoint(
-    d: AuctionMarketItemDetailResponse,
+    _d: AuctionMarketItemDetailResponse,
     x: number,
   ): AuctionMarketItemHourlyPoint | undefined {
+    const points = this.hourlyPointsForActiveScope();
+    if (points.length === 0) return undefined;
+    const i = Math.max(0, Math.min(points.length - 1, Math.round(x)));
+    return points[i];
+  }
+
+  private hourlyPointsForActiveScope(): AuctionMarketItemHourlyPoint[] {
+    const d = this.detail();
+    if (!d) return [];
     const points =
       d.regionalMetricsRedundant || this.chartScope() === 'realm'
         ? d.hourlySeriesRealm
         : d.hourlySeriesCommodity;
-    if (points.length === 0) return undefined;
-    const i = Math.max(0, Math.min(points.length - 1, Math.round(x)));
-    return points[i];
+    return sortHourlyPoints(points);
   }
 
   private numberDisplay(value: number | null | undefined): string {
@@ -683,283 +610,4 @@ export class MarketItemDetailPage {
   private selectedLocaleForNumberPipe(): string | undefined {
     return this.realmSelection.selected()?.locale?.replace('_', '-');
   }
-}
-
-function realmAncestorRoute(route: ActivatedRoute): ActivatedRoute {
-  let r: ActivatedRoute | null = route;
-  while (r) {
-    const m = r.snapshot.paramMap;
-    if (m.has('region') && m.has('realm')) {
-      return r;
-    }
-    r = r.parent;
-  }
-  return route;
-}
-
-function variantFromQuery(q: ParamMap): ItemDetailVariantParams {
-  return {
-    bonusKey: q.get('bonusKey') ?? '',
-    modifierKey: q.get('modifierKey') ?? '',
-    petSpeciesId: Number(q.get('petSpeciesId') ?? 0) || 0,
-  };
-}
-
-function variantEqual(a: ItemDetailVariantParams, b: ItemDetailVariantParams): boolean {
-  return (
-    a.bonusKey === b.bonusKey &&
-    a.modifierKey === b.modifierKey &&
-    a.petSpeciesId === b.petSpeciesId
-  );
-}
-
-function scopeFromQuery(q: ParamMap): ItemDetailScope {
-  return q.get('scope') === 'commodity' ? 'commodity' : 'realm';
-}
-
-function isRegion(value: string | null | undefined): value is RegionCode {
-  return value === 'us' || value === 'eu' || value === 'kr' || value === 'tw';
-}
-
-function formatRealmLabel(slug: string): string {
-  const t = slug.replace(/-/g, ' ');
-  return t.length ? t.charAt(0).toUpperCase() + t.slice(1) : slug;
-}
-
-function showChartScopeToggleFn(d: AuctionMarketItemDetailResponse): boolean {
-  return !d.regionalMetricsRedundant && hasRealmScopeMetrics(d.summary);
-}
-
-function shouldUseCommodityScopeByDefault(d: AuctionMarketItemDetailResponse): boolean {
-  return d.regionalMetricsRedundant || !hasRealmScopeMetrics(d.summary);
-}
-
-function shouldFallbackToCommodityFetch(d: AuctionMarketItemDetailResponse): boolean {
-  return (
-    !d.regionalMetricsRedundant &&
-    !hasRealmScopeMetrics(d.summary) &&
-    !hasCommodityScopeMetrics(d.summary)
-  );
-}
-
-function hasRealmScopeMetrics(summary: AuctionMarketItemDetailSummary): boolean {
-  const realmPrice = summary.selectedRealmPrice;
-  const realmQty = summary.selectedRealmQuantity;
-  return (
-    (realmPrice != null && Number.isFinite(realmPrice)) ||
-    (realmQty != null && Number.isFinite(realmQty))
-  );
-}
-
-function hasCommodityScopeMetrics(summary: AuctionMarketItemDetailSummary): boolean {
-  const commodityPrice = summary.commodityPrice;
-  const commodityQty = summary.commodityQuantity;
-  return (
-    (commodityPrice != null && Number.isFinite(commodityPrice)) ||
-    (commodityQty != null && Number.isFinite(commodityQty))
-  );
-}
-
-function priceChangeCaptionStatic(pct: number | null | undefined): string {
-  if (pct == null || !Number.isFinite(pct)) return '';
-  const sign = pct > 0 ? '+' : '';
-  return `${sign}${pct.toFixed(1)}% vs prior day`;
-}
-
-function mergeCommodityScope(
-  existing: AuctionMarketItemDetailResponse | null,
-  commodity: AuctionMarketItemDetailResponse,
-): AuctionMarketItemDetailResponse {
-  if (!existing) return commodity;
-  return {
-    ...existing,
-    regionalMetricsRedundant: commodity.regionalMetricsRedundant,
-    commodity: commodity.commodity,
-    summary: {
-      ...existing.summary,
-      commodityPrice: commodity.summary.commodityPrice,
-      commodityQuantity: commodity.summary.commodityQuantity,
-      commodityPriceChangePercent: commodity.summary.commodityPriceChangePercent,
-      realmVsCommodityPricePercent: commodity.summary.realmVsCommodityPricePercent,
-    },
-    dailySeriesCommodity: commodity.dailySeriesCommodity,
-    hourlySeriesCommodity: commodity.hourlySeriesCommodity,
-    quantityPieCommodity: commodity.quantityPieCommodity,
-    marketDataSources:
-      commodity.marketDataSources.length > 0
-        ? commodity.marketDataSources
-        : existing.marketDataSources,
-  };
-}
-
-/**
- * One pass per `dailySeries*` row: bars use `avgQuantity`, lines use price fields from the same object.
- * `ee-chart-panel` uses separate `yScaleKey`s (`price` vs `quantity`) from `chart.ts`.
- */
-function dailyPointsToChartSeries(rows: readonly AuctionMarketItemDetailPoint[]): ChartSeries[] {
-  if (rows.length === 0) return [];
-
-  const qtyPts: ChartPoint[] = [];
-  const lowerPts: ChartPoint[] = [];
-  const midPts: ChartPoint[] = [];
-  const upperPts: ChartPoint[] = [];
-
-  for (let i = 0; i < rows.length; i++) {
-    const p = rows[i]!;
-    const x = i;
-
-    const q = p.avgQuantity;
-    qtyPts.push({
-      x,
-      y: q != null && Number.isFinite(q) && q >= 0 ? q : 0,
-    });
-
-    const hasPctiles =
-      p.p25Price != null &&
-      p.p75Price != null &&
-      Number.isFinite(p.p25Price) &&
-      Number.isFinite(p.p75Price);
-    const lo = hasPctiles ? p.p25Price! : p.minPrice;
-    const hi = hasPctiles ? p.p75Price! : p.maxPrice;
-    const mid = p.avgPrice;
-
-    if (lo != null && Number.isFinite(lo)) lowerPts.push({ x, y: lo });
-    if (mid != null && Number.isFinite(mid)) midPts.push({ x, y: mid });
-    if (hi != null && Number.isFinite(hi)) upperPts.push({ x, y: hi });
-  }
-
-  if (lowerPts.length === 0 && midPts.length === 0 && upperPts.length === 0) {
-    return qtyPts.length
-      ? [
-          {
-            id: 'quantity',
-            kind: 'column',
-            yScaleKey: 'quantity',
-            color: 'tertiary-container',
-            points: qtyPts,
-          },
-        ]
-      : [];
-  }
-
-  const series: ChartSeries[] = [];
-  if (qtyPts.length > 0) {
-    series.push({
-      id: 'quantity',
-      kind: 'column',
-      yScaleKey: 'quantity',
-      color: 'tertiary-container',
-      points: qtyPts,
-    });
-  }
-  if (lowerPts.length > 0) {
-    series.push({
-      id: 'low',
-      kind: 'line',
-      yScaleKey: 'price',
-      color: 'secondary',
-      points: lowerPts,
-    });
-  }
-  if (midPts.length > 0) {
-    series.push({
-      id: 'mid',
-      kind: 'line',
-      yScaleKey: 'price',
-      color: 'primary-container',
-      points: midPts,
-    });
-  }
-  if (upperPts.length > 0) {
-    series.push({ id: 'high', kind: 'line', yScaleKey: 'price', color: 'error', points: upperPts });
-  }
-  return series;
-}
-
-function hourlyPointsToChartSeries(rows: readonly AuctionMarketItemHourlyPoint[]): ChartSeries[] {
-  if (rows.length === 0) return [];
-
-  const sorted = [...rows].sort((a, b) => {
-    const ta = Date.parse(a.timestamp ?? '');
-    const tb = Date.parse(b.timestamp ?? '');
-    if (Number.isFinite(ta) && Number.isFinite(tb)) return ta - tb;
-    if (Number.isFinite(ta)) return -1;
-    if (Number.isFinite(tb)) return 1;
-    return a.hourOfDay - b.hourOfDay;
-  });
-  const qtyPts: ChartPoint[] = [];
-  const lowerPts: ChartPoint[] = [];
-  const midPts: ChartPoint[] = [];
-  const upperPts: ChartPoint[] = [];
-
-  for (let i = 0; i < sorted.length; i++) {
-    const p = sorted[i]!;
-    const x = i;
-
-    const q = p.totalQuantity;
-    qtyPts.push({
-      x,
-      y: q != null && Number.isFinite(q) && q >= 0 ? q : 0,
-    });
-
-    const hasPctiles =
-      p.p25Price != null &&
-      p.p75Price != null &&
-      Number.isFinite(p.p25Price) &&
-      Number.isFinite(p.p75Price);
-    const lo = hasPctiles ? p.p25Price! : p.minPrice;
-    const hi = hasPctiles ? p.p75Price! : p.maxPrice;
-    const mid = p.avgPrice;
-
-    if (lo != null && Number.isFinite(lo)) lowerPts.push({ x, y: lo });
-    if (mid != null && Number.isFinite(mid)) midPts.push({ x, y: mid });
-    if (hi != null && Number.isFinite(hi)) upperPts.push({ x, y: hi });
-  }
-
-  if (lowerPts.length === 0 && midPts.length === 0 && upperPts.length === 0) {
-    return qtyPts.length
-      ? [
-          {
-            id: 'quantity',
-            kind: 'column',
-            yScaleKey: 'quantity',
-            color: 'tertiary-container',
-            points: qtyPts,
-          },
-        ]
-      : [];
-  }
-
-  const series: ChartSeries[] = [];
-  if (qtyPts.length > 0) {
-    series.push({
-      id: 'quantity',
-      kind: 'column',
-      yScaleKey: 'quantity',
-      color: 'tertiary-container',
-      points: qtyPts,
-    });
-  }
-  if (lowerPts.length > 0) {
-    series.push({
-      id: 'low',
-      kind: 'line',
-      yScaleKey: 'price',
-      color: 'secondary',
-      points: lowerPts,
-    });
-  }
-  if (midPts.length > 0) {
-    series.push({
-      id: 'mid',
-      kind: 'line',
-      yScaleKey: 'price',
-      color: 'primary-container',
-      points: midPts,
-    });
-  }
-  if (upperPts.length > 0) {
-    series.push({ id: 'high', kind: 'line', yScaleKey: 'price', color: 'error', points: upperPts });
-  }
-  return series;
 }

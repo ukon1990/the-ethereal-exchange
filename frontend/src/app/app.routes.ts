@@ -39,6 +39,37 @@ export const routes: TitledRoutes = [
           },
           {
             path: 'item/:itemId',
+            data: {
+              marketListSegment: 'auctions',
+              marketListLabel: 'Auctions',
+            },
+            loadComponent: () =>
+              import('./features/market-browser/market-item-detail.page').then(
+                (m) => m.MarketItemDetailPage,
+              ),
+          },
+        ],
+      },
+      {
+        path: 'crafting',
+        title: 'Crafting',
+        icon: 'handyman',
+        loadComponent: () =>
+          import('./features/crafting/crafting-shell.page').then((m) => m.CraftingShellPage),
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./features/crafting/crafting-browser.page').then(
+                (m) => m.CraftingBrowserPage,
+              ),
+          },
+          {
+            path: ':recipeId/:itemId',
+            data: {
+              marketListSegment: 'crafting',
+              marketListLabel: 'Crafting',
+            },
             loadComponent: () =>
               import('./features/market-browser/market-item-detail.page').then(
                 (m) => m.MarketItemDetailPage,

@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   ElementRef,
+  effect,
   input,
   signal,
   TemplateRef,
@@ -53,6 +54,7 @@ export type {
         <span class="ee-label text-outline">{{ rangeLabel() }}</span>
       </div>
       <div
+        #scrollHost
         class="relative w-full min-w-0 overflow-x-auto overflow-y-hidden touch-pan-x"
         [attr.aria-label]="scrollRegionLabel()"
       >
@@ -156,6 +158,7 @@ export class ChartPanelComponent {
   private static readonly TOOLTIP_OFFSET_Y = 14;
 
   private readonly panelRoot = viewChild.required<ElementRef<HTMLElement>>('panelRoot');
+  private readonly scrollHost = viewChild.required<ElementRef<HTMLElement>>('scrollHost');
 
   readonly title = input.required<string>();
   readonly rangeLabel = input('14 days');
@@ -304,6 +307,18 @@ export class ChartPanelComponent {
   protected readonly scrollRegionLabel = computed(
     () => `${this.title()} chart, scroll horizontally for full history`,
   );
+
+  constructor() {
+    effect(() => {
+      const series = this.effectiveSeries();
+      if (series.length === 0) return;
+      // Show newest data first: once data is rendered, scroll to the rightmost edge.
+      setTimeout(() => {
+        const host = this.scrollHost().nativeElement;
+        host.scrollLeft = host.scrollWidth;
+      }, 0);
+    });
+  }
 
   protected onBandPointerEnter(event: PointerEvent, index: number): void {
     this.hoveredCategoryIndex.set(index);
