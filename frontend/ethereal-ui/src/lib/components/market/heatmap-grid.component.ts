@@ -25,9 +25,9 @@ export interface HeatmapTooltipContext {
           <span class="ee-label text-outline">{{ rangeLabel() }}</span>
         }
       </div>
-      <div class="overflow-x-auto">
+      <div class="max-w-full overflow-x-auto">
         <div
-          class="grid min-w-[42rem] gap-1"
+          class="grid min-w-[34rem] sm:min-w-[42rem] gap-1"
           role="grid"
           [attr.aria-label]="ariaLabel()"
           [style.grid-template-columns]="gridTemplateColumns()"
@@ -79,6 +79,9 @@ export interface HeatmapTooltipContext {
       }
     </div>
   `,
+  host: {
+    class: 'block min-w-0 max-w-full',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HeatmapGridComponent {

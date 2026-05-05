@@ -57,7 +57,8 @@ interface ItemDetailBackState {
 
 interface TooltipRow {
   readonly label: string;
-  readonly value: string;
+  readonly value?: string;
+  readonly copperValue?: number | null;
 }
 
 @Component({
@@ -257,7 +258,11 @@ interface TooltipRow {
               @for (row of rows; track row.label) {
                 <div class="flex justify-between gap-4">
                   <span class="text-outline">{{ row.label }}</span>
-                  <span class="text-on-surface">{{ row.value }}</span>
+                  @if (row.copperValue !== undefined) {
+                    <ee-currency-amount [amount]="row.copperValue | copperToCurrency" />
+                  } @else {
+                    <span class="text-on-surface">{{ row.value }}</span>
+                  }
                 </div>
               }
               @if (!rows.length) {
@@ -276,7 +281,11 @@ interface TooltipRow {
               @for (row of hourlyTooltipRows(d, ctx.x); track row.label) {
                 <div class="flex justify-between gap-4">
                   <span class="text-outline">{{ row.label }}</span>
-                  <span class="text-on-surface">{{ row.value }}</span>
+                  @if (row.copperValue !== undefined) {
+                    <ee-currency-amount [amount]="row.copperValue | copperToCurrency" />
+                  } @else {
+                    <span class="text-on-surface">{{ row.value }}</span>
+                  }
                 </div>
               }
               @if (!hourlyTooltipRows(d, ctx.x).length) {
@@ -296,31 +305,39 @@ interface TooltipRow {
           <div class="font-space-mono">{{ cell.label }}</div>
         </ng-template>
 
-        <ee-chart-panel
-          title="Daily market"
-          rangeLabel="14 days"
-          [series]="dailyChartSeries()"
-          [tooltipTemplate]="dailyChartTip"
-          description="Average quantity per hour as bars; buyout spread and average as lines."
-        />
+        <div class="grid gap-4 xl:grid-cols-2 2xl:grid-cols-3">
+          <div class="min-w-0 max-w-full">
+            <ee-chart-panel
+              title="Daily market"
+              rangeLabel="14 days"
+              [series]="dailyChartSeries()"
+              [tooltipTemplate]="dailyChartTip"
+              description="Average quantity per hour as bars; buyout spread and average as lines."
+            />
+          </div>
 
-        <ee-chart-panel
-          title="Hourly market"
-          rangeLabel="14 days"
-          [series]="hourlyChartSeries()"
-          [tooltipTemplate]="hourlyChartTip"
-          description="Listed quantity per hour over 14 days as bars; buyout spread and average as lines."
-        />
+          <div class="min-w-0 max-w-full">
+            <ee-chart-panel
+              title="Hourly market"
+              rangeLabel="14 days"
+              [series]="hourlyChartSeries()"
+              [tooltipTemplate]="hourlyChartTip"
+              description="Listed quantity per hour over 14 days as bars; buyout spread and average as lines."
+            />
+          </div>
 
-        <ee-heatmap-grid
-          title="Hourly price heatmap"
-          rangeLabel="14 days"
-          description="Average market unit price by day and hour."
-          [rowLabels]="heatmapRowLabels"
-          [columnLabels]="heatmapColumnLabels"
-          [cells]="hourlyPriceHeatmapCells()"
-          [tooltipTemplate]="priceHeatmapTip"
-        />
+          <div class="min-w-0 max-w-full">
+            <ee-heatmap-grid
+              title="Hourly price heatmap"
+              rangeLabel="14 days"
+              description="Average market unit price by day and hour."
+              [rowLabels]="heatmapRowLabels"
+              [columnLabels]="heatmapColumnLabels"
+              [cells]="hourlyPriceHeatmapCells()"
+              [tooltipTemplate]="priceHeatmapTip"
+            />
+          </div>
+        </div>
 
         @if (d.craftings.length) {
           <section class="ee-glass rounded-lg p-inner-padding">
@@ -483,12 +500,6 @@ interface TooltipRow {
               </div>
             </section>
           } @else if (craftingAnalytics(); as analytics) {
-            <ee-chart-panel
-              title="Crafting profit / ROI"
-              rangeLabel="14 days"
-              [series]="craftingAnalyticsSeries()"
-              description="Daily profit and ROI for selected recipe. Missing points mean incomplete pricing."
-            />
             <ng-template
               #heatmapTip
               let-cell="cell"
@@ -498,15 +509,27 @@ interface TooltipRow {
               <div class="ee-label text-outline">{{ rowLabel }} · {{ columnLabel }}:00</div>
               <div class="font-space-mono">{{ cell.label }}</div>
             </ng-template>
-            <ee-heatmap-grid
-              title="Crafting profit heatmap"
-              rangeLabel="14 days"
-              description="Average profit by day and hour for selected recipe."
-              [rowLabels]="heatmapRowLabels"
-              [columnLabels]="heatmapColumnLabels"
-              [cells]="craftingHeatmapCells()"
-              [tooltipTemplate]="heatmapTip"
-            />
+            <div class="grid gap-4 xl:grid-cols-2">
+              <div class="min-w-0 max-w-full">
+                <ee-chart-panel
+                  title="Crafting profit / ROI"
+                  rangeLabel="14 days"
+                  [series]="craftingAnalyticsSeries()"
+                  description="Daily profit and ROI for selected recipe. Missing points mean incomplete pricing."
+                />
+              </div>
+              <div class="min-w-0 max-w-full">
+                <ee-heatmap-grid
+                  title="Crafting profit heatmap"
+                  rangeLabel="14 days"
+                  description="Average profit by day and hour for selected recipe."
+                  [rowLabels]="heatmapRowLabels"
+                  [columnLabels]="heatmapColumnLabels"
+                  [cells]="craftingHeatmapCells()"
+                  [tooltipTemplate]="heatmapTip"
+                />
+              </div>
+            </div>
           } @else if (analyticsError()) {
             <div class="ee-glass rounded-lg border border-error/40 p-inner-padding text-error">
               Could not load crafting analytics.
@@ -910,11 +933,11 @@ export class MarketItemDetailPage {
       { label: 'avg quantity', value: this.numberDisplay(point.avgQuantity) },
       { label: 'min quantity', value: this.numberDisplay(point.minQuantity) },
       { label: 'max quantity', value: this.numberDisplay(point.maxQuantity) },
-      { label: 'min price', value: formatCopperCurrency(point.minPrice) },
-      { label: 'p25 price', value: formatCopperCurrency(point.p25Price) },
-      { label: 'avg price', value: formatCopperCurrency(point.avgPrice) },
-      { label: 'p75 price', value: formatCopperCurrency(point.p75Price) },
-      { label: 'max price', value: formatCopperCurrency(point.maxPrice) },
+      { label: 'min price', copperValue: point.minPrice },
+      { label: 'p25 price', copperValue: point.p25Price },
+      { label: 'avg price', copperValue: point.avgPrice },
+      { label: 'p75 price', copperValue: point.p75Price },
+      { label: 'max price', copperValue: point.maxPrice },
     ];
   }
 
@@ -932,11 +955,9 @@ export class MarketItemDetailPage {
       { label: 'hour', value: `${String(point.hourOfDay).padStart(2, '0')}:00` },
       { label: 'timestamp', value: point.timestamp ?? '—' },
       { label: 'quantity / hour', value: this.numberDisplay(point.totalQuantity) },
-      { label: 'min price', value: formatCopperCurrency(point.minPrice) },
-      { label: 'p25 price', value: formatCopperCurrency(point.p25Price) },
-      { label: 'avg price', value: formatCopperCurrency(point.avgPrice) },
-      { label: 'p75 price', value: formatCopperCurrency(point.p75Price) },
-      { label: 'max price', value: formatCopperCurrency(point.maxPrice) },
+      { label: 'min price', copperValue: point.minPrice },
+      { label: 'avg price', copperValue: point.avgPrice },
+      { label: 'max price', copperValue: point.maxPrice },
     ];
   }
 

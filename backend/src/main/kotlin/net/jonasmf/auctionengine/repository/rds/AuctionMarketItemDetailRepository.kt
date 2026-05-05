@@ -628,6 +628,8 @@ class AuctionMarketItemDetailRepository(
         modifierKey: String,
         petSpeciesId: Int,
     ): Pair<String, Array<Any?>> {
+        val priceCase = hourlyPriceCaseExpression("ash", "hs.hour_of_day")
+        val quantityCase = hourlyQuantityCaseExpression("ash", "hs.hour_of_day")
         val sql =
             if (variant) {
                 """
@@ -643,49 +645,33 @@ class AuctionMarketItemDetailRepository(
                     UNION ALL
                     SELECT hour_of_day + 1 FROM hour_spine WHERE hour_of_day < 23
                 ),
-                priced AS (
-                    SELECT
-                        v.date AS stat_date,
-                        v.timestamp,
-                        v.hour_of_day,
-                        v.price,
-                        v.quantity,
-                        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY v.price) OVER (
-                            PARTITION BY v.connected_realm_id, v.item_id, v.bonus_key, v.modifier_key, v.pet_species_id, v.date, v.hour_of_day
-                        ) AS p25_price,
-                        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY v.price) OVER (
-                            PARTITION BY v.connected_realm_id, v.item_id, v.bonus_key, v.modifier_key, v.pet_species_id, v.date, v.hour_of_day
-                        ) AS p75_price
-                    FROM v_auction_house_prices v
-                    WHERE v.connected_realm_id = ?
-                      AND v.item_id = ?
-                      AND v.date BETWEEN ? AND ?
-                      AND v.bonus_key <=> ?
-                      AND v.modifier_key <=> ?
-                      AND v.pet_species_id = ?
-                ),
                 hourly_agg AS (
                     SELECT
-                        stat_date,
-                        hour_of_day,
-                        MIN(timestamp) AS timestamp,
-                        MIN(price) AS min_price,
-                        AVG(price) AS avg_price,
-                        MIN(p25_price) AS p25_price,
-                        MIN(p75_price) AS p75_price,
-                        MAX(price) AS max_price,
-                        SUM(quantity) AS total_quantity
-                    FROM priced
-                    GROUP BY stat_date, hour_of_day
+                        ds.stat_date,
+                        hs.hour_of_day,
+                        MIN($priceCase) AS min_price,
+                        AVG($priceCase) AS avg_price,
+                        MAX($priceCase) AS max_price,
+                        SUM($quantityCase) AS total_quantity
+                    FROM date_spine ds
+                    CROSS JOIN hour_spine hs
+                    LEFT JOIN auction_stats_hourly ash
+                      ON ash.connected_realm_id = ?
+                     AND ash.item_id = ?
+                     AND ash.date = ds.stat_date
+                     AND ash.bonus_key <=> ?
+                     AND ash.modifier_key <=> ?
+                     AND ash.pet_species_id = ?
+                    GROUP BY ds.stat_date, hs.hour_of_day
                 )
                 SELECT
                     ds.stat_date,
                     hs.hour_of_day,
-                    COALESCE(ha.timestamp, DATE_ADD(TIMESTAMP(ds.stat_date), INTERVAL hs.hour_of_day HOUR)) AS timestamp,
+                    DATE_ADD(TIMESTAMP(ds.stat_date), INTERVAL hs.hour_of_day HOUR) AS timestamp,
                     ha.min_price,
                     ha.avg_price,
-                    ha.p25_price,
-                    ha.p75_price,
+                    NULL AS p25_price,
+                    NULL AS p75_price,
                     ha.max_price,
                     ha.total_quantity
                 FROM date_spine ds
@@ -709,46 +695,30 @@ class AuctionMarketItemDetailRepository(
                     UNION ALL
                     SELECT hour_of_day + 1 FROM hour_spine WHERE hour_of_day < 23
                 ),
-                priced AS (
-                    SELECT
-                        v.date AS stat_date,
-                        v.timestamp,
-                        v.hour_of_day,
-                        v.price,
-                        v.quantity,
-                        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY v.price) OVER (
-                            PARTITION BY v.connected_realm_id, v.item_id, v.date, v.hour_of_day
-                        ) AS p25_price,
-                        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY v.price) OVER (
-                            PARTITION BY v.connected_realm_id, v.item_id, v.date, v.hour_of_day
-                        ) AS p75_price
-                    FROM v_auction_house_prices v
-                    WHERE v.connected_realm_id = ?
-                      AND v.item_id = ?
-                      AND v.date BETWEEN ? AND ?
-                ),
                 hourly_agg AS (
                     SELECT
-                        stat_date,
-                        hour_of_day,
-                        MIN(timestamp) AS timestamp,
-                        MIN(price) AS min_price,
-                        AVG(price) AS avg_price,
-                        MIN(p25_price) AS p25_price,
-                        MIN(p75_price) AS p75_price,
-                        MAX(price) AS max_price,
-                        SUM(quantity) AS total_quantity
-                    FROM priced
-                    GROUP BY stat_date, hour_of_day
+                        ds.stat_date,
+                        hs.hour_of_day,
+                        MIN($priceCase) AS min_price,
+                        AVG($priceCase) AS avg_price,
+                        MAX($priceCase) AS max_price,
+                        SUM($quantityCase) AS total_quantity
+                    FROM date_spine ds
+                    CROSS JOIN hour_spine hs
+                    LEFT JOIN auction_stats_hourly ash
+                      ON ash.connected_realm_id = ?
+                     AND ash.item_id = ?
+                     AND ash.date = ds.stat_date
+                    GROUP BY ds.stat_date, hs.hour_of_day
                 )
                 SELECT
                     ds.stat_date,
                     hs.hour_of_day,
-                    COALESCE(ha.timestamp, DATE_ADD(TIMESTAMP(ds.stat_date), INTERVAL hs.hour_of_day HOUR)) AS timestamp,
+                    DATE_ADD(TIMESTAMP(ds.stat_date), INTERVAL hs.hour_of_day HOUR) AS timestamp,
                     ha.min_price,
                     ha.avg_price,
-                    ha.p25_price,
-                    ha.p75_price,
+                    NULL AS p25_price,
+                    NULL AS p75_price,
                     ha.max_price,
                     ha.total_quantity
                 FROM date_spine ds
@@ -766,8 +736,6 @@ class AuctionMarketItemDetailRepository(
                     Date.valueOf(toDate),
                     connectedRealmId,
                     itemId,
-                    Date.valueOf(fromDate),
-                    Date.valueOf(toDate),
                     bonusKey,
                     modifierKey,
                     petSpeciesId,
@@ -778,8 +746,6 @@ class AuctionMarketItemDetailRepository(
                     Date.valueOf(toDate),
                     connectedRealmId,
                     itemId,
-                    Date.valueOf(fromDate),
-                    Date.valueOf(toDate),
                 )
             }
         return sql to params
@@ -1456,4 +1422,14 @@ class AuctionMarketItemDetailRepository(
             separator = " ",
             postfix = " END",
         ) { "WHEN $it THEN $tableAlias.price${hourColumnSuffix(it)}" }
+
+    private fun hourlyQuantityCaseExpression(
+        tableAlias: String = "ash",
+        hourCol: String = "h.hour_of_day",
+    ): String =
+        (0..23).joinToString(
+            prefix = "CASE $hourCol ",
+            separator = " ",
+            postfix = " END",
+        ) { "WHEN $it THEN $tableAlias.quantity${hourColumnSuffix(it)}" }
 }

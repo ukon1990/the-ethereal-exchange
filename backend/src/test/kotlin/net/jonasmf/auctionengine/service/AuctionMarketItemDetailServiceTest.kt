@@ -56,11 +56,48 @@ class AuctionMarketItemDetailServiceTest : IntegrationTestBase() {
         assertEquals(50L, base.reagents.single().unitPrice)
         assertEquals(100L, base.reagents.single().lineTotal)
         assertTrue(base.reagents.single().priced)
+        assertTrue(
+            detail.hourlySeriesRealm.any { it.avgPrice != null },
+            "hourly realm series should include pricing values when hourly auction stats are present",
+        )
 
         val bulk = detail.craftings.single { it.recipeId == 7004 }
         assertEquals(2, bulk.craftedQuantity)
         assertEquals(50L, bulk.reagentCost)
         assertEquals(1950L, bulk.profit)
+    }
+
+    @Test
+    fun `item detail treats petSpeciesId -1 as rollup for non-pet items`() {
+        MarketSearchTestFixtures.seedMarketSearchData(jdbcTemplate)
+        MarketSearchTestFixtures.augmentMarketSearchDataForCrafting(jdbcTemplate)
+
+        val petZero =
+            service.itemDetail(
+                regionCode = "eu",
+                realmSlug = "argent-dawn",
+                itemId = 19019,
+                bonusKey = "",
+                modifierKey = "",
+                petSpeciesId = 0,
+                scope = "realm",
+                localeOverride = null,
+            )
+        val petMinusOne =
+            service.itemDetail(
+                regionCode = "eu",
+                realmSlug = "argent-dawn",
+                itemId = 19019,
+                bonusKey = "",
+                modifierKey = "",
+                petSpeciesId = -1,
+                scope = "realm",
+                localeOverride = null,
+            )
+
+        assertEquals(petZero.summary.selectedRealmPrice, petMinusOne.summary.selectedRealmPrice)
+        assertEquals(petZero.summary.selectedRealmQuantity, petMinusOne.summary.selectedRealmQuantity)
+        assertTrue(petMinusOne.hourlySeriesRealm.any { it.avgPrice != null })
     }
 
     @Test
@@ -88,6 +125,29 @@ class AuctionMarketItemDetailServiceTest : IntegrationTestBase() {
         assertEquals(900L, crafting.profit)
         assertEquals(50L, crafting.reagents.single().unitPrice)
         assertEquals(100L, crafting.reagents.single().lineTotal)
+    }
+
+    @Test
+    fun `commodity scope item detail exposes hourly commodity price values`() {
+        MarketSearchTestFixtures.seedMarketSearchData(jdbcTemplate)
+        addCommodityOnlyCraftingFixture()
+
+        val detail =
+            service.itemDetail(
+                regionCode = "eu",
+                realmSlug = "argent-dawn",
+                itemId = 19200,
+                bonusKey = "",
+                modifierKey = "",
+                petSpeciesId = -1,
+                scope = "commodity",
+                localeOverride = null,
+            )
+
+        assertTrue(
+            detail.hourlySeriesCommodity.any { it.avgPrice != null },
+            "hourly commodity series should include pricing values when commodity hourly stats are present",
+        )
     }
 
     @Test
@@ -255,6 +315,30 @@ class AuctionMarketItemDetailServiceTest : IntegrationTestBase() {
         assertEquals(1, cell.sampleCount)
         assertEquals(900.0, cell.profit!!, 0.01)
         assertNotNull(cell.roiPercent)
+    }
+
+    @Test
+    fun `item detail includes fixed daily and hourly spines even when data window is sparse`() {
+        MarketSearchTestFixtures.seedMarketSearchData(jdbcTemplate)
+
+        val detail =
+            service.itemDetail(
+                regionCode = "eu",
+                realmSlug = "argent-dawn",
+                itemId = 19019,
+                bonusKey = "",
+                modifierKey = "",
+                petSpeciesId = 0,
+                scope = "realm",
+                localeOverride = null,
+            )
+
+        assertEquals(14, detail.dailySeriesRealm.size, "daily series must always provide a 14-day spine")
+        assertEquals(
+            14 * 24,
+            detail.hourlySeriesRealm.size,
+            "hourly series must always provide a full 14x24 day/hour spine",
+        )
     }
 
     private fun addSecondRecipeForHealingPotion() {
