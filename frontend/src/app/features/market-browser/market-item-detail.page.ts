@@ -470,6 +470,7 @@ export class MarketItemDetailPage {
   );
   protected readonly analyticsLoading = signal(false);
   protected readonly analyticsError = signal(false);
+  private analyticsRequestId = 0;
   protected readonly heatmapRowLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
   protected readonly heatmapColumnLabels = Array.from({ length: 24 }, (_, h) =>
     String(h).padStart(2, '0'),
@@ -687,18 +688,29 @@ export class MarketItemDetailPage {
     const ctx = this.routeCtx();
     const recipeId = this.selectedRecipeId();
     if (!ctx || recipeId == null) return;
+    const reqId = ++this.analyticsRequestId;
     this.analyticsLoading.set(true);
     this.analyticsError.set(false);
     this.craftingAnalytics.set(null);
     this.detailService
       .loadCraftingAnalytics(ctx.region, ctx.realmSlug, ctx.itemId, recipeId, ctx.variant)
       .pipe(
-        finalize(() => this.analyticsLoading.set(false)),
+        finalize(() => {
+          if (reqId === this.analyticsRequestId) {
+            this.analyticsLoading.set(false);
+          }
+        }),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: (analytics) => this.craftingAnalytics.set(analytics),
-        error: () => this.analyticsError.set(true),
+        next: (analytics) => {
+          if (reqId !== this.analyticsRequestId) return;
+          this.craftingAnalytics.set(analytics);
+        },
+        error: () => {
+          if (reqId !== this.analyticsRequestId) return;
+          this.analyticsError.set(true);
+        },
       });
   }
 
