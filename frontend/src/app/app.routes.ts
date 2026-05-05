@@ -15,6 +15,11 @@ export const routes: TitledRoutes = [
       import('./features/select-realm/select-realm.page').then((module) => module.SelectRealmPage),
   },
   {
+    path: 'login',
+    title: 'Login',
+    loadComponent: () => import('./features/login/login.page').then((module) => module.LoginPage),
+  },
+  {
     path: ':region/:realm',
     canActivate: [realmSelectedGuard],
     children: [

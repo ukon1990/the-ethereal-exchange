@@ -85,6 +85,7 @@ Resources:
       ExplicitAuthFlows:
         - ALLOW_REFRESH_TOKEN_AUTH
         - ALLOW_USER_SRP_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
       AccessTokenValidity: 1
       IdTokenValidity: 1
       RefreshTokenValidity: 30

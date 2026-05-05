@@ -7,6 +7,29 @@ import {
 import express from 'express';
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
+import {
+  buildLoginUrl,
+  buildLogoutUrl,
+  callbackUri,
+  clearOAuthStateCookie,
+  clearSessionCookie,
+  confirmSignUp,
+  createOpaqueState,
+  createPkcePair,
+  authenticateWithPassword,
+  exchangeCodeForTokens,
+  getRequestOrigin,
+  readAuthConfig,
+  readOAuthState,
+  readSession,
+  refreshSession,
+  sessionNeedsRefresh,
+  signUpWithPassword,
+  writeOAuthStateCookie,
+  writeSessionCookie,
+  type AuthConfig,
+  type SessionPayload,
+} from './auth-session';
 import { resolveBackendOrigin } from './backend-origin';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
@@ -25,6 +48,9 @@ const hopByHopHeaders = new Set([
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
+const authConfig = readAuthConfig();
+
+app.use('/auth', express.json({ limit: '16kb' }));
 
 const requestIdHeader = 'x-request-id';
 const maxErrorMessageLength = 256;
@@ -41,6 +67,172 @@ function readRequestBody(req: express.Request): Promise<Buffer> {
   });
 }
 
+app.get('/auth/login', (req, res) => {
+  if (!authConfig) {
+    res.status(503).json({ error: 'Authentication is not configured' });
+    return;
+  }
+  const state = createOpaqueState();
+  const pkce = createPkcePair();
+  const returnTo = sanitizeReturnTo(req.query['returnTo']);
+  const screenHint = readQueryParam(req.query['mode']) === 'signup' ? 'signup' : undefined;
+  writeOAuthStateCookie(
+    res,
+    req,
+    {
+      state,
+      codeVerifier: pkce.verifier,
+      returnTo,
+    },
+    authConfig.sessionSecret,
+  );
+  res.redirect(
+    buildLoginUrl({
+      config: authConfig,
+      redirectUri: callbackUri(req),
+      state,
+      codeChallenge: pkce.challenge,
+      screenHint,
+    }),
+  );
+});
+
+app.post('/auth/login', async (req, res) => {
+  if (!authConfig) {
+    res.status(503).json({ error: 'Authentication is not configured' });
+    return;
+  }
+  const credentials = readCredentials(req.body);
+  if (!credentials) {
+    res.status(400).json({ error: 'Email and password are required' });
+    return;
+  }
+
+  try {
+    const result = await authenticateWithPassword({
+      config: authConfig,
+      email: credentials.email,
+      password: credentials.password,
+    });
+    if (result.status !== 'authenticated') {
+      res
+        .status(409)
+        .json({ error: `Unsupported authentication challenge: ${result.challengeName}` });
+      return;
+    }
+    writeSessionCookie(res, req, result.session, authConfig.sessionSecret);
+    res.json({ authenticated: true });
+  } catch (error) {
+    console.error(`Password login failed ${formatErrorForLogSafe(error)}`);
+    res.status(401).json({ error: 'Invalid email or password' });
+  }
+});
+
+app.post('/auth/signup', async (req, res) => {
+  if (!authConfig) {
+    res.status(503).json({ error: 'Authentication is not configured' });
+    return;
+  }
+  const credentials = readCredentials(req.body);
+  if (!credentials) {
+    res.status(400).json({ error: 'Email and password are required' });
+    return;
+  }
+
+  try {
+    const result = await signUpWithPassword({
+      config: authConfig,
+      email: credentials.email,
+      password: credentials.password,
+    });
+    res.status(201).json({
+      confirmed: result.confirmed,
+      email: credentials.email,
+    });
+  } catch (error) {
+    console.error(`Password signup failed ${formatErrorForLogSafe(error)}`);
+    res.status(400).json({ error: userSafeAuthError(error) });
+  }
+});
+
+app.post('/auth/confirm', async (req, res) => {
+  if (!authConfig) {
+    res.status(503).json({ error: 'Authentication is not configured' });
+    return;
+  }
+  const email = readBodyString(req.body, 'email')?.trim().toLowerCase();
+  const code = readBodyString(req.body, 'code')?.trim();
+  if (!email || !code) {
+    res.status(400).json({ error: 'Email and confirmation code are required' });
+    return;
+  }
+
+  try {
+    await confirmSignUp({
+      config: authConfig,
+      email,
+      code,
+    });
+    res.json({ confirmed: true });
+  } catch (error) {
+    console.error(`Signup confirmation failed ${formatErrorForLogSafe(error)}`);
+    res.status(400).json({ error: userSafeAuthError(error) });
+  }
+});
+
+app.get('/auth/callback', async (req, res) => {
+  if (!authConfig) {
+    res.status(503).json({ error: 'Authentication is not configured' });
+    return;
+  }
+  const code = readQueryParam(req.query['code']);
+  const state = readQueryParam(req.query['state']);
+  const oauthState = readOAuthState(req, authConfig.sessionSecret);
+  clearOAuthStateCookie(res, req);
+
+  if (!code || !state || !oauthState || oauthState.state !== state) {
+    res.status(400).json({ error: 'Invalid authentication callback' });
+    return;
+  }
+
+  try {
+    const session = await exchangeCodeForTokens({
+      config: authConfig,
+      code,
+      codeVerifier: oauthState.codeVerifier,
+      redirectUri: callbackUri(req),
+    });
+    writeSessionCookie(res, req, session, authConfig.sessionSecret);
+    res.redirect(oauthState.returnTo);
+  } catch (error) {
+    console.error(`Authentication callback failed ${formatErrorForLogSafe(error)}`);
+    res.status(502).json({ error: 'Authentication failed' });
+  }
+});
+
+app.get('/auth/logout', (req, res) => {
+  clearSessionCookie(res, req);
+  if (!authConfig) {
+    res.redirect('/');
+    return;
+  }
+  res.redirect(
+    buildLogoutUrl({
+      config: authConfig,
+      logoutUri: `${getRequestOrigin(req)}/`,
+    }),
+  );
+});
+
+app.get('/auth/me', async (req, res) => {
+  const session = await resolveValidSession(req, res, authConfig);
+  if (!session) {
+    res.status(401).json({ authenticated: false });
+    return;
+  }
+  res.json({ authenticated: true });
+});
+
 app.use('/api', async (req, res) => {
   const proxyStart = performance.now();
   const requestId = readRequestId(req) ?? randomUUID();
@@ -52,7 +244,7 @@ app.use('/api', async (req, res) => {
     const headers = new Headers();
 
     for (const [key, value] of Object.entries(req.headers)) {
-      if (!value || key.toLowerCase() === 'host') {
+      if (!value || ['host', 'cookie', 'authorization'].includes(key.toLowerCase())) {
         continue;
       }
       if (Array.isArray(value)) {
@@ -64,6 +256,10 @@ app.use('/api', async (req, res) => {
       }
     }
     headers.set(requestIdHeader, requestId);
+    const session = await resolveValidSession(req, res, authConfig);
+    if (session) {
+      headers.set('Authorization', `Bearer ${session.accessToken}`);
+    }
     res.setHeader('X-Request-Id', requestId);
 
     const bodyBuffer = ['GET', 'HEAD'].includes(req.method)
@@ -141,6 +337,78 @@ app.use('/api', async (req, res) => {
     sendBadGatewayResponse(res, requestId);
   }
 });
+
+async function resolveValidSession(
+  req: express.Request,
+  res: express.Response,
+  config: AuthConfig | null,
+): Promise<SessionPayload | null> {
+  if (!config) {
+    return null;
+  }
+  const session = readSession(req, config.sessionSecret);
+  if (!session) {
+    return null;
+  }
+  if (!sessionNeedsRefresh(session)) {
+    return session;
+  }
+  try {
+    const refreshed = await refreshSession(config, session);
+    if (!refreshed) {
+      clearSessionCookie(res, req);
+      return null;
+    }
+    writeSessionCookie(res, req, refreshed, config.sessionSecret);
+    return refreshed;
+  } catch (error) {
+    console.error(`Session refresh failed ${formatErrorForLogSafe(error)}`);
+    clearSessionCookie(res, req);
+    return null;
+  }
+}
+
+function sanitizeReturnTo(value: unknown): string {
+  const raw = readQueryParam(value);
+  if (!raw || !raw.startsWith('/') || raw.startsWith('//') || raw.startsWith('/auth/')) {
+    return '/';
+  }
+  return raw;
+}
+
+function readQueryParam(value: unknown): string | null {
+  if (Array.isArray(value)) {
+    return readQueryParam(value[0]);
+  }
+  return typeof value === 'string' && value.trim() ? value : null;
+}
+
+function readCredentials(value: unknown): { email: string; password: string } | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const email = readBodyString(value, 'email')?.trim().toLowerCase();
+  const password = readBodyString(value, 'password');
+  if (!email || !password) {
+    return null;
+  }
+  return { email, password };
+}
+
+function readBodyString(value: unknown, key: string): string | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const item = value[key];
+  return typeof item === 'string' ? item : null;
+}
+
+function userSafeAuthError(error: unknown): string {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+  return 'Authentication request failed';
+}
 
 function readRequestId(req: express.Request): string | null {
   const value = req.headers[requestIdHeader];
