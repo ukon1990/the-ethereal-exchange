@@ -23,7 +23,7 @@ on:
         type: choice
         options:
           - all
-          - eu-west-1
+          - eu-north-1
           - us-west-1
           - ap-northeast-2
       run_app_rollout:

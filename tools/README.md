@@ -35,8 +35,8 @@ Custom URLs, output folder, a capped array sample size, and a custom enum thresh
 
 ```powershell
 node .\tools\map-auction-json.mjs `
-  --url "https://wah-data-eu.s3.eu-west-1.amazonaws.com/engine/auctions/europe/commodity/1773733732000.json.gz" `
-  --url "https://wah-data-eu.s3.eu-west-1.amazonaws.com/engine/auctions/europe/1403/1773733732000.json.gz" `
+  --url "https://wah-data-eu.s3.eu-north-1.amazonaws.com/engine/auctions/europe/commodity/1773733732000.json.gz" `
+  --url "https://wah-data-eu.s3.eu-north-1.amazonaws.com/engine/auctions/europe/1403/1773733732000.json.gz" `
   --bearer-token "<token>" `
   --out-dir .\target\auction-json-map `
   --sample-size 250 `

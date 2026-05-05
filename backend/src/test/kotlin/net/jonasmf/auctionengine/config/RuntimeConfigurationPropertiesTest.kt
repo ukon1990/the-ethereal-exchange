@@ -17,7 +17,7 @@ class RuntimeConfigurationPropertiesTest {
                 "blizzard.client-id=id",
                 "blizzard.client-secret=secret",
                 "wae.s3.buckets.europe.name=wah-data-eu",
-                "wae.s3.buckets.europe.bucket-region=eu-west-1",
+                "wae.s3.buckets.europe.bucket-region=eu-north-1",
                 "wae.s3.buckets.northamerica.name=wah-data-us",
                 "wae.s3.buckets.northamerica.bucket-region=us-west-1",
                 "wae.s3.buckets.korea.name=wah-data-as",

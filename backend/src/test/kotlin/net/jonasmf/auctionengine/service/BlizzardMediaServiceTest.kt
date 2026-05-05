@@ -37,11 +37,11 @@ class BlizzardMediaServiceTest {
             DownloadedMediaAsset(byteArrayOf(1, 2, 3), "image/png")
         every {
             amazonS3Service.uploadBytes(Region.Europe, "media/item/19019.png", byteArrayOf(1, 2, 3), "image/png")
-        } returns "https://wah-data-eu.s3.eu-west-1.amazonaws.com/media/item/19019.png"
+        } returns "https://wah-data-eu.s3.eu-north-1.amazonaws.com/media/item/19019.png"
 
         val resolved = service.resolve(Region.Europe, BlizzardMediaType.ITEM, 19019)
 
-        assertEquals("https://wah-data-eu.s3.eu-west-1.amazonaws.com/media/item/19019.png", resolved?.mediaUrl)
+        assertEquals("https://wah-data-eu.s3.eu-north-1.amazonaws.com/media/item/19019.png", resolved?.mediaUrl)
         assertEquals("https://eu.api.blizzard.com/data/wow/media/item/19019", resolved?.mediaSourceUrl)
         verify(exactly = 1) { mediaApiClient.downloadAsset("https://render.example.test/icon.png") }
     }
@@ -57,11 +57,11 @@ class BlizzardMediaServiceTest {
         every { mediaApiClient.getMedia("recipe", 42363, Region.Europe, null) } returns media
         every { amazonS3Service.objectExists(Region.Europe, "media/recipe/42363.jpg") } returns true
         every { amazonS3Service.publicUrl(Region.Europe, "media/recipe/42363.jpg") } returns
-            "https://wah-data-eu.s3.eu-west-1.amazonaws.com/media/recipe/42363.jpg"
+            "https://wah-data-eu.s3.eu-north-1.amazonaws.com/media/recipe/42363.jpg"
 
         val resolved = service.resolve(Region.Europe, BlizzardMediaType.RECIPE, 42363)
 
-        assertEquals("https://wah-data-eu.s3.eu-west-1.amazonaws.com/media/recipe/42363.jpg", resolved?.mediaUrl)
+        assertEquals("https://wah-data-eu.s3.eu-north-1.amazonaws.com/media/recipe/42363.jpg", resolved?.mediaUrl)
         verify(exactly = 0) { mediaApiClient.downloadAsset(any()) }
     }
 
@@ -86,7 +86,7 @@ class BlizzardMediaServiceTest {
             DownloadedMediaAsset(byteArrayOf(1, 2, 3), "image/png")
         every {
             amazonS3Service.uploadBytes(Region.Europe, "media/item/19019.png", byteArrayOf(1, 2, 3), "image/png")
-        } returns "https://wah-data-eu.s3.eu-west-1.amazonaws.com/media/item/19019.png"
+        } returns "https://wah-data-eu.s3.eu-north-1.amazonaws.com/media/item/19019.png"
 
         val resolved =
             service.resolve(
@@ -96,7 +96,7 @@ class BlizzardMediaServiceTest {
                 sourceHref = "https://eu.api.blizzard.com/data/wow/media/item/19019",
             )
 
-        assertEquals("https://wah-data-eu.s3.eu-west-1.amazonaws.com/media/item/19019.png", resolved?.mediaUrl)
+        assertEquals("https://wah-data-eu.s3.eu-north-1.amazonaws.com/media/item/19019.png", resolved?.mediaUrl)
         verify(exactly = 1) { mediaApiClient.downloadAsset("https://render.example.test/icon.png") }
         verify(exactly = 1) {
             amazonS3Service.uploadBytes(Region.Europe, "media/item/19019.png", byteArrayOf(1, 2, 3), "image/png")
@@ -122,7 +122,7 @@ class BlizzardMediaServiceTest {
         every { mediaApiClient.getMedia("item", 3555131, Region.Europe, null) } returns media
         every { amazonS3Service.objectExists(Region.Europe, "media/item-appearance/42762.png") } returns true
         every { amazonS3Service.publicUrl(Region.Europe, "media/item-appearance/42762.png") } returns
-            "https://wah-data-eu.s3.eu-west-1.amazonaws.com/media/item-appearance/42762.png"
+            "https://wah-data-eu.s3.eu-north-1.amazonaws.com/media/item-appearance/42762.png"
 
         val resolved =
             service.resolve(
@@ -133,7 +133,7 @@ class BlizzardMediaServiceTest {
             )
 
         assertEquals(
-            "https://wah-data-eu.s3.eu-west-1.amazonaws.com/media/item-appearance/42762.png",
+            "https://wah-data-eu.s3.eu-north-1.amazonaws.com/media/item-appearance/42762.png",
             resolved?.mediaUrl,
         )
     }

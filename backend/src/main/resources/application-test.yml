@@ -6,7 +6,7 @@ spring:
     cloud:
         aws:
             region:
-                static: eu-west-1
+                static: eu-north-1
             credentials:
                 access-key: dummy-access-key
                 secret-key: dummy-secret-key
@@ -32,7 +32,7 @@ wae:
                 bucket-region: us-west-1
             europe:
                 name: wah-data-eu
-                bucket-region: eu-west-1
+                bucket-region: eu-north-1
             korea:
                 name: wah-data-as
                 bucket-region: ap-northeast-2

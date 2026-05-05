@@ -32,7 +32,7 @@ class ProfessionRecipeScheduleTest {
         WaeS3Properties(
             buckets =
                 mapOf(
-                    "europe" to BucketConfig("wah-data-eu", "eu-west-1"),
+                    "europe" to BucketConfig("wah-data-eu", "eu-north-1"),
                     "northamerica" to BucketConfig("wah-data-us", "us-west-1"),
                     "korea" to BucketConfig("wah-data-as", "ap-northeast-2"),
                     "taiwan" to BucketConfig("wah-data-as", "ap-northeast-2"),
@@ -54,7 +54,7 @@ class ProfessionRecipeScheduleTest {
         }
 
         try {
-            val schedule = ProfessionRecipeSchedule(properties, s3Properties, service, "eu-west-1")
+            val schedule = ProfessionRecipeSchedule(properties, s3Properties, service, "eu-north-1")
             val future = executor.submit<Unit> { schedule.syncProfessionRecipes() }
             assertTrue(started.await(5, TimeUnit.SECONDS))
 
@@ -80,7 +80,7 @@ class ProfessionRecipeScheduleTest {
         val service = mockk<ProfessionRecipeSyncService>()
         every { service.syncConfiguredStaticDataRegion() } returns mockk<ProfessionRecipeSyncResult>(relaxed = true)
 
-        val schedule = ProfessionRecipeSchedule(properties, s3Properties, service, "eu-west-1")
+        val schedule = ProfessionRecipeSchedule(properties, s3Properties, service, "eu-north-1")
 
         schedule.syncProfessionRecipes()
         schedule.syncProfessionRecipes()
@@ -94,7 +94,7 @@ class ProfessionRecipeScheduleTest {
         every { service.syncConfiguredStaticDataRegion() } throws RuntimeException("boom") andThen
             mockk<ProfessionRecipeSyncResult>(relaxed = true)
 
-        val schedule = ProfessionRecipeSchedule(properties, s3Properties, service, "eu-west-1")
+        val schedule = ProfessionRecipeSchedule(properties, s3Properties, service, "eu-north-1")
 
         runCatching { schedule.syncProfessionRecipes() }
         schedule.syncProfessionRecipes()
@@ -115,7 +115,7 @@ class ProfessionRecipeScheduleTest {
             assertTrue(
                 messages.any {
                     it.contains(
-                        "Skipping scheduled profession/recipe sync because deployment AWS region us-west-1 does not match static data region Europe bucket region eu-west-1.",
+                        "Skipping scheduled profession/recipe sync because deployment AWS region us-west-1 does not match static data region Europe bucket region eu-north-1.",
                     )
                 },
             )

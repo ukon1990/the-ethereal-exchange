@@ -3,7 +3,7 @@
 This document captures a point-in-time production memory baseline and a repeatable check process.
 
 - Baseline date: **2026-04-08 (UTC)**
-- Scope: `eu-west-1`, `us-west-1`, `ap-northeast-2`
+- Scope: `eu-north-1`, `us-west-1`, `ap-northeast-2`
 - Source: CloudWatch logs + SSM `docker stats` probes
 
 For deployment and incident context, see [infra/README.md](../infra/README.md). For project overview, see [README.md](../README.md).
@@ -12,7 +12,7 @@ For deployment and incident context, see [infra/README.md](../infra/README.md). 
 
 | Region | AWS region | Instance type | Instance RAM | Live container memory | JVM used avg / p95 / max (MB) | JVM total max (MB) | JVM configured max (MB) | GC p95 / max pause | Notable signals |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| EU | `eu-west-1` | `t4g.small` | 2048 MiB | `721.4 MiB / 1.803 GiB` (39.06%) | `171 / 258 / 312` | `354` | `1202` | `24.1 ms / 40.0 ms` | Stable, frequent humongous-allocation cycles but short pauses |
+| EU | `eu-north-1` | `t4g.small` | 2048 MiB | `721.4 MiB / 1.803 GiB` (39.06%) | `171 / 258 / 312` | `354` | `1202` | `24.1 ms / 40.0 ms` | Stable, frequent humongous-allocation cycles but short pauses |
 | US | `us-west-1` | `t4g.small` | 2048 MiB | `705.8 MiB / 1.803 GiB` (38.22%) | `152 / 234 / 292` | `379` | `1202` | `19.6 ms / 31.2 ms` | Stable, similar pattern to EU |
 | APAC | `ap-northeast-2` | `t4g.micro` | 1024 MiB | `466.7 MiB / 916.9 MiB` (50.90%) | `112 / 139 / 140` | `185` | `576` | `28.1 ms / 255.5 ms` | Tighter headroom; occasional Full GC observed |
 
@@ -48,8 +48,8 @@ Run these from your local machine with AWS CLI credentials that can read CloudWa
 
 ```bash
 aws cloudformation describe-stacks \
-  --region eu-west-1 \
-  --stack-name wah-wow-auction-engine-prod-eu-west-1 \
+  --region eu-north-1 \
+  --stack-name wah-wow-auction-engine-prod-eu-north-1 \
   --query "Stacks[0].Outputs[?OutputKey=='AppInstanceId'].OutputValue" \
   --output text
 
@@ -69,7 +69,7 @@ aws cloudformation describe-stacks \
 ### 2. Pull recent application logs (GC + JVM memory markers)
 
 ```bash
-aws logs tail /aws/ec2/wow-auction-engine/prod/eu-west-1 --since 30m
+aws logs tail /aws/ec2/wow-auction-engine/prod/eu-north-1 --since 30m
 aws logs tail /aws/ec2/wow-auction-engine/prod/us-west-1 --since 30m
 aws logs tail /aws/ec2/wow-auction-engine/prod/ap-northeast-2 --since 30m
 ```

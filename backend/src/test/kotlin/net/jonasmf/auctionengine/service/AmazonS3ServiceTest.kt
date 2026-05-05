@@ -27,7 +27,7 @@ class AmazonS3ServiceTest {
                 buckets =
                     mapOf(
                         "northamerica" to BucketConfig("wah-data-us", "us-west-1"),
-                        "europe" to BucketConfig("wah-data-eu", "eu-west-1"),
+                        "europe" to BucketConfig("wah-data-eu", "eu-north-1"),
                         "korea" to BucketConfig("wah-data-as", "ap-northeast-2"),
                         "taiwan" to BucketConfig("wah-data-as", "ap-northeast-2"),
                     ),
@@ -61,7 +61,7 @@ class AmazonS3ServiceTest {
         val clientFactory = mockk<AmazonS3ClientFactory>()
         val s3Properties =
             WaeS3Properties(
-                buckets = mapOf("europe" to BucketConfig("wah-data-eu", "eu-west-1")),
+                buckets = mapOf("europe" to BucketConfig("wah-data-eu", "eu-north-1")),
             )
         val requestSlot = mutableListOf<PutObjectRequest>()
         val service =
@@ -72,7 +72,7 @@ class AmazonS3ServiceTest {
                 s3Endpoint = "",
             )
 
-        every { clientFactory.create("eu-west-1") } returns regionalClient
+        every { clientFactory.create("eu-north-1") } returns regionalClient
         coEvery { regionalClient.putObject(any()) } answers {
             requestSlot += firstArg<PutObjectRequest>()
             mockk<PutObjectResponse>(relaxed = true)
@@ -80,7 +80,7 @@ class AmazonS3ServiceTest {
 
         val url = service.uploadBytes(Region.Europe, "media/item/19019.png", byteArrayOf(1, 2, 3), "image/png")
 
-        assertEquals("https://wah-data-eu.s3.eu-west-1.amazonaws.com/media/item/19019.png", url)
+        assertEquals("https://wah-data-eu.s3.eu-north-1.amazonaws.com/media/item/19019.png", url)
         assertEquals("wah-data-eu", requestSlot.single().bucket)
         assertEquals("media/item/19019.png", requestSlot.single().key)
         assertEquals("image/png", requestSlot.single().contentType)
@@ -93,7 +93,7 @@ class AmazonS3ServiceTest {
         val clientFactory = mockk<AmazonS3ClientFactory>()
         val s3Properties =
             WaeS3Properties(
-                buckets = mapOf("europe" to BucketConfig("wah-data-eu", "eu-west-1")),
+                buckets = mapOf("europe" to BucketConfig("wah-data-eu", "eu-north-1")),
             )
         val requestSlot = mutableListOf<HeadObjectRequest>()
         val service =
@@ -104,7 +104,7 @@ class AmazonS3ServiceTest {
                 s3Endpoint = "",
             )
 
-        every { clientFactory.create("eu-west-1") } returns regionalClient
+        every { clientFactory.create("eu-north-1") } returns regionalClient
         coEvery { regionalClient.headObject(any()) } answers {
             requestSlot += firstArg<HeadObjectRequest>()
             mockk<HeadObjectResponse>(relaxed = true)

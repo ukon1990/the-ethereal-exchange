@@ -335,7 +335,7 @@ The deploy workflow uses OIDC. It does not require long-lived AWS access keys.
 
 Make sure the AWS account can deploy into the regions listed in `infra/regions.json`, for example:
 
-- `eu-west-1`
+- `eu-north-1`
 - `us-east-1`
 - `ap-northeast-2`
 
@@ -370,7 +370,7 @@ The runtime configuration is written to SSM under:
 
 Example:
 
-`/wow-auction-engine/prod/eu-west-1/BLIZZARD_CLIENT_ID`
+`/wow-auction-engine/prod/eu-north-1/BLIZZARD_CLIENT_ID`
 
 Important keys include:
 
@@ -403,8 +403,8 @@ Example for Europe:
 
 ```bash
 aws cloudformation describe-stacks \
-  --region eu-west-1 \
-  --stack-name wah-wow-auction-engine-prod-eu-west-1 \
+  --region eu-north-1 \
+  --stack-name wah-wow-auction-engine-prod-eu-north-1 \
   --query "Stacks[0].Outputs[?OutputKey=='AppInstanceId'].OutputValue" \
   --output text
 ```
@@ -436,7 +436,7 @@ Example:
 
 ```bash
 aws ssm send-command \
-  --region eu-west-1 \
+  --region eu-north-1 \
   --instance-ids <instance-id> \
   --document-name AWS-RunShellScript \
   --comment "Inspect wow-auction-engine" \
@@ -449,7 +449,7 @@ Then fetch the output:
 
 ```bash
 aws ssm list-command-invocations \
-  --region eu-west-1 \
+  --region eu-north-1 \
   --command-id <command-id> \
   --details
 ```
@@ -461,13 +461,13 @@ If the command remains `Delayed` or `Undeliverable`, treat that as a sign the ho
 Recent logs from the regional log group:
 
 ```bash
-aws logs tail /aws/ec2/wow-auction-engine/prod/eu-west-1 --since 30m
+aws logs tail /aws/ec2/wow-auction-engine/prod/eu-north-1 --since 30m
 ```
 
 Follow logs live:
 
 ```bash
-aws logs tail /aws/ec2/wow-auction-engine/prod/eu-west-1 --follow
+aws logs tail /aws/ec2/wow-auction-engine/prod/eu-north-1 --follow
 ```
 
 Look for:
@@ -483,8 +483,8 @@ First resolve the current base URL from the stack output:
 
 ```bash
 aws cloudformation describe-stacks \
-  --region eu-west-1 \
-  --stack-name wah-wow-auction-engine-prod-eu-west-1 \
+  --region eu-north-1 \
+  --stack-name wah-wow-auction-engine-prod-eu-north-1 \
   --query "Stacks[0].Outputs[?OutputKey=='AppBaseUrl'].OutputValue" \
   --output text
 ```
@@ -493,8 +493,8 @@ Then call `/api/health` on that URL:
 
 ```bash
 curl -i "$(aws cloudformation describe-stacks \
-  --region eu-west-1 \
-  --stack-name wah-wow-auction-engine-prod-eu-west-1 \
+  --region eu-north-1 \
+  --stack-name wah-wow-auction-engine-prod-eu-north-1 \
   --query "Stacks[0].Outputs[?OutputKey=='AppBaseUrl'].OutputValue" \
   --output text)/api/health"
 ```
@@ -511,7 +511,7 @@ Use this when the host is reachable and SSM is still responsive.
 
 ```bash
 aws ssm send-command \
-  --region eu-west-1 \
+  --region eu-north-1 \
   --instance-ids <instance-id> \
   --document-name AWS-RunShellScript \
   --comment "Restart wow-auction-engine" \
@@ -525,14 +525,14 @@ Use this when the container is unresponsive and SSM or Docker commands are not m
 Reboot:
 
 ```bash
-aws ec2 reboot-instances --region eu-west-1 --instance-ids <instance-id>
+aws ec2 reboot-instances --region eu-north-1 --instance-ids <instance-id>
 ```
 
 Full stop/start:
 
 ```bash
-aws ec2 stop-instances --region eu-west-1 --instance-ids <instance-id>
-aws ec2 start-instances --region eu-west-1 --instance-ids <instance-id>
+aws ec2 stop-instances --region eu-north-1 --instance-ids <instance-id>
+aws ec2 start-instances --region eu-north-1 --instance-ids <instance-id>
 ```
 
 Because the stack uses an Elastic IP and systemd bootstraps the container on startup, a stop/start should bring the same public endpoint back.
@@ -559,7 +559,7 @@ Typical changes:
 
 The deploy contract now distinguishes the AWS deployment region from the Blizzard regions handled by that instance.
 
-- `eu-west-1` deploys the Europe stack with `blizzard_regions: ["Europe"]`
+- `eu-north-1` deploys the Europe stack with `blizzard_regions: ["Europe"]`
 - `us-west-1` deploys the North America stack with `blizzard_regions: ["NorthAmerica"]`
 - `ap-northeast-2` deploys the Asia stack with `blizzard_regions: ["Korea", "Taiwan"]`
 

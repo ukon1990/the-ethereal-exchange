@@ -33,7 +33,7 @@ class ItemScheduleTest {
         WaeS3Properties(
             buckets =
                 mapOf(
-                    "europe" to BucketConfig("wah-data-eu", "eu-west-1"),
+                    "europe" to BucketConfig("wah-data-eu", "eu-north-1"),
                     "northamerica" to BucketConfig("wah-data-us", "us-west-1"),
                     "korea" to BucketConfig("wah-data-as", "ap-northeast-2"),
                     "taiwan" to BucketConfig("wah-data-as", "ap-northeast-2"),
@@ -55,7 +55,7 @@ class ItemScheduleTest {
         }
 
         try {
-            val schedule = ItemSchedule(properties, s3Properties, service, "eu-west-1")
+            val schedule = ItemSchedule(properties, s3Properties, service, "eu-north-1")
             val future = executor.submit<Unit> { schedule.syncItems() }
             assertTrue(started.await(5, TimeUnit.SECONDS))
 
@@ -87,7 +87,7 @@ class ItemScheduleTest {
             assertTrue(
                 messages.any {
                     it.contains(
-                        "Skipping scheduled item sync because deployment AWS region us-west-1 does not match static data region Europe bucket region eu-west-1.",
+                        "Skipping scheduled item sync because deployment AWS region us-west-1 does not match static data region Europe bucket region eu-north-1.",
                     )
                 },
             )

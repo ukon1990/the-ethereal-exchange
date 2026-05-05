@@ -16,7 +16,7 @@ class AmazonS3ConfigTest {
             .withPropertyValues(
                 "spring.cloud.aws.credentials.access-key=test",
                 "spring.cloud.aws.credentials.secret-key=test",
-                "spring.cloud.aws.region.static=eu-west-1",
+                "spring.cloud.aws.region.static=eu-north-1",
             )
 
     @Test
@@ -24,7 +24,7 @@ class AmazonS3ConfigTest {
         contextRunner.run { context ->
             val client = context.getBean(S3Client::class.java)
 
-            assertEquals("eu-west-1", client.config.region)
+            assertEquals("eu-north-1", client.config.region)
             assertNull(client.config.endpointUrl)
             assertFalse(client.config.forcePathStyle)
         }
@@ -37,7 +37,7 @@ class AmazonS3ConfigTest {
             WaeS3Properties(
                 buckets =
                     mapOf(
-                        "europe" to BucketConfig("wah-data-eu", "eu-west-1"),
+                        "europe" to BucketConfig("wah-data-eu", "eu-north-1"),
                         "northamerica" to BucketConfig("wah-data-us", "us-west-1"),
                         "korea" to BucketConfig("wah-data-as", "ap-northeast-2"),
                         "taiwan" to BucketConfig("wah-data-as", "ap-northeast-2"),

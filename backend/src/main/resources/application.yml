@@ -4,7 +4,7 @@ spring:
   cloud:
     aws:
       region:
-        static: ${WAE_AWS_REGION:eu-west-1}
+        static: ${WAE_AWS_REGION:eu-north-1}
       credentials:
         access-key: ${AWS_ACCESS_KEY:local-dev-key}
         secret-key: ${AWS_SECRET_KEY:local-dev-secret}
@@ -74,7 +74,7 @@ wae:
         bucket-region: us-west-1
       europe:
         name: wah-data-eu
-        bucket-region: eu-west-1
+        bucket-region: eu-west-1 # Sticking with eu-west-1 instead of re-generating everything  when I move to eu-north-1
       korea:
         name: wah-data-as
         bucket-region: ap-northeast-2

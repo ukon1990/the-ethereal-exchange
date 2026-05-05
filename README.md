@@ -62,7 +62,7 @@ Recommended for static/reference Blizzard data syncs:
 
 For local development, AWS settings default to obvious dummy values:
 
-- `WAE_AWS_REGION=eu-west-1`
+- `WAE_AWS_REGION=eu-north-1`
 - `AWS_ACCESS_KEY=local-dev-key`
 - `AWS_SECRET_KEY=local-dev-secret`
 
@@ -149,7 +149,7 @@ docker compose -f docker-compose-db.yml down
 | `WAE_BLIZZARD_REGIONS` | Yes | `Europe` or `Korea,Taiwan` | Comma-separated app enum values, not `eu`/`kr`. Auction/realm processing follows these regions. |
 | `WAE_BLIZZARD_REGION` | No | `Europe` | Deprecated compatibility fallback for single-region setups. |
 | `WAE_STATIC_DATA_REGION` | No | `Europe` | Region used for static/reference Blizzard data such as professions, recipes, items, and related metadata. Defaults to `Europe`. |
-| `WAE_AWS_REGION` | No | `eu-west-1` | Optional locally; defaults to `eu-west-1`. |
+| `WAE_AWS_REGION` | No | `eu-north-1` | Optional locally; defaults to `eu-north-1`. |
 | `AWS_ACCESS_KEY` | No | `local-dev-key` | Optional locally; defaults to a dummy value. |
 | `AWS_SECRET_KEY` | No | `local-dev-secret` | Optional locally; defaults to a dummy value. |
 
@@ -169,7 +169,7 @@ The default local datasource configuration lives in [`backend/src/main/resources
 - MariaDB password: `root`
 - DynamoDB endpoint: `http://localhost:4566`
 - S3 endpoint: `http://localhost:4566`
-- AWS region: `eu-west-1`
+- AWS region: `eu-north-1`
 - AWS access key: `local-dev-key`
 - AWS secret key: `local-dev-secret`
 
@@ -197,7 +197,7 @@ The app deployment region and the S3 bucket region are related but not identical
 
 Current production layout:
 
-- Europe deployment: `eu-west-1`, auction/realm updates `Europe`, static data defaults to `Europe`, writes to `wah-data-eu` in `eu-west-1`
+- Europe deployment: `eu-north-1`, auction/realm updates `Europe`, static data defaults to `Europe`, writes to `wah-data-eu` in `eu-north-1`
 - North America deployment: `us-west-1`, auction/realm updates `NorthAmerica`, static data can still point to `Europe`, writes to `wah-data-us` in `us-west-1`
 - Asia deployment: `ap-northeast-2`, auction/realm updates `Korea,Taiwan`, static data can still point to `Europe`, writes to `wah-data-as` in `ap-northeast-2`
 

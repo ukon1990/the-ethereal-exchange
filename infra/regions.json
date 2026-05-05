@@ -4,16 +4,16 @@
   "project_tag": "WAH",
   "regions": [
     {
-      "enabled": true,
-      "aws_region": "eu-west-1",
-      "blizzard_regions": ["Europe"],
-      "instance_type": "t4g.small",
-      "allowed_ingress_cidr": "0.0.0.0/0",
-      "jvm_max_ram_percentage": "65.0",
-      "container_port": 8080,
-      "health_check_path": "/api/health",
-      "instance_enabled": "true",
-      "stack_name": "wah-wow-auction-engine-prod-eu-west-1"
+        "enabled": true,
+        "aws_region": "eu-north-1",
+        "blizzard_regions": ["Europe"],
+        "instance_type": "t4g.small",
+        "allowed_ingress_cidr": "0.0.0.0/0",
+        "jvm_max_ram_percentage": "65.0",
+        "container_port": 8080,
+        "health_check_path": "/api/health",
+        "instance_enabled": "true",
+        "stack_name": "wah-wow-auction-engine-prod-eu-north-1"
     },
     {
       "enabled": true,

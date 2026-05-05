@@ -27,7 +27,7 @@ const app = express();
 const angularApp = new AngularNodeAppEngine();
 
 const requestIdHeader = 'x-request-id';
-const maxErrorMessageLength = 500;
+const maxErrorMessageLength = 256;
 const maxStackLines = 6;
 
 registerCompactProcessErrorLogging();

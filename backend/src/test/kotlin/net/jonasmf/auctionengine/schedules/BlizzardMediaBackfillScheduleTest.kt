@@ -32,7 +32,7 @@ class BlizzardMediaBackfillScheduleTest {
         WaeS3Properties(
             buckets =
                 mapOf(
-                    "europe" to BucketConfig("wah-data-eu", "eu-west-1"),
+                    "europe" to BucketConfig("wah-data-eu", "eu-north-1"),
                     "northamerica" to BucketConfig("wah-data-us", "us-west-1"),
                     "korea" to BucketConfig("wah-data-as", "ap-northeast-2"),
                     "taiwan" to BucketConfig("wah-data-as", "ap-northeast-2"),
@@ -54,7 +54,7 @@ class BlizzardMediaBackfillScheduleTest {
         }
 
         try {
-            val schedule = BlizzardMediaBackfillSchedule(properties, s3Properties, service, "eu-west-1")
+            val schedule = BlizzardMediaBackfillSchedule(properties, s3Properties, service, "eu-north-1")
             val future = executor.submit<Unit> { schedule.backfillMedia() }
             assertTrue(started.await(5, TimeUnit.SECONDS))
 
@@ -86,7 +86,7 @@ class BlizzardMediaBackfillScheduleTest {
             assertTrue(
                 messages.any {
                     it.contains(
-                        "Skipping scheduled media backfill because deployment AWS region us-west-1 does not match static data region Europe bucket region eu-west-1.",
+                        "Skipping scheduled media backfill because deployment AWS region us-west-1 does not match static data region Europe bucket region eu-north-1.",
                     )
                 },
             )
