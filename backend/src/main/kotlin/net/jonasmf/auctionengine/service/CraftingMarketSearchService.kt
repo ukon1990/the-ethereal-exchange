@@ -71,12 +71,17 @@ class CraftingMarketSearchService(
         val normalizedSortBy = allowedSorts.firstOrNull { it == sortBy } ?: "itemName"
         val normalizedSortDirection = if (sortDirection.equals("desc", ignoreCase = true)) "desc" else "asc"
         val previousDate = context.selectedSnapshot.date.minusDays(1)
+        val commodityPreviousDate = context.commoditySnapshot.date.minusDays(1)
         val request =
             CraftingMarketSearchRequest(
                 selectedConnectedRealmId = context.selectedSnapshot.connectedRealmId,
                 selectedDate = context.selectedSnapshot.date,
                 selectedHour = context.selectedSnapshot.hour,
+                commodityConnectedRealmId = context.commoditySnapshot.connectedRealmId,
+                commodityDate = context.commoditySnapshot.date,
+                commodityHour = context.commoditySnapshot.hour,
                 previousDate = previousDate,
+                commodityPreviousDate = commodityPreviousDate,
                 localeColumnSuffix = context.localeColumnSuffix,
                 page = normalizedPage,
                 pageSize = normalizedPageSize,
@@ -168,7 +173,7 @@ class CraftingMarketSearchService(
                         outputPriceChangePercent = row.outputPriceChangePercent,
                         profitChangePercent = row.profitChangePercent,
                         reagentsFullyPriced = row.reagentsFullyPriced,
-                        outputPriced = true,
+                        outputPriced = row.outputUnitPrice != null,
                     )
                 },
             page =
