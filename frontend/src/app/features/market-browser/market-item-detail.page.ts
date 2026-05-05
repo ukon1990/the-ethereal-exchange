@@ -248,18 +248,19 @@ interface TooltipRow {
         }
 
         <ng-template #dailyChartTip let-ctx>
+          @let rows = dailyTooltipRows(d, ctx.x);
           <div
             class="ee-glass min-w-64 rounded-md border border-white/15 bg-surface-container/95 px-3 py-2 text-left text-xs text-on-surface shadow-lg backdrop-blur-md"
           >
             <div class="ee-label text-outline mb-1.5">{{ dailyTooltipTitle(d, ctx.x) }}</div>
             <div class="space-y-1 font-space-mono text-[11px]">
-              @for (row of dailyTooltipRows(d, ctx.x); track row.label) {
+              @for (row of rows; track row.label) {
                 <div class="flex justify-between gap-4">
                   <span class="text-outline">{{ row.label }}</span>
                   <span class="text-on-surface">{{ row.value }}</span>
                 </div>
               }
-              @if (!dailyTooltipRows(d, ctx.x).length) {
+              @if (!rows.length) {
                 <div class="text-outline">No values for this day</div>
               }
             </div>

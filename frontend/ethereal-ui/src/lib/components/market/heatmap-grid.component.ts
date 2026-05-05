@@ -36,21 +36,22 @@ export interface HeatmapTooltipContext {
           @for (label of columnLabels(); track $index) {
             <div class="ee-label text-center text-outline" role="columnheader">{{ label }}</div>
           }
+          @let columns = columnLabels();
           @for (row of gridRows(); track row.index) {
             <div class="ee-label flex items-center text-outline" role="rowheader">
               {{ row.label }}
             </div>
             @for (cell of row.cells; track cell.col) {
+              @let colLabel = columns[cell.col];
+              @let ariaLabel = cellAriaLabel(row.label, colLabel, cell);
               <div
                 class="group relative h-8 rounded border border-white/10 transition focus-within:ring-2 focus-within:ring-primary/60"
                 role="gridcell"
                 [style.background]="cellBackground(cell.value)"
-                [attr.aria-label]="cellAriaLabel(row.label, columnLabels()[cell.col], cell)"
+                [attr.aria-label]="ariaLabel"
                 tabindex="0"
               >
-                <span class="sr-only">{{
-                  cellAriaLabel(row.label, columnLabels()[cell.col], cell)
-                }}</span>
+                <span class="sr-only">{{ ariaLabel }}</span>
                 <div
                   class="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden min-w-44 -translate-x-1/2 rounded border border-white/15 bg-surface-container/95 px-2 py-1.5 text-xs text-on-surface shadow-lg backdrop-blur group-hover:block group-focus-within:block"
                 >
@@ -60,13 +61,11 @@ export interface HeatmapTooltipContext {
                       [ngTemplateOutletContext]="{
                         cell: cell,
                         rowLabel: row.label,
-                        columnLabel: columnLabels()[cell.col],
+                        columnLabel: colLabel,
                       }"
                     />
                   } @else {
-                    <div class="ee-label text-outline">
-                      {{ row.label }} · {{ columnLabels()[cell.col] }}
-                    </div>
+                    <div class="ee-label text-outline">{{ row.label }} · {{ colLabel }}</div>
                     <div class="font-space-mono">{{ cell.label ?? valueLabel(cell.value) }}</div>
                   }
                 </div>
