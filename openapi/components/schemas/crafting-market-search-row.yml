@@ -22,8 +22,16 @@ properties:
   professionId:
     type: integer
     format: int32
+    nullable: true
+    description: |
+      Profession id for the recipe, taken from `profession.id` via
+      `profession_category` and `skill_tier`. Nullable because recipes can be
+      orphaned from their profession metadata when reference data sync is in
+      progress, in which case the row is still surfaced with a null profession.
   professionName:
     type: string
+    nullable: true
+    description: Localized profession name. Nullable for the same reason as `professionId`.
   skillTierName:
     type: string
     nullable: true
