@@ -1,0 +1,70 @@
+type: object
+required:
+  - rowId
+  - recipeId
+  - listingKey
+  - craftedQuantity
+  - reagentsFullyPriced
+  - outputPriced
+properties:
+  rowId:
+    type: string
+    description: Stable id for table rows (recipe + listing variant).
+  recipeId:
+    type: integer
+    format: int32
+  recipe:
+    $ref: ./auction-market-recipe.yml
+  item:
+    $ref: ./auction-market-item.yml
+  listingKey:
+    $ref: ./auction-listing-key.yml
+  professionId:
+    type: integer
+    format: int32
+  professionName:
+    type: string
+  skillTierName:
+    type: string
+    nullable: true
+  professionCategoryName:
+    type: string
+    nullable: true
+  craftedQuantity:
+    type: integer
+    format: int32
+  listingQuantity:
+    type: integer
+    format: int64
+    nullable: true
+    description: Quantity at the snapshot for this crafted listing bucket.
+  reagentCostCopper:
+    type: integer
+    format: int64
+    nullable: true
+  outputPriceCopper:
+    type: integer
+    format: int64
+    nullable: true
+    description: Unit buyout for this listing variant at the snapshot hour.
+  profitCopper:
+    type: integer
+    format: int64
+    nullable: true
+  roiPercent:
+    type: number
+    format: double
+    nullable: true
+  outputPriceChangePercent:
+    type: number
+    format: double
+    nullable: true
+    description: vs prior calendar day same hour for this variant.
+  profitChangePercent:
+    type: number
+    format: double
+    nullable: true
+  reagentsFullyPriced:
+    type: boolean
+  outputPriced:
+    type: boolean

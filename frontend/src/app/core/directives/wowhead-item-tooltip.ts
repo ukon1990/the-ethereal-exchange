@@ -1,5 +1,6 @@
 import { Directive, ElementRef, inject, input } from '@angular/core';
 
+import { bonusKeyToWowheadBonusIds } from '@core/utils/bonus-key-to-wowhead-bonus-ids';
 import { WowheadTooltipService } from '@core/services/wowhead-tooltip';
 import type { CurrencyAmount } from '@ui';
 
@@ -17,6 +18,8 @@ export class WowheadItemTooltipDirective {
   readonly itemId = input.required<number>();
   readonly linkType = input<string>('item');
   readonly bonusIds = input<readonly number[]>([]);
+  /** When set and `bonusIds` is empty, tooltip uses parsed Wowhead bonus ids from this key. */
+  readonly bonusKey = input<string | null>(null);
   readonly isClassic = input(false);
   readonly currentBuyout = input<CurrencyAmount | null>(null);
   private describedById: string | null = null;
@@ -37,10 +40,13 @@ export class WowheadItemTooltipDirective {
     this.host.nativeElement.setAttribute('aria-describedby', this.describedById);
 
     try {
+      const explicit = this.bonusIds();
+      const fromKey = bonusKeyToWowheadBonusIds(this.bonusKey());
+      const bonusIds = explicit.length > 0 ? explicit : fromKey;
       await this.tooltipService.show({
         wowheadType: this.linkType(),
         id,
-        bonusIds: this.bonusIds(),
+        bonusIds,
         isClassic: this.isClassic(),
         currentBuyout: this.currentBuyout(),
         event,

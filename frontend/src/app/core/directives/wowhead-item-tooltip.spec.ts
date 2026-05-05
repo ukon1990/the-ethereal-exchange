@@ -15,6 +15,13 @@ import { WowheadItemTooltipDirective } from './wowhead-item-tooltip';
 })
 class WowheadHostComponent {}
 
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [WowheadItemTooltipDirective],
+  template: `<span appWowheadItemTooltip [itemId]="42" [bonusKey]="'6652:7'">Item</span>`,
+})
+class WowheadBonusKeyHostComponent {}
+
 describe('WowheadItemTooltipDirective', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -49,6 +56,46 @@ describe('WowheadItemTooltipDirective', () => {
     span.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true, clientX: 5, clientY: 6 }));
 
     const req = httpMock.expectOne((r) => r.url.includes('/tooltip/item/42'));
+    req.flush({ tooltip: '<span>Tip</span>' });
+
+    await fixture.whenStable();
+    expect(TestBed.inject(WowheadTooltipService).active()).not.toBeNull();
+    httpMock.verify();
+  });
+
+  it('appends bonus query from bonusKey when bonusIds empty', async () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [WowheadBonusKeyHostComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        WowheadTooltipService,
+        {
+          provide: RealmSelectionService,
+          useValue: {
+            selected: (): Realm => ({
+              region: Realm.RegionEnum.Us,
+              name: 'x',
+              slug: 'x',
+              category: 'c',
+              locale: 'en_US',
+              timezone: 't',
+            }),
+          },
+        },
+      ],
+    });
+    const fixture = TestBed.createComponent(WowheadBonusKeyHostComponent);
+    const httpMock = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+
+    const span = (fixture.nativeElement as HTMLElement).querySelector('span')!;
+    span.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true, clientX: 5, clientY: 6 }));
+
+    const req = httpMock.expectOne(
+      (r) => r.url.includes('/tooltip/item/42') && r.url.includes('bonus=6652:7'),
+    );
     req.flush({ tooltip: '<span>Tip</span>' });
 
     await fixture.whenStable();

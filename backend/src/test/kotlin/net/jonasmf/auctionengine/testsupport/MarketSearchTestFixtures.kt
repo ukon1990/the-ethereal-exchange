@@ -64,6 +64,63 @@ object MarketSearchTestFixtures {
         )
     }
 
+    /**
+     * Adds profession metadata, a reagent, and prior-day pricing so [CraftingMarketSearchService] integration tests
+     * can run against the same realm as [seedMarketSearchData].
+     */
+    fun augmentMarketSearchDataForCrafting(jdbcTemplate: JdbcTemplate) {
+        val profName = insertLocale(jdbcTemplate, 100, "Alchemy", "Alchemie", "PROFESSION", "50", "name")
+        val tierName = insertLocale(jdbcTemplate, 101, "Classic", "Klassisch", "SKILL_TIER", "600", "name")
+        val catName = insertLocale(jdbcTemplate, 102, "Outland", "Scherbenwelt", "PROF_CAT", "9001", "name")
+        jdbcTemplate.update("INSERT INTO profession (id, name_id) VALUES (50, ?)", profName)
+        jdbcTemplate.update(
+            """
+            INSERT INTO skill_tier (id, maximum_skill_level, minimum_skill_level, name_id, profession_id)
+            VALUES (600, 375, 1, ?, 50)
+            """.trimIndent(),
+            tierName,
+        )
+        jdbcTemplate.update(
+            """
+            INSERT INTO profession_category (internal_id, name_id, skill_tier_id)
+            VALUES (9001, ?, 600)
+            """.trimIndent(),
+            catName,
+        )
+        jdbcTemplate.update("UPDATE recipe SET profession_category_id = 9001 WHERE id = 7001")
+
+        val reagentName = insertLocale(jdbcTemplate, 103, "Peacebloom", "Friedensblume", "ITEM", "19050", "name")
+        jdbcTemplate.update(
+            """
+            INSERT INTO item (
+                id, is_equippable, is_stackable, level, max_count, media_url, purchase_price, purchase_quantity,
+                required_level, sell_price, item_class_id, item_subclass_id, name_id, quality_id
+            ) VALUES (19050, 0, 1, 1, 0, 'https://media.example/herb.png', 0, 1, 1, 0, 2, 501, ?, 3)
+            """.trimIndent(),
+            reagentName,
+        )
+        jdbcTemplate.update(
+            """
+            INSERT INTO recipe_reagent (item_id, quantity, recipe_id)
+            VALUES (19050, 2, 7001)
+            """.trimIndent(),
+        )
+        jdbcTemplate.update(
+            """
+            INSERT INTO auction_stats_hourly (
+                connected_realm_id, item_id, date, pet_species_id, modifier_key, bonus_key, price11, quantity11
+            ) VALUES (1084, 19050, '2026-05-01', -1, '', '', 50, 20)
+            """.trimIndent(),
+        )
+        jdbcTemplate.update(
+            """
+            INSERT INTO auction_stats_hourly (
+                connected_realm_id, item_id, date, pet_species_id, modifier_key, bonus_key, price11, quantity11
+            ) VALUES (1084, 19019, '2026-04-30', -1, '', '', 800, 3)
+            """.trimIndent(),
+        )
+    }
+
     /** Item present only on regional commodity (`connected_realm_id` negative), not on the selected realm. */
     fun seedCommodityOnlyItem(jdbcTemplate: JdbcTemplate) {
         val itemName = insertLocale(jdbcTemplate, 6, "Copper Dust", "Kupferstaub", "ITEM", "19020", "name")

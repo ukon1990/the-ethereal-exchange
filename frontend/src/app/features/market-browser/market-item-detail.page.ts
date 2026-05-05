@@ -102,9 +102,9 @@ interface TooltipRow {
           >
           <span aria-hidden="true">/</span>
           <a
-            [routerLink]="['..']"
+            [routerLink]="['/', regionRealm().region, regionRealm().realm, regionRealm().marketListSegment]"
             class="rounded-sm hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-            >Auctions</a
+            >{{ regionRealm().marketListLabel }}</a
           >
           <span aria-hidden="true">/</span>
           <span class="text-on-surface" aria-current="page">{{ itemTitle() }}</span>
@@ -383,19 +383,31 @@ export class MarketItemDetailPage {
     region: RegionCode;
     realmSlug: string;
     itemId: number;
+    recipeId: string | null;
     variant: ItemDetailVariantParams;
+    listSegment: string;
+    listLabel: string;
   } | null>(null);
 
   protected readonly regionRealm = computed(() => {
     const ctx = this.routeCtx();
     if (!ctx) {
-      return { region: '', realm: '', realmLabel: '', regionLabel: '' };
+      return {
+        region: '',
+        realm: '',
+        realmLabel: '',
+        regionLabel: '',
+        marketListSegment: 'auctions',
+        marketListLabel: 'Auctions',
+      };
     }
     return {
       region: ctx.region,
       realm: ctx.realmSlug,
       realmLabel: formatRealmLabel(ctx.realmSlug),
       regionLabel: ctx.region.toUpperCase(),
+      marketListSegment: ctx.listSegment,
+      marketListLabel: ctx.listLabel,
     };
   });
 
@@ -434,12 +446,15 @@ export class MarketItemDetailPage {
 
     const realmRoute = realmAncestorRoute(this.route);
 
-    combineLatest([realmRoute.paramMap, this.route.paramMap, this.route.queryParamMap])
+    combineLatest([realmRoute.paramMap, this.route.paramMap, this.route.data, this.route.queryParamMap])
       .pipe(
-        map(([realmPm, itemPm, q]) => ({
+        map(([realmPm, itemPm, data, q]) => ({
           region: realmPm.get('region'),
           realmSlug: realmPm.get('realm'),
           itemId: Number(itemPm.get('itemId')),
+          recipeId: itemPm.get('recipeId'),
+          listSegment: (data['marketListSegment'] as string | undefined) ?? 'auctions',
+          listLabel: (data['marketListLabel'] as string | undefined) ?? 'Auctions',
           variant: variantFromQuery(q),
           initialScope: scopeFromQuery(q),
         })),
@@ -448,6 +463,8 @@ export class MarketItemDetailPage {
             a.region === b.region &&
             a.realmSlug === b.realmSlug &&
             a.itemId === b.itemId &&
+            a.recipeId === b.recipeId &&
+            a.listSegment === b.listSegment &&
             a.initialScope === b.initialScope &&
             variantEqual(a.variant, b.variant),
         ),
@@ -463,7 +480,10 @@ export class MarketItemDetailPage {
             region: ctx.region,
             realmSlug: ctx.realmSlug,
             itemId: ctx.itemId,
+            recipeId: ctx.recipeId,
             variant: ctx.variant,
+            listSegment: ctx.listSegment,
+            listLabel: ctx.listLabel,
           });
           this.loading.set(true);
           this.error.set(false);

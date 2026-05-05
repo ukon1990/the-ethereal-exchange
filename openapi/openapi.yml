@@ -25,3 +25,7 @@ paths:
     $ref: ./paths/auction-market-search-filters.yml
   /auctions/market-items/detail:
     $ref: ./paths/auction-market-item-detail.yml
+  /auctions/crafting-market/search:
+    $ref: ./paths/crafting-market-search.yml
+  /auctions/crafting-market/filters:
+    $ref: ./paths/crafting-market-search-filters.yml

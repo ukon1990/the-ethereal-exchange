@@ -1,0 +1,47 @@
+import { DecimalPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { injectFlexRenderContext } from '@tanstack/angular-table';
+import type { CellContext } from '@tanstack/table-core';
+
+import { RealmSelectionService } from '@core/services/realm-selection.service';
+
+import type { CraftingTableRow } from './crafting-browser.models';
+
+@Component({
+  selector: 'app-crafting-percent-cell',
+  imports: [DecimalPipe],
+  template: `
+    @if (value() != null) {
+      <div class="justify-self-end ee-data text-on-surface">
+        {{ value()! | number: '1.1-1' : selectedLocaleForNumberPipe() }}%
+      </div>
+    } @else {
+      <span class="justify-self-end text-outline">—</span>
+    }
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class CraftingPercentCellComponent {
+  protected readonly ctx = injectFlexRenderContext<CellContext<CraftingTableRow, unknown>>();
+  private readonly realmSelection = inject(RealmSelectionService);
+
+  protected columnId(): string {
+    return this.ctx.column.id;
+  }
+
+  protected value(): number | null {
+    const r = this.ctx.row.original;
+    switch (this.columnId()) {
+      case 'roiPercent':
+        return r.roiPercent;
+      case 'outputPriceChangePercent':
+        return r.outputPriceChangePercent;
+      default:
+        return null;
+    }
+  }
+
+  protected selectedLocaleForNumberPipe(): string | undefined {
+    return this.realmSelection.selected()?.locale?.replace('_', '-');
+  }
+}
