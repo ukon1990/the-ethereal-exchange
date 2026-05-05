@@ -2,6 +2,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { Subject } from 'rxjs';
 
 import { Realm } from '@api/generated';
 import { RealmSelectionService } from '../services/realm-selection.service';
@@ -43,6 +45,7 @@ describe('WowheadItemTooltipDirective', () => {
             }),
           },
         },
+        { provide: Router, useValue: { events: new Subject().asObservable() } },
       ],
     });
   });
@@ -84,6 +87,7 @@ describe('WowheadItemTooltipDirective', () => {
             }),
           },
         },
+        { provide: Router, useValue: { events: new Subject().asObservable() } },
       ],
     });
     const fixture = TestBed.createComponent(WowheadBonusKeyHostComponent);

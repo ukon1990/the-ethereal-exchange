@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { firstValueFrom } from 'rxjs';
+import { NavigationStart, Router } from '@angular/router';
+import { filter, firstValueFrom } from 'rxjs';
 
 import { RealmSelectionService } from '@core/services/realm-selection.service';
 import {
@@ -28,16 +29,40 @@ interface WowheadTooltipJson {
 export class WowheadTooltipService {
   private static nextId = 0;
 
+  private static readonly AUTO_DISMISS_MS = 10_000;
+
   private readonly http = inject(HttpClient);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly realmSelection = inject(RealmSelectionService);
+  private readonly router = inject(Router);
 
   private readonly cache = new Map<string, string>();
+
+  /** Bumped on every {@link clear} and at the start of each {@link show} so stale async work cannot republish the overlay. */
+  private latestOverlayId = 0;
+  private autoDismissTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly loading = signal(false);
   readonly active = signal<WowheadTooltipOverlay | null>(null);
 
+  constructor() {
+    this.router.events
+      .pipe(filter((e): e is NavigationStart => e instanceof NavigationStart))
+      .subscribe(() => this.clear());
+  }
+
   clear(): void {
+    if (this.autoDismissTimer !== null) {
+      clearTimeout(this.autoDismissTimer);
+      this.autoDismissTimer = null;
+    }
+    const tip = this.active();
+    if (tip?.describedById) {
+      document
+        .querySelector(`[aria-describedby="${tip.describedById}"]`)
+        ?.removeAttribute('aria-describedby');
+    }
+    this.latestOverlayId++;
     this.active.set(null);
   }
 
@@ -53,6 +78,8 @@ export class WowheadTooltipService {
     readonly event: MouseEvent | FocusEvent;
     readonly describedById: string;
   }): Promise<void> {
+    const myOverlayId = ++this.latestOverlayId;
+
     const locale = wowheadLocaleFromBlizzardLocale(this.realmSelection.selected()?.locale);
     let url = getWowheadTooltipUrl(options.isClassic, options.id, options.wowheadType, locale);
     const bonus = options.bonusIds?.filter((b) => b > 0) ?? [];
@@ -64,14 +91,27 @@ export class WowheadTooltipService {
     const composeTooltipHtml = (html: string): SafeHtml =>
       this.sanitizer.bypassSecurityTrustHtml(appendCurrentBuyout(html, options.currentBuyout));
 
-    const cached = this.cache.get(url);
-    if (cached) {
+    const publish = (rawHtml: string): void => {
+      if (myOverlayId !== this.latestOverlayId) return;
+      if (this.autoDismissTimer !== null) {
+        clearTimeout(this.autoDismissTimer);
+        this.autoDismissTimer = null;
+      }
       this.active.set({
-        safeHtml: composeTooltipHtml(cached),
+        safeHtml: composeTooltipHtml(rawHtml),
         leftPx,
         topPx,
         describedById: options.describedById,
       });
+      this.autoDismissTimer = setTimeout(() => {
+        this.autoDismissTimer = null;
+        this.clear();
+      }, WowheadTooltipService.AUTO_DISMISS_MS);
+    };
+
+    const cached = this.cache.get(url);
+    if (cached) {
+      publish(cached);
       return;
     }
 
@@ -79,13 +119,9 @@ export class WowheadTooltipService {
     try {
       const body = await firstValueFrom(this.http.get<WowheadTooltipJson>(url));
       const raw = body.tooltip ?? '';
+      if (myOverlayId !== this.latestOverlayId) return;
       this.cache.set(url, raw);
-      this.active.set({
-        safeHtml: composeTooltipHtml(raw),
-        leftPx,
-        topPx,
-        describedById: options.describedById,
-      });
+      publish(raw);
     } finally {
       this.loading.set(false);
     }

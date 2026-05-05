@@ -1,4 +1,4 @@
-import { Directive, ElementRef, inject, input } from '@angular/core';
+import { Directive, ElementRef, inject, input, OnDestroy } from '@angular/core';
 
 import { bonusKeyToWowheadBonusIds } from '@core/utils/bonus-key-to-wowhead-bonus-ids';
 import { WowheadTooltipService } from '@core/services/wowhead-tooltip';
@@ -11,7 +11,7 @@ import type { CurrencyAmount } from '@ui';
     '(mouseleave)': 'onMouseLeave()',
   },
 })
-export class WowheadItemTooltipDirective {
+export class WowheadItemTooltipDirective implements OnDestroy {
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly tooltipService = inject(WowheadTooltipService);
 
@@ -29,6 +29,10 @@ export class WowheadItemTooltipDirective {
   }
 
   protected onMouseLeave(): void {
+    this.dismiss();
+  }
+
+  ngOnDestroy(): void {
     this.dismiss();
   }
 
