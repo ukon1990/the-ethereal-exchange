@@ -1180,6 +1180,15 @@ class AuctionMarketItemDetailRepository(
         )
     }
 
+    /**
+     * Loads the (day_of_week, hour_of_day) heatmap of average profit and ROI over the given date window.
+     *
+     * Implemented as a single SQL query that unpivots the 24 `priceNN`/`quantityNN` columns of
+     * `auction_stats_hourly` via a `CASE` expression cross-joined against an inline 0..23 hours table.
+     * This replaces a previous loop that issued 24 separate JDBC queries (one per hour), each running a
+     * complex CTE pipeline. The new shape executes in a single round-trip and lets MariaDB index-scan
+     * `auction_stats_hourly` once per CTE branch instead of 24 times.
+     */
     fun loadCraftingAnalyticsHeatmap(
         connectedRealmId: Int,
         commodityConnectedRealmId: Int,
@@ -1192,35 +1201,198 @@ class AuctionMarketItemDetailRepository(
         modifierKey: String,
         petSpeciesId: Int,
     ): List<AuctionMarketItemCraftingHeatmapRow> {
-        val rows = mutableListOf<AuctionMarketItemCraftingHeatmapRow>()
-        for (hour in 0..23) {
-            rows += loadCraftingAnalyticsDaily(
-                connectedRealmId,
-                commodityConnectedRealmId,
-                itemId,
-                recipeId,
-                fromDate,
-                toDate,
-                hour,
-                hour,
-                variant,
-                bonusKey,
-                modifierKey,
-                petSpeciesId,
+        val variantWhere =
+            if (variant) {
+                "AND ash.bonus_key <=> ? AND ash.modifier_key <=> ? AND ash.pet_species_id = ?"
+            } else {
+                ""
+            }
+        val priceCase = hourlyPriceCaseExpression()
+        val sql =
+            """
+            WITH RECURSIVE date_spine AS (
+                SELECT ? AS stat_date
+                UNION ALL
+                SELECT DATE_ADD(stat_date, INTERVAL 1 DAY) FROM date_spine WHERE stat_date < ?
+            ),
+            hours_t AS (${hoursCteSql()}),
+            reagent_sel_priced AS (
+                SELECT ash.date AS stat_date, h.hour_of_day, ash.item_id,
+                       ash.bonus_key, ash.modifier_key, ash.pet_species_id,
+                       $priceCase AS price
+                FROM hours_t h
+                JOIN auction_stats_hourly ash
+                  ON ash.connected_realm_id = ?
+                 AND ash.date BETWEEN ? AND ?
+                 AND ash.item_id IN (SELECT item_id FROM recipe_reagent WHERE recipe_id = ?)
+                HAVING price IS NOT NULL
+            ),
+            reagent_sel_ranked AS (
+                SELECT stat_date, hour_of_day, item_id, price,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY stat_date, hour_of_day, item_id
+                           ORDER BY price ASC, bonus_key, modifier_key, pet_species_id
+                       ) AS rn
+                FROM reagent_sel_priced
+            ),
+            reagent_sel AS (
+                SELECT stat_date, hour_of_day, item_id, price FROM reagent_sel_ranked WHERE rn = 1
+            ),
+            reagent_com_priced AS (
+                SELECT ash.date AS stat_date, h.hour_of_day, ash.item_id,
+                       ash.bonus_key, ash.modifier_key, ash.pet_species_id,
+                       $priceCase AS price
+                FROM hours_t h
+                JOIN auction_stats_hourly ash
+                  ON ash.connected_realm_id = ?
+                 AND ash.date BETWEEN ? AND ?
+                 AND ash.item_id IN (SELECT item_id FROM recipe_reagent WHERE recipe_id = ?)
+                HAVING price IS NOT NULL
+            ),
+            reagent_com_ranked AS (
+                SELECT stat_date, hour_of_day, item_id, price,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY stat_date, hour_of_day, item_id
+                           ORDER BY price ASC, bonus_key, modifier_key, pet_species_id
+                       ) AS rn
+                FROM reagent_com_priced
+            ),
+            reagent_com AS (
+                SELECT stat_date, hour_of_day, item_id, price FROM reagent_com_ranked WHERE rn = 1
+            ),
+            reagent_price AS (
+                SELECT ds.stat_date, h.hour_of_day, rr.item_id,
+                       COALESCE(rs.price, rc.price) AS price
+                FROM date_spine ds
+                CROSS JOIN hours_t h
+                CROSS JOIN (SELECT DISTINCT item_id FROM recipe_reagent WHERE recipe_id = ?) rr
+                LEFT JOIN reagent_sel rs
+                       ON rs.stat_date = ds.stat_date AND rs.hour_of_day = h.hour_of_day AND rs.item_id = rr.item_id
+                LEFT JOIN reagent_com rc
+                       ON rc.stat_date = ds.stat_date AND rc.hour_of_day = h.hour_of_day AND rc.item_id = rr.item_id
+            ),
+            reagent_cost AS (
+                SELECT ds.stat_date, h.hour_of_day,
+                       SUM(CASE WHEN rp.price IS NULL THEN 1 ELSE 0 END) AS missing_reagents,
+                       SUM(COALESCE(rp.price, 0) * rr.quantity) AS partial_cost
+                FROM date_spine ds
+                CROSS JOIN hours_t h
+                JOIN recipe_reagent rr ON rr.recipe_id = ?
+                LEFT JOIN reagent_price rp
+                       ON rp.stat_date = ds.stat_date AND rp.hour_of_day = h.hour_of_day AND rp.item_id = rr.item_id
+                GROUP BY ds.stat_date, h.hour_of_day
+            ),
+            output_sel_priced AS (
+                SELECT ash.date AS stat_date, h.hour_of_day,
+                       ash.bonus_key, ash.modifier_key, ash.pet_species_id,
+                       $priceCase AS output_unit_price
+                FROM hours_t h
+                JOIN auction_stats_hourly ash
+                  ON ash.connected_realm_id = ?
+                 AND ash.date BETWEEN ? AND ?
+                 AND ash.item_id = ?
+                 $variantWhere
+                HAVING output_unit_price IS NOT NULL
+            ),
+            output_sel_ranked AS (
+                SELECT stat_date, hour_of_day, output_unit_price,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY stat_date, hour_of_day
+                           ORDER BY output_unit_price ASC, bonus_key, modifier_key, pet_species_id
+                       ) AS rn
+                FROM output_sel_priced
+            ),
+            output_sel AS (
+                SELECT stat_date, hour_of_day, output_unit_price FROM output_sel_ranked WHERE rn = 1
+            ),
+            output_com_priced AS (
+                SELECT ash.date AS stat_date, h.hour_of_day,
+                       ash.bonus_key, ash.modifier_key, ash.pet_species_id,
+                       $priceCase AS output_unit_price
+                FROM hours_t h
+                JOIN auction_stats_hourly ash
+                  ON ash.connected_realm_id = ?
+                 AND ash.date BETWEEN ? AND ?
+                 AND ash.item_id = ?
+                 $variantWhere
+                HAVING output_unit_price IS NOT NULL
+            ),
+            output_com_ranked AS (
+                SELECT stat_date, hour_of_day, output_unit_price,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY stat_date, hour_of_day
+                           ORDER BY output_unit_price ASC, bonus_key, modifier_key, pet_species_id
+                       ) AS rn
+                FROM output_com_priced
+            ),
+            output_com AS (
+                SELECT stat_date, hour_of_day, output_unit_price FROM output_com_ranked WHERE rn = 1
+            ),
+            output_price AS (
+                SELECT ds.stat_date, h.hour_of_day,
+                       COALESCE(os.output_unit_price, oc.output_unit_price) AS output_unit_price
+                FROM date_spine ds
+                CROSS JOIN hours_t h
+                LEFT JOIN output_sel os ON os.stat_date = ds.stat_date AND os.hour_of_day = h.hour_of_day
+                LEFT JOIN output_com oc ON oc.stat_date = ds.stat_date AND oc.hour_of_day = h.hour_of_day
+            ),
+            recipe_dim AS (
+                SELECT COALESCE(NULLIF(crafted_quantity, 0), 1) AS crafted_quantity
+                FROM recipe WHERE id = ? AND crafted_item_id = ?
+            ),
+            cells AS (
+                SELECT WEEKDAY(ds.stat_date) AS day_of_week,
+                       h.hour_of_day,
+                       CASE WHEN rc.missing_reagents = 0 AND rc.partial_cost IS NOT NULL AND op.output_unit_price IS NOT NULL
+                            THEN op.output_unit_price * rd.crafted_quantity - rc.partial_cost ELSE NULL END AS profit,
+                       CASE WHEN rc.missing_reagents = 0 AND rc.partial_cost IS NOT NULL AND rc.partial_cost > 0 AND op.output_unit_price IS NOT NULL
+                            THEN 100.0 * (op.output_unit_price * rd.crafted_quantity - rc.partial_cost) / rc.partial_cost ELSE NULL END AS roi_percent
+                FROM date_spine ds
+                CROSS JOIN hours_t h
+                CROSS JOIN recipe_dim rd
+                LEFT JOIN reagent_cost rc ON rc.stat_date = ds.stat_date AND rc.hour_of_day = h.hour_of_day
+                LEFT JOIN output_price op ON op.stat_date = ds.stat_date AND op.hour_of_day = h.hour_of_day
             )
-                .filter { it.profit != null }
-                .groupBy { it.statDate.dayOfWeek.value - 1 }
-                .map { (dow, points) ->
-                    AuctionMarketItemCraftingHeatmapRow(
-                        dayOfWeek = dow,
-                        hourOfDay = hour,
-                        profit = points.mapNotNull { it.profit }.average(),
-                        roiPercent = points.mapNotNull { it.roiPercent }.takeIf { it.isNotEmpty() }?.average(),
-                        sampleCount = points.size,
-                    )
-                }
-        }
-        return rows.sortedWith(compareBy({ it.dayOfWeek }, { it.hourOfDay }))
+            SELECT day_of_week,
+                   hour_of_day,
+                   AVG(profit) AS profit,
+                   AVG(roi_percent) AS roi_percent,
+                   COUNT(profit) AS sample_count
+            FROM cells
+            WHERE profit IS NOT NULL
+            GROUP BY day_of_week, hour_of_day
+            ORDER BY day_of_week, hour_of_day
+            """.trimIndent()
+
+        val variantParams: Array<Any?> = if (variant) arrayOf(bonusKey, modifierKey, petSpeciesId) else emptyArray()
+        return jdbcTemplate.query(
+            sql,
+            craftingAnalyticsHeatmapRowMapper,
+            Date.valueOf(fromDate),
+            Date.valueOf(toDate),
+            connectedRealmId,
+            Date.valueOf(fromDate),
+            Date.valueOf(toDate),
+            recipeId,
+            commodityConnectedRealmId,
+            Date.valueOf(fromDate),
+            Date.valueOf(toDate),
+            recipeId,
+            recipeId,
+            recipeId,
+            connectedRealmId,
+            Date.valueOf(fromDate),
+            Date.valueOf(toDate),
+            itemId,
+            *variantParams,
+            commodityConnectedRealmId,
+            Date.valueOf(fromDate),
+            Date.valueOf(toDate),
+            itemId,
+            *variantParams,
+            recipeId,
+            itemId,
+        )
     }
 
     private val craftingAnalyticsDailyRowMapper =
@@ -1234,5 +1406,33 @@ class AuctionMarketItemDetailRepository(
             )
         }
 
+    private val craftingAnalyticsHeatmapRowMapper =
+        RowMapper { rs: ResultSet, _: Int ->
+            AuctionMarketItemCraftingHeatmapRow(
+                dayOfWeek = rs.getInt("day_of_week"),
+                hourOfDay = rs.getInt("hour_of_day"),
+                profit = rs.getNullableDouble("profit"),
+                roiPercent = rs.getNullableDouble("roi_percent"),
+                sampleCount = rs.getInt("sample_count"),
+            )
+        }
+
     private fun hourColumnSuffix(hourOfDay: Int): String = hourOfDay.coerceIn(0, 23).toString().padStart(2, '0')
+
+    private fun hoursCteSql(): String = (0..23).joinToString(separator = " UNION ALL ") { "SELECT $it AS hour_of_day" }
+
+    /**
+     * Returns a `CASE h.hour_of_day WHEN 0 THEN ash.price00 ... WHEN 23 THEN ash.price23 END` expression
+     * used to unpivot the 24 hourly price columns of `auction_stats_hourly` into a single column when
+     * cross-joined with the `hours_t` 0..23 table.
+     */
+    private fun hourlyPriceCaseExpression(
+        tableAlias: String = "ash",
+        hourCol: String = "h.hour_of_day",
+    ): String =
+        (0..23).joinToString(
+            prefix = "CASE $hourCol ",
+            separator = " ",
+            postfix = " END",
+        ) { "WHEN $it THEN $tableAlias.price${hourColumnSuffix(it)}" }
 }
