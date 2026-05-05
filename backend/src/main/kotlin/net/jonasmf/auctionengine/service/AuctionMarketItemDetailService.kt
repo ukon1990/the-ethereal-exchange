@@ -437,11 +437,13 @@ class AuctionMarketItemDetailService(
         val daily =
             detailRepository.loadCraftingAnalyticsDaily(
                 context.selectedSnapshot.connectedRealmId,
+                context.commoditySnapshot.connectedRealmId,
                 itemId,
                 recipeId,
                 from,
                 to,
                 context.selectedSnapshot.hour,
+                context.commoditySnapshot.hour,
                 variant,
                 bonusKey,
                 modifierKey,
@@ -450,6 +452,7 @@ class AuctionMarketItemDetailService(
         val heatmap =
             detailRepository.loadCraftingAnalyticsHeatmap(
                 context.selectedSnapshot.connectedRealmId,
+                context.commoditySnapshot.connectedRealmId,
                 itemId,
                 recipeId,
                 from,

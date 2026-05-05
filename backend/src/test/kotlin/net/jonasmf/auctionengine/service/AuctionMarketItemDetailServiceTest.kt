@@ -120,6 +120,56 @@ class AuctionMarketItemDetailServiceTest : IntegrationTestBase() {
     }
 
     @Test
+    fun `item detail and analytics fall back to commodity output with zero crafted quantity`() {
+        MarketSearchTestFixtures.seedMarketSearchData(jdbcTemplate)
+        addCommodityOnlyCraftingFixture()
+
+        val detail =
+            service.itemDetail(
+                regionCode = "eu",
+                realmSlug = "argent-dawn",
+                itemId = 19200,
+                bonusKey = "",
+                modifierKey = "",
+                petSpeciesId = -1,
+                scope = "commodity",
+                localeOverride = null,
+            )
+
+        val crafting = detail.craftings.single()
+        assertEquals(7100, crafting.recipeId)
+        assertEquals(1, crafting.craftedQuantity)
+        assertTrue(crafting.reagentsFullyPriced)
+        assertEquals(145L, crafting.reagentCost)
+        assertEquals(190L, crafting.outputUnitPrice)
+        assertEquals(45L, crafting.profit)
+        assertEquals(31.034, crafting.roiPercent!!, 0.01)
+        assertEquals(19199, crafting.reagents.single().itemId)
+        assertEquals(145L, crafting.reagents.single().unitPrice)
+        assertEquals(145L, crafting.reagents.single().lineTotal)
+
+        val analytics =
+            service.craftingAnalytics(
+                regionCode = "eu",
+                realmSlug = "argent-dawn",
+                itemId = 19200,
+                recipeId = 7100,
+                bonusKey = "",
+                modifierKey = "",
+                petSpeciesId = -1,
+                localeOverride = null,
+            )
+        val latest = analytics.dailySeries.last()
+        assertEquals(145L, latest.reagentCost)
+        assertEquals(190L, latest.outputUnitPrice)
+        assertEquals(45L, latest.profit)
+        val latestDow = latest.statDate.dayOfWeek.value - 1
+        val heatmapCell = analytics.heatmap.single { it.dayOfWeek == latestDow && it.hourOfDay == 10 }
+        assertEquals(1, heatmapCell.sampleCount)
+        assertEquals(45.0, heatmapCell.profit!!, 0.01)
+    }
+
+    @Test
     fun `crafting analytics api response has daily and heatmap economics`() {
         MarketSearchTestFixtures.seedMarketSearchData(jdbcTemplate)
         MarketSearchTestFixtures.augmentMarketSearchDataForCrafting(jdbcTemplate)
@@ -160,6 +210,52 @@ class AuctionMarketItemDetailServiceTest : IntegrationTestBase() {
             recipeName,
         )
         jdbcTemplate.update("INSERT INTO recipe_reagent (item_id, quantity, recipe_id) VALUES (19050, 1, 7004)")
+    }
+
+    private fun addCommodityOnlyCraftingFixture() {
+        val outputName = insertLocale(1200, "Test Copper Bar", "Test Kupferbarren", "ITEM", "19200", "name")
+        val reagentName = insertLocale(1201, "Test Copper Ore", "Test Kupfererz", "ITEM", "19199", "name")
+        val recipeName = insertLocale(1202, "Smelt Test Copper", "Testkupfer verhütten", "RECIPE", "7100", "name")
+        jdbcTemplate.update(
+            """
+            INSERT INTO item (
+                id, is_equippable, is_stackable, level, max_count, media_url, purchase_price, purchase_quantity,
+                required_level, sell_price, item_class_id, item_subclass_id, name_id, quality_id
+            ) VALUES (19200, 0, 1, 1, 0, 'https://media.example/test-bar.png', 0, 1, 1, 0, 2, 501, ?, 3)
+            """.trimIndent(),
+            outputName,
+        )
+        jdbcTemplate.update(
+            """
+            INSERT INTO item (
+                id, is_equippable, is_stackable, level, max_count, media_url, purchase_price, purchase_quantity,
+                required_level, sell_price, item_class_id, item_subclass_id, name_id, quality_id
+            ) VALUES (19199, 0, 1, 1, 0, 'https://media.example/test-ore.png', 0, 1, 1, 0, 2, 501, ?, 3)
+            """.trimIndent(),
+            reagentName,
+        )
+        jdbcTemplate.update(
+            """
+            INSERT INTO recipe (id, crafted_item_id, crafted_quantity, media_url, name_id)
+            VALUES (7100, 19200, 0, 'https://media.example/recipe7100.png', ?)
+            """.trimIndent(),
+            recipeName,
+        )
+        jdbcTemplate.update("INSERT INTO recipe_reagent (item_id, quantity, recipe_id) VALUES (19199, 1, 7100)")
+        jdbcTemplate.update(
+            """
+            INSERT INTO auction_stats_hourly (
+                connected_realm_id, item_id, date, pet_species_id, modifier_key, bonus_key, price10, quantity10
+            ) VALUES (-2, 19200, '2026-05-01', -1, '', '', 190, 20)
+            """.trimIndent(),
+        )
+        jdbcTemplate.update(
+            """
+            INSERT INTO auction_stats_hourly (
+                connected_realm_id, item_id, date, pet_species_id, modifier_key, bonus_key, price10, quantity10
+            ) VALUES (-2, 19199, '2026-05-01', -1, '', '', 145, 30)
+            """.trimIndent(),
+        )
     }
 
     private fun addIncompleteRecipeForHealingPotion() {
