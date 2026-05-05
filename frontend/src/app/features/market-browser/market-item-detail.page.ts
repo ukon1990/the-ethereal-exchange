@@ -353,7 +353,7 @@ interface TooltipRow {
                       </tr>
                     </thead>
                     <tbody>
-                      @for (reagent of crafting.reagents; track reagent.itemId) {
+                      @for (reagent of crafting.reagents; track $index) {
                         <tr class="border-b border-white/5">
                           <td class="py-3 pr-4 select-text">
                             <div class="flex items-center gap-2">
