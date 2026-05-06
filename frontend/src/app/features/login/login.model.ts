@@ -5,4 +5,4 @@ export type LoginAndRegistrationModel = {
   confirmationCode: string;
 };
 
-export type LoginMode = 'login' | 'signup' | 'confirm';
+export type LoginMode = 'login' | 'signup' | 'confirm' | 'forgot' | 'reset';

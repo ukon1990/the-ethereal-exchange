@@ -4,8 +4,10 @@ import { catchError, finalize, firstValueFrom, from, map, of, switchMap, tap } f
 
 import {
   AuthConfirmResponse,
+  AuthForgotPasswordResponse,
   AuthLoginResponse,
   AuthMeResponse,
+  AuthResetPasswordResponse,
   AuthSignupResponse,
 } from '@api/auth/auth.model';
 
@@ -50,6 +52,20 @@ export class AuthService {
     return this.http.post<AuthConfirmResponse>('/auth/confirm', {
       email,
       code,
+    });
+  }
+
+  requestPasswordReset(email: string) {
+    return this.http.post<AuthForgotPasswordResponse>('/auth/forgot-password', {
+      email,
+    });
+  }
+
+  resetPassword(email: string, code: string, password: string) {
+    return this.http.post<AuthResetPasswordResponse>('/auth/reset-password', {
+      email,
+      code,
+      password,
     });
   }
 

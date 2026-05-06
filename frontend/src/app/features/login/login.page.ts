@@ -1,7 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { email, form, FormField, required, submit as submitForm } from '@angular/forms/signals';
+import {
+  email,
+  form,
+  FormField,
+  required,
+  submit as submitForm,
+  validate,
+} from '@angular/forms/signals';
 import type { ValidationError } from '@angular/forms/signals';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -9,6 +16,7 @@ import { firstValueFrom } from 'rxjs';
 import { TextInputComponent } from '@ui';
 import { AuthErrorResponse } from '@api/auth/auth.model';
 import { AuthService } from '@core/services/auth.service';
+import { validatePasswordRules } from '@core/utils/auth-validation';
 import { LoginAndRegistrationModel, LoginMode } from '@features/login/login.model';
 
 @Component({
@@ -39,17 +47,31 @@ export class LoginPage {
   });
   readonly loginForm = form<LoginAndRegistrationModel>(this.registerModel, (schemaPath) => {
     email(schemaPath.email, this.getMessage('Email is required'));
-    required(schemaPath.password, this.getMessage('Password is required'));
+    required(schemaPath.password, {
+      message: 'Password is required',
+      when: () => this.mode() !== 'confirm' && this.mode() !== 'forgot',
+    });
+    validate(schemaPath.password, ({ value }) => {
+      if (this.mode() !== 'reset') {
+        return undefined;
+      }
+      if (!value()) {
+        return undefined;
+      }
+      const message = validatePasswordRules(value(), 'New password');
+      return message ? { kind: 'password_rules', message } : undefined;
+    });
 
     required(schemaPath.confirmPassword, {
       message: 'The passwords must match',
       when: ({ value, valueOf }) =>
-        this.mode() === 'signup' && valueOf(schemaPath.password) !== value(),
+        (this.mode() === 'signup' || this.mode() === 'reset') &&
+        valueOf(schemaPath.password) !== value(),
     });
 
     required(schemaPath.confirmationCode, {
       message: 'Confirmation Code is required',
-      when: () => this.mode() === 'confirm',
+      when: () => this.mode() === 'confirm' || this.mode() === 'reset',
     });
   });
 
@@ -70,6 +92,10 @@ export class LoginPage {
             await this.signup();
           } else if (this.mode() === 'confirm') {
             await this.confirm();
+          } else if (this.mode() === 'forgot') {
+            await this.requestPasswordReset();
+          } else if (this.mode() === 'reset') {
+            await this.resetPassword();
           } else {
             await this.login();
           }
@@ -108,6 +134,30 @@ export class LoginPage {
     const { email, confirmationCode: code } = this.loginForm().value() as LoginAndRegistrationModel;
     await firstValueFrom(this.authService.confirmEmailCode(email, code));
     await this.login();
+  }
+
+  private async requestPasswordReset(): Promise<void> {
+    const { email } = this.loginForm().value() as LoginAndRegistrationModel;
+    await firstValueFrom(this.authService.requestPasswordReset(email));
+    this.notice.set('If an account exists for this email, a password reset code has been sent.');
+    this.mode.set('reset');
+  }
+
+  private async resetPassword(): Promise<void> {
+    const {
+      email,
+      confirmationCode: code,
+      password,
+    } = this.loginForm().value() as LoginAndRegistrationModel;
+    await firstValueFrom(this.authService.resetPassword(email, code, password));
+    this.registerModel.update((value) => ({
+      ...value,
+      password: '',
+      confirmPassword: '',
+      confirmationCode: '',
+    }));
+    this.mode.set('login');
+    this.notice.set('Password reset. Sign in with your new password.');
   }
 
   private toAuthValidationErrors(error: unknown): ValidationError.WithOptionalFieldTree[] {

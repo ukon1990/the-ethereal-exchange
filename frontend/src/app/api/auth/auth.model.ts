@@ -66,6 +66,14 @@ export type AuthConfirmResponse = {
   confirmed: true;
 };
 
+export type AuthForgotPasswordResponse = {
+  requested: true;
+};
+
+export type AuthResetPasswordResponse = {
+  reset: true;
+};
+
 export type AuthMeResponse =
   | {
       authenticated: true;

@@ -20,9 +20,9 @@
     <button
       type="button"
       class="h-10 rounded-md text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-primary-container"
-      [class.bg-primary]="mode() === 'login'"
-      [class.text-on-primary]="mode() === 'login'"
-      [class.text-outline]="mode() !== 'login'"
+      [class.bg-primary]="mode() === 'login' || mode() === 'forgot' || mode() === 'reset'"
+      [class.text-on-primary]="mode() === 'login' || mode() === 'forgot' || mode() === 'reset'"
+      [class.text-outline]="mode() === 'signup' || mode() === 'confirm'"
       (click)="setMode('login')"
     >
       Sign in
@@ -30,9 +30,9 @@
     <button
       type="button"
       class="h-10 rounded-md text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-primary-container"
-      [class.bg-primary]="mode() !== 'login'"
-      [class.text-on-primary]="mode() !== 'login'"
-      [class.text-outline]="mode() === 'login'"
+      [class.bg-primary]="mode() === 'signup' || mode() === 'confirm'"
+      [class.text-on-primary]="mode() === 'signup' || mode() === 'confirm'"
+      [class.text-outline]="mode() === 'login' || mode() === 'forgot' || mode() === 'reset'"
       (click)="setMode('signup')"
     >
       Create account
@@ -42,23 +42,27 @@
   <form class="grid gap-4" novalidate (submit)="submit($event)">
     <ee-text-input label="Email" type="email" autocomplete="email" [formField]="loginForm.email" />
 
-    @if (mode() !== 'confirm') {
+    @if (mode() !== 'confirm' && mode() !== 'forgot') {
       <ee-text-input
-        label="Password"
+        [label]="mode() === 'reset' ? 'New password' : 'Password'"
         type="password"
-        [autocomplete]="mode() === 'signup' ? 'new-password' : 'current-password'"
+        [autocomplete]="
+          mode() === 'signup' || mode() === 'reset' ? 'new-password' : 'current-password'
+        "
         [formField]="loginForm.password"
       />
 
-      @if (mode() === 'signup') {
+      @if (mode() === 'signup' || mode() === 'reset') {
         <ee-text-input
-          label="Confirm password"
+          [label]="mode() === 'reset' ? 'Confirm new password' : 'Confirm password'"
           type="password"
           autocomplete="new-password"
           [formField]="loginForm.confirmPassword"
         />
       }
-    } @else {
+    }
+
+    @if (mode() === 'confirm' || mode() === 'reset') {
       <ee-text-input
         label="Confirmation code"
         type="text"
@@ -84,9 +88,39 @@
         Create account
       } @else if (mode() === 'confirm') {
         Confirm email
+      } @else if (mode() === 'forgot') {
+        Send reset code
+      } @else if (mode() === 'reset') {
+        Reset password
       } @else {
         Sign in
       }
     </button>
+
+    @if (mode() === 'login') {
+      <button
+        type="button"
+        class="justify-self-center text-sm font-semibold text-primary-container transition hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary-container"
+        (click)="setMode('forgot')"
+      >
+        Forgot password?
+      </button>
+    } @else if (mode() === 'forgot') {
+      <button
+        type="button"
+        class="justify-self-center text-sm font-semibold text-primary-container transition hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary-container"
+        (click)="setMode('reset')"
+      >
+        I have a reset code
+      </button>
+    } @else if (mode() === 'reset') {
+      <button
+        type="button"
+        class="justify-self-center text-sm font-semibold text-primary-container transition hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary-container"
+        (click)="setMode('login')"
+      >
+        Back to sign in
+      </button>
+    }
   </form>
 </main>

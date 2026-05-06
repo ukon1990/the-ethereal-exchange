@@ -2,7 +2,9 @@ import {
   AuthFlowType,
   ChangePasswordCommand,
   CognitoIdentityProviderClient,
+  ConfirmForgotPasswordCommand,
   ConfirmSignUpCommand,
+  ForgotPasswordCommand,
   GetUserCommand,
   InitiateAuthCommand,
   SignUpCommand,
@@ -56,6 +58,45 @@ export async function confirmSignUp(input: {
     );
   } catch (error) {
     throw mapConfirmSignUpError(error);
+  }
+}
+
+export async function requestPasswordReset(input: {
+  config: AuthConfig;
+  email: string;
+}): Promise<void> {
+  try {
+    await cognitoClient(input.config).send(
+      new ForgotPasswordCommand({
+        ClientId: input.config.clientId,
+        Username: input.email,
+      }),
+    );
+  } catch (error) {
+    if (errorName(error) === 'UserNotFoundException') {
+      return;
+    }
+    throw mapPasswordResetRequestError(error);
+  }
+}
+
+export async function confirmPasswordReset(input: {
+  config: AuthConfig;
+  email: string;
+  code: string;
+  password: string;
+}): Promise<void> {
+  try {
+    await cognitoClient(input.config).send(
+      new ConfirmForgotPasswordCommand({
+        ClientId: input.config.clientId,
+        Username: input.email,
+        ConfirmationCode: input.code,
+        Password: input.password,
+      }),
+    );
+  } catch (error) {
+    throw mapPasswordResetConfirmError(error);
   }
 }
 
@@ -195,6 +236,40 @@ function mapConfirmSignUpError(error: unknown): AuthError {
       return new AuthError('expired_code', 'The confirmation code has expired.', 400, {
         cause: error,
       });
+    case 'TooManyRequestsException':
+    case 'LimitExceededException':
+      return new AuthError('rate_limited', 'Too many attempts. Please try again later.', 429, {
+        cause: error,
+      });
+    default:
+      return unknownCognitoError(error);
+  }
+}
+
+function mapPasswordResetRequestError(error: unknown): AuthError {
+  switch (errorName(error)) {
+    case 'TooManyRequestsException':
+    case 'LimitExceededException':
+      return new AuthError('rate_limited', 'Too many attempts. Please try again later.', 429, {
+        cause: error,
+      });
+    default:
+      return unknownCognitoError(error);
+  }
+}
+
+function mapPasswordResetConfirmError(error: unknown): AuthError {
+  switch (errorName(error)) {
+    case 'CodeMismatchException':
+      return new AuthError('code_mismatch', 'The confirmation code is incorrect.', 400, {
+        cause: error,
+      });
+    case 'ExpiredCodeException':
+      return new AuthError('expired_code', 'The confirmation code has expired.', 400, {
+        cause: error,
+      });
+    case 'InvalidPasswordException':
+      return new AuthError('weak_password', publicErrorMessage(error), 400, { cause: error });
     case 'TooManyRequestsException':
     case 'LimitExceededException':
       return new AuthError('rate_limited', 'Too many attempts. Please try again later.', 429, {

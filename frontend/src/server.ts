@@ -16,6 +16,7 @@ import {
   changePassword,
   clearOAuthStateCookie,
   clearSessionCookie,
+  confirmPasswordReset,
   confirmSignUp,
   createOpaqueState,
   createPkcePair,
@@ -27,6 +28,7 @@ import {
   readOAuthState,
   readSession,
   refreshSession,
+  requestPasswordReset,
   sessionNeedsRefresh,
   signUpWithPassword,
   writeOAuthStateCookie,
@@ -201,6 +203,71 @@ app.post('/auth/confirm', async (req, res) => {
     res.json({ confirmed: true });
   } catch (error) {
     console.error(`Signup confirmation failed ${formatErrorForLogSafe(error)}`);
+    res.status(authErrorStatus(error, 400)).json(
+      authErrorResponse(error, {
+        message: 'Authentication request failed',
+        code: 'cognito_request_failed',
+      }),
+    );
+  }
+});
+
+app.post('/auth/forgot-password', async (req, res) => {
+  if (!authConfig) {
+    res
+      .status(503)
+      .json({ error: 'Authentication is not configured', code: 'auth_not_configured' });
+    return;
+  }
+  const email = readEmail(req.body);
+  if (!email) {
+    res.status(400).json({ error: 'Email is required', code: 'invalid_request' });
+    return;
+  }
+
+  try {
+    await requestPasswordReset({
+      config: authConfig,
+      email,
+    });
+    res.json({ requested: true });
+  } catch (error) {
+    console.error(`Password reset request failed ${formatErrorForLogSafe(error)}`);
+    res.status(authErrorStatus(error, 400)).json(
+      authErrorResponse(error, {
+        message: 'Authentication request failed',
+        code: 'cognito_request_failed',
+      }),
+    );
+  }
+});
+
+app.post('/auth/reset-password', async (req, res) => {
+  if (!authConfig) {
+    res
+      .status(503)
+      .json({ error: 'Authentication is not configured', code: 'auth_not_configured' });
+    return;
+  }
+  const reset = readPasswordReset(req.body);
+  if (!reset) {
+    res.status(400).json({
+      error: 'Email, confirmation code, and password are required',
+      code: 'invalid_request',
+    });
+    return;
+  }
+
+  try {
+    await confirmPasswordReset({
+      config: authConfig,
+      email: reset.email,
+      code: reset.code,
+      password: reset.password,
+    });
+    res.json({ reset: true });
+  } catch (error) {
+    console.error(`Password reset confirmation failed ${formatErrorForLogSafe(error)}`);
     res.status(authErrorStatus(error, 400)).json(
       authErrorResponse(error, {
         message: 'Authentication request failed',
@@ -472,12 +539,34 @@ function readCredentials(value: unknown): { email: string; password: string } | 
   if (!isRecord(value)) {
     return null;
   }
-  const email = readBodyString(value, 'email')?.trim().toLowerCase();
+  const email = readEmail(value);
   const password = readBodyString(value, 'password');
   if (!email || !password) {
     return null;
   }
   return { email, password };
+}
+
+function readEmail(value: unknown): string | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+  return readBodyString(value, 'email')?.trim().toLowerCase() || null;
+}
+
+function readPasswordReset(
+  value: unknown,
+): { email: string; code: string; password: string } | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const email = readEmail(value);
+  const code = readBodyString(value, 'code')?.trim();
+  const password = readBodyString(value, 'password');
+  if (!email || !code || !password) {
+    return null;
+  }
+  return { email, code, password };
 }
 
 function readPasswordChange(
