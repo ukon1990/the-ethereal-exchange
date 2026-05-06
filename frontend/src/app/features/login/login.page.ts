@@ -1,12 +1,15 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { email, form, FormField, required } from '@angular/forms/signals';
+import { HttpErrorResponse } from '@angular/common/http';
+import { email, form, FormField, required, submit as submitForm } from '@angular/forms/signals';
+import type { ValidationError } from '@angular/forms/signals';
 import { ActivatedRoute, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
 import { TextInputComponent } from '@ui';
+import { AuthErrorResponse } from '@api/auth/auth.model';
 import { AuthService } from '@core/services/auth.service';
 import { LoginAndRegistrationModel, LoginMode } from '@features/login/login.model';
-import { catchError, finalize, tap } from 'rxjs';
 
 @Component({
   selector: 'app-login-page',
@@ -59,62 +62,96 @@ export class LoginPage {
     event.preventDefault();
 
     this.notice.set(null);
-    if (this.loginForm().invalid()) return;
-
     this.loading.set(true);
     try {
-      if (this.mode() === 'signup') {
-        await this.signup();
-      } else if (this.mode() === 'confirm') {
-        await this.confirm();
-      } else {
-        await this.login();
-      }
-    } catch (error) {
-      console.error(error);
+      await submitForm(this.loginForm, async () => {
+        try {
+          if (this.mode() === 'signup') {
+            await this.signup();
+          } else if (this.mode() === 'confirm') {
+            await this.confirm();
+          } else {
+            await this.login();
+          }
+          return undefined;
+        } catch (error) {
+          return this.toAuthValidationErrors(error);
+        }
+      });
     } finally {
       this.loading.set(false);
     }
   }
 
   private async login(): Promise<void> {
-    if (this.mode() === 'login' && !this.loginForm().valid()) return;
-
     const { email, password } = this.loginForm().value() as LoginAndRegistrationModel;
-    this.authService.login(email, password).pipe(
-      tap(() => {
-        this.router.navigateByUrl(this.returnTo());
-      }),
-      catchError((error) => {
-        // TODO: Check the response type. If I can infer used email etc
-        console.log('login error', error);
-        return error;
-      }),
-      finalize(() => this.loading.set(false)),
-    );
+    await firstValueFrom(this.authService.login(email, password));
+    await this.router.navigateByUrl(this.returnTo());
   }
 
   private async signup(): Promise<void> {
     const { email, password } = this.loginForm().value() as LoginAndRegistrationModel;
-    this.authService.requestVerificationCode(email, password).pipe(
-      tap((response) => {
-        if (response.confirmed) {
-          this.login();
-          return;
-        }
-        this.notice.set('Enter the confirmation code sent to your email.');
-        this.mode.set('confirm');
-      }),
-      catchError((error) => {
-        console.log('Invalid code error', error);
-        return error;
-      }),
+    const response = await firstValueFrom(
+      this.authService.requestVerificationCode(email, password),
     );
+
+    if (response.confirmed) {
+      await this.login();
+      return;
+    }
+
+    this.notice.set('Enter the confirmation code sent to your email.');
+    this.mode.set('confirm');
   }
 
   private async confirm(): Promise<void> {
     const { email, confirmationCode: code } = this.loginForm().value() as LoginAndRegistrationModel;
-    this.authService.confirmEmailCode(email, code).pipe(tap(() => this.login()));
+    await firstValueFrom(this.authService.confirmEmailCode(email, code));
+    await this.login();
+  }
+
+  private toAuthValidationErrors(error: unknown): ValidationError.WithOptionalFieldTree[] {
+    const authError = this.getAuthErrorResponse(error);
+    const message = authError?.error ?? 'Unable to complete the request. Please try again.';
+
+    if (!authError) {
+      this.notice.set(message);
+      return [{ kind: 'server', message }];
+    }
+
+    switch (authError.code) {
+      case 'invalid_credentials':
+        return [
+          { kind: authError.code, message, fieldTree: this.loginForm.email },
+          { kind: authError.code, message, fieldTree: this.loginForm.password },
+        ];
+      case 'user_exists':
+      case 'user_not_confirmed':
+        if (authError.code === 'user_not_confirmed') {
+          this.notice.set('Enter the confirmation code sent to your email.');
+          this.mode.set('confirm');
+        }
+        return [{ kind: authError.code, message, fieldTree: this.loginForm.email }];
+      case 'weak_password':
+        return [{ kind: authError.code, message, fieldTree: this.loginForm.password }];
+      case 'code_mismatch':
+      case 'expired_code':
+        return [{ kind: authError.code, message, fieldTree: this.loginForm.confirmationCode }];
+      default:
+        this.notice.set(message);
+        return [{ kind: authError.code, message }];
+    }
+  }
+
+  private getAuthErrorResponse(error: unknown): AuthErrorResponse | null {
+    if (!(error instanceof HttpErrorResponse)) return null;
+
+    const value = error.error;
+    if (!value || typeof value !== 'object') return null;
+    if (!('error' in value) || !('code' in value)) return null;
+    if (typeof value.error !== 'string' || typeof value.code !== 'string') return null;
+
+    return value as AuthErrorResponse;
   }
 
   private returnTo(): string {
