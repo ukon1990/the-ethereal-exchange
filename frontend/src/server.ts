@@ -8,6 +8,8 @@ import express from 'express';
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import {
+  authErrorResponse,
+  authErrorStatus,
   buildLoginUrl,
   buildLogoutUrl,
   callbackUri,
@@ -31,7 +33,7 @@ import {
   writeSessionCookie,
   type AuthConfig,
   type SessionPayload,
-} from './auth-session';
+} from './server/auth/auth-session';
 import { resolveBackendOrigin } from './backend-origin';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
@@ -71,7 +73,9 @@ function readRequestBody(req: express.Request): Promise<Buffer> {
 
 app.get('/auth/login', (req, res) => {
   if (!authConfig) {
-    res.status(503).json({ error: 'Authentication is not configured' });
+    res
+      .status(503)
+      .json({ error: 'Authentication is not configured', code: 'auth_not_configured' });
     return;
   }
   const state = createOpaqueState();
@@ -101,12 +105,14 @@ app.get('/auth/login', (req, res) => {
 
 app.post('/auth/login', async (req, res) => {
   if (!authConfig) {
-    res.status(503).json({ error: 'Authentication is not configured' });
+    res
+      .status(503)
+      .json({ error: 'Authentication is not configured', code: 'auth_not_configured' });
     return;
   }
   const credentials = readCredentials(req.body);
   if (!credentials) {
-    res.status(400).json({ error: 'Email and password are required' });
+    res.status(400).json({ error: 'Email and password are required', code: 'invalid_request' });
     return;
   }
 
@@ -117,27 +123,35 @@ app.post('/auth/login', async (req, res) => {
       password: credentials.password,
     });
     if (result.status !== 'authenticated') {
-      res
-        .status(409)
-        .json({ error: `Unsupported authentication challenge: ${result.challengeName}` });
+      res.status(409).json({
+        error: `Unsupported authentication challenge: ${result.challengeName}`,
+        code: 'unsupported_challenge',
+      });
       return;
     }
     writeSessionCookie(res, req, result.session, authConfig.sessionSecret);
     res.json({ authenticated: true });
   } catch (error) {
     console.error(`Password login failed ${formatErrorForLogSafe(error)}`);
-    res.status(401).json({ error: 'Invalid email or password' });
+    res.status(authErrorStatus(error, 401)).json(
+      authErrorResponse(error, {
+        message: 'Invalid email or password',
+        code: 'invalid_credentials',
+      }),
+    );
   }
 });
 
 app.post('/auth/signup', async (req, res) => {
   if (!authConfig) {
-    res.status(503).json({ error: 'Authentication is not configured' });
+    res
+      .status(503)
+      .json({ error: 'Authentication is not configured', code: 'auth_not_configured' });
     return;
   }
   const credentials = readCredentials(req.body);
   if (!credentials) {
-    res.status(400).json({ error: 'Email and password are required' });
+    res.status(400).json({ error: 'Email and password are required', code: 'invalid_request' });
     return;
   }
 
@@ -153,19 +167,28 @@ app.post('/auth/signup', async (req, res) => {
     });
   } catch (error) {
     console.error(`Password signup failed ${formatErrorForLogSafe(error)}`);
-    res.status(400).json({ error: userSafeAuthError(error) });
+    res.status(authErrorStatus(error, 400)).json(
+      authErrorResponse(error, {
+        message: 'Authentication request failed',
+        code: 'cognito_request_failed',
+      }),
+    );
   }
 });
 
 app.post('/auth/confirm', async (req, res) => {
   if (!authConfig) {
-    res.status(503).json({ error: 'Authentication is not configured' });
+    res
+      .status(503)
+      .json({ error: 'Authentication is not configured', code: 'auth_not_configured' });
     return;
   }
   const email = readBodyString(req.body, 'email')?.trim().toLowerCase();
   const code = readBodyString(req.body, 'code')?.trim();
   if (!email || !code) {
-    res.status(400).json({ error: 'Email and confirmation code are required' });
+    res
+      .status(400)
+      .json({ error: 'Email and confirmation code are required', code: 'invalid_request' });
     return;
   }
 
@@ -178,13 +201,20 @@ app.post('/auth/confirm', async (req, res) => {
     res.json({ confirmed: true });
   } catch (error) {
     console.error(`Signup confirmation failed ${formatErrorForLogSafe(error)}`);
-    res.status(400).json({ error: userSafeAuthError(error) });
+    res.status(authErrorStatus(error, 400)).json(
+      authErrorResponse(error, {
+        message: 'Authentication request failed',
+        code: 'cognito_request_failed',
+      }),
+    );
   }
 });
 
 app.get('/auth/callback', async (req, res) => {
   if (!authConfig) {
-    res.status(503).json({ error: 'Authentication is not configured' });
+    res
+      .status(503)
+      .json({ error: 'Authentication is not configured', code: 'auth_not_configured' });
     return;
   }
   const code = readQueryParam(req.query['code']);
@@ -193,7 +223,7 @@ app.get('/auth/callback', async (req, res) => {
   clearOAuthStateCookie(res, req);
 
   if (!code || !state || !oauthState || oauthState.state !== state) {
-    res.status(400).json({ error: 'Invalid authentication callback' });
+    res.status(400).json({ error: 'Invalid authentication callback', code: 'invalid_callback' });
     return;
   }
 
@@ -208,7 +238,12 @@ app.get('/auth/callback', async (req, res) => {
     res.redirect(oauthState.returnTo);
   } catch (error) {
     console.error(`Authentication callback failed ${formatErrorForLogSafe(error)}`);
-    res.status(502).json({ error: 'Authentication failed' });
+    res.status(authErrorStatus(error, 502)).json(
+      authErrorResponse(error, {
+        message: 'Authentication failed',
+        code: 'token_exchange_failed',
+      }),
+    );
   }
 });
 
@@ -240,19 +275,27 @@ app.get('/auth/me', async (req, res) => {
     res.json({ authenticated: true, email: user.email });
   } catch (error) {
     console.error(`Get current user failed ${formatErrorForLogSafe(error)}`);
-    res.status(502).json({ error: 'Unable to read current user' });
+    res.status(authErrorStatus(error, 502)).json(
+      authErrorResponse(error, {
+        message: 'Unable to read current user',
+        code: 'current_user_unavailable',
+      }),
+    );
   }
 });
 
 app.post('/auth/change-password', async (req, res) => {
   const session = await resolveValidSession(req, res, authConfig);
   if (!session) {
-    res.status(401).json({ error: 'Sign in to change your password' });
+    res.status(401).json({ error: 'Sign in to change your password', code: 'session_required' });
     return;
   }
   const passwords = readPasswordChange(req.body);
   if (!passwords) {
-    res.status(400).json({ error: 'Current password and new password are required' });
+    res.status(400).json({
+      error: 'Current password and new password are required',
+      code: 'invalid_request',
+    });
     return;
   }
 
@@ -266,7 +309,12 @@ app.post('/auth/change-password', async (req, res) => {
     res.json({ changed: true });
   } catch (error) {
     console.error(`Password change failed ${formatErrorForLogSafe(error)}`);
-    res.status(400).json({ error: passwordChangeError(error) });
+    res.status(authErrorStatus(error, 400)).json(
+      authErrorResponse(error, {
+        message: 'Authentication request failed',
+        code: 'cognito_request_failed',
+      }),
+    );
   }
 });
 
@@ -452,20 +500,6 @@ function readBodyString(value: unknown, key: string): string | null {
   }
   const item = value[key];
   return typeof item === 'string' ? item : null;
-}
-
-function userSafeAuthError(error: unknown): string {
-  if (error instanceof Error && error.message.trim()) {
-    return error.message;
-  }
-  return 'Authentication request failed';
-}
-
-function passwordChangeError(error: unknown): string {
-  if (error instanceof Error && /notauthorized|incorrect|previouspassword/i.test(error.message)) {
-    return 'Current password is incorrect';
-  }
-  return userSafeAuthError(error);
 }
 
 function readRequestId(req: express.Request): string | null {

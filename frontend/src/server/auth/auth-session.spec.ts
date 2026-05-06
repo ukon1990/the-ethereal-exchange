@@ -1,11 +1,16 @@
+import type express from 'express';
 import { describe, expect, it } from 'vitest';
 
 import {
+  AuthError,
+  authErrorResponse,
   buildLoginUrl,
   decryptPayload,
   encryptPayload,
   readAuthConfig,
+  readSession,
   sessionNeedsRefresh,
+  writeSessionCookie,
 } from './auth-session';
 
 describe('auth session helpers', () => {
@@ -57,6 +62,49 @@ describe('auth session helpers', () => {
     expect(encrypted).not.toContain('access');
     expect(decryptPayload(encrypted, config.sessionSecret)).toEqual(payload);
     expect(decryptPayload(encrypted, 'wrong-secret')).toBeNull();
+  });
+
+  it('writes and reads encrypted session cookies', () => {
+    const payload = {
+      accessToken: 'access',
+      idToken: 'id',
+      refreshToken: 'refresh',
+      expiresAt: 123,
+    };
+    const headers = new Map<string, number | string | string[]>();
+    const res = {
+      getHeader: (name: string) => headers.get(name),
+      setHeader: (name: string, value: number | string | string[]) => headers.set(name, value),
+    } as unknown as express.Response;
+    const req = {
+      headers: {},
+      protocol: 'http',
+      secure: false,
+    } as unknown as express.Request;
+
+    writeSessionCookie(res, req, payload, config.sessionSecret);
+
+    const setCookie = headers.get('Set-Cookie');
+    expect(Array.isArray(setCookie)).toBe(true);
+    const cookieHeader = Array.isArray(setCookie) ? setCookie[0]?.split(';')[0] : undefined;
+    expect(cookieHeader).toContain('wae_session=');
+
+    const readReq = {
+      headers: { cookie: cookieHeader },
+    } as unknown as express.Request;
+    expect(readSession(readReq, config.sessionSecret)).toEqual(payload);
+  });
+
+  it('maps auth errors to frontend-safe response payloads', () => {
+    expect(
+      authErrorResponse(new AuthError('weak_password', 'Password is too weak'), {
+        code: 'unknown',
+        message: 'Fallback',
+      }),
+    ).toEqual({
+      error: 'Password is too weak',
+      code: 'weak_password',
+    });
   });
 
   it('reads auth config only when all required values are present', () => {
