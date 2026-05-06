@@ -202,7 +202,6 @@ function sessionFromAuthenticationResult(result: AuthenticationResultType): Sess
 
   return {
     accessToken: result.AccessToken,
-    idToken: result.IdToken,
     refreshToken: result.RefreshToken,
     expiresAt: Date.now() + (result.ExpiresIn ?? 3600) * 1000,
   };

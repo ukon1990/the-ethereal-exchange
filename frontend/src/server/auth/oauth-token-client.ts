@@ -70,7 +70,6 @@ async function requestTokens(config: AuthConfig, body: URLSearchParams): Promise
 
   return {
     accessToken: tokenResponse.access_token,
-    idToken: tokenResponse.id_token,
     refreshToken: tokenResponse.refresh_token,
     expiresAt: Date.now() + tokenResponse.expires_in * 1000,
   };
