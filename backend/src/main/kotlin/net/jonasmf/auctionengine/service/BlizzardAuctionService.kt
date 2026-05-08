@@ -183,28 +183,6 @@ class BlizzardAuctionService(
                     JvmRuntimeDiagnostics.snapshot(),
                 )
                 runtimeHealthTracker.markUpdateBatchProgress(
-                    "archive-auction-payload",
-                    region = region,
-                    connectedRealmId = connectedRealmId,
-                )
-                val s3ArchiveStartTime = System.currentTimeMillis()
-                val s3Url = saveAuctionDataToS3(region, connectedRealmId, downloadedPayload, lastModified)
-                if (s3Url == null) {
-                    logger.error(
-                        "Auction payload archive failed for realm {}. Marking update as failed.",
-                        connectedRealmId,
-                    )
-                    markAuctionUpdateFailed(connectedRealmId, lastModified)
-                    return
-                }
-                logger.info(
-                    "Archived auction payload for realm {} region {} in {}ms {}",
-                    connectedRealmId,
-                    region,
-                    System.currentTimeMillis() - s3ArchiveStartTime,
-                    JvmRuntimeDiagnostics.snapshot(),
-                )
-                runtimeHealthTracker.markUpdateBatchProgress(
                     "aggregate-hourly-stats",
                     region = region,
                     connectedRealmId = connectedRealmId,
@@ -377,38 +355,6 @@ class BlizzardAuctionService(
         val warnOnly: Boolean,
     )
 
-    private fun saveAuctionDataToS3(
-        region: Region,
-        connectedRealmId: Int,
-        payload: DownloadedAuctionPayload,
-        lastModified: ZonedDateTime,
-    ): String? {
-        var s3Url: String? = null
-        val lastModifiedMs = lastModified.toInstant().toEpochMilli()
-        val startTime = System.currentTimeMillis()
-        val filePath = "auctions/${region.name.lowercase(Locale.getDefault())}/${
-            if (connectedRealmId < 0) "commodity" else "$connectedRealmId"
-        }/$lastModifiedMs.json"
-
-        try {
-            s3Url = amazonS3.uploadCompressedFile(region, filePath, payload.path)
-            logger.debug("Successfully uploaded auctions to S3: $filePath")
-        } catch (e: Exception) {
-            logger.error("Failed to upload auctions to S3: $filePath", e)
-        }
-        if (s3Url != null) {
-            logger.info(
-                "Uploaded auctions to S3 for realm {} region {} from {} (contentLength={}B) in {}ms {}",
-                connectedRealmId,
-                region,
-                payload.path,
-                payload.contentLength ?: "unknown",
-                System.currentTimeMillis() - startTime,
-                JvmRuntimeDiagnostics.snapshot(),
-            )
-        }
-        return s3Url
-    }
 
     private fun saveDumpPathToS3(
         region: Region,
