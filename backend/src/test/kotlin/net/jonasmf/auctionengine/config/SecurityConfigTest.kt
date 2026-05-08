@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterAutoConfiguration
 import org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration
-import org.springframework.boot.test.autoconfigure.OverrideAutoConfiguration
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
 import org.springframework.context.annotation.Import
 import org.springframework.security.oauth2.jwt.JwtDecoder
@@ -27,7 +26,6 @@ import org.springframework.test.web.servlet.get
         HealthController::class,
     ],
 )
-@OverrideAutoConfiguration(enabled = true)
 @ImportAutoConfiguration(
     ServletWebSecurityAutoConfiguration::class,
     SecurityFilterAutoConfiguration::class,
