@@ -99,6 +99,7 @@ export class LoginPage {
     event.preventDefault();
 
     this.notice.set(null);
+    this.registerModel.update((value) => ({ ...value }));
     this.loading.set(true);
     try {
       await submitForm(this.loginForm, async () => {
@@ -192,12 +193,10 @@ export class LoginPage {
       return [{ kind: 'server', message }];
     }
 
+    this.notice.set(message);
     switch (authError.code) {
       case 'invalid_credentials':
-        return [
-          { kind: authError.code, message, fieldTree: this.loginForm.email },
-          { kind: authError.code, message, fieldTree: this.loginForm.password },
-        ];
+        return [{ kind: authError.code, message }];
       case 'user_exists':
       case 'user_not_confirmed':
         if (authError.code === 'user_not_confirmed') {
@@ -206,14 +205,13 @@ export class LoginPage {
           );
           this.mode.set('confirm');
         }
-        return [{ kind: authError.code, message, fieldTree: this.loginForm.email }];
+        return [{ kind: authError.code, message }];
       case 'weak_password':
-        return [{ kind: authError.code, message, fieldTree: this.loginForm.password }];
+        return [{ kind: authError.code, message }];
       case 'code_mismatch':
       case 'expired_code':
-        return [{ kind: authError.code, message, fieldTree: this.loginForm.confirmationCode }];
+        return [{ kind: authError.code, message }];
       default:
-        this.notice.set(message);
         return [{ kind: authError.code, message }];
     }
   }
