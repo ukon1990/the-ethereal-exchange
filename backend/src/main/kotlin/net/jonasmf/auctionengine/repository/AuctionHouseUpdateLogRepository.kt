@@ -11,7 +11,5 @@ interface AuctionHouseUpdateLogRepository {
     fun save(
         connectedId: Int,
         lastModified: Instant,
-        size: Double,
-        url: String,
     ): AuctionHouseUpdateLog
 }

@@ -98,9 +98,6 @@ class ConnectedRealmService(
                     lowestDelay = 60,
                     avgDelay = 60,
                     highestDelay = 60,
-                    tsmFile = null,
-                    statsFile = null,
-                    auctionFile = null,
                     updateAttempts = 0,
                 ),
         )

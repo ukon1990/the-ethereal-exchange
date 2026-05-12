@@ -8,7 +8,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import net.jonasmf.auctionengine.config.BlizzardApiProperties
 import net.jonasmf.auctionengine.constant.Region
-import net.jonasmf.auctionengine.domain.AuctionHouse
+import net.jonasmf.auctionengine.domain.realm.AuctionHouse
 import net.jonasmf.auctionengine.service.AuctionHouseService
 import net.jonasmf.auctionengine.service.BlizzardAuctionService
 import net.jonasmf.auctionengine.service.RuntimeHealthTracker

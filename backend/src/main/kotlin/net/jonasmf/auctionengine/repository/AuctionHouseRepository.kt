@@ -1,11 +1,11 @@
 package net.jonasmf.auctionengine.repository
 
 import net.jonasmf.auctionengine.constant.Region
-import net.jonasmf.auctionengine.domain.AuctionHouse
+import net.jonasmf.auctionengine.domain.realm.AuctionHouse
 import java.util.Optional
 
 interface AuctionHouseRepository {
-    fun findById(id: Int?): Optional<AuctionHouse>
+    fun findById(id: Int?): AuctionHouse?
 
     fun findAllByRegion(region: Region): List<AuctionHouse>
 

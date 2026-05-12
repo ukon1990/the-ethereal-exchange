@@ -3,7 +3,7 @@ package net.jonasmf.auctionengine.service
 import net.jonasmf.auctionengine.constant.Region
 import net.jonasmf.auctionengine.dbo.rds.realm.ConnectedRealm
 import net.jonasmf.auctionengine.repository.AuctionHouseRepository
-import net.jonasmf.auctionengine.repository.rds.AuctionHouseFileLogRepository
+import net.jonasmf.auctionengine.repository.rds.AuctionUpdateHistoryRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.math.min
@@ -17,7 +17,7 @@ import net.jonasmf.auctionengine.repository.rds.AuctionHouseRepository as Auctio
 class AuctionHouseService(
     val repository: AuctionHouseRepository,
     private val auctionHouseEntityRepository: AuctionHouseEntityRepository,
-    private val auctionHouseFileLogRepository: AuctionHouseFileLogRepository,
+    private val auctionUpdateHistoryRepository: AuctionUpdateHistoryRepository,
 ) {
     companion object {
         private const val DEFAULT_DELAY_MINUTES = 45L
@@ -42,10 +42,10 @@ class AuctionHouseService(
         auctionHouse.region = region
         auctionHouse.lastModified = auctionHouse.lastModified ?: seededAt
         auctionHouse.nextUpdate = auctionHouse.nextUpdate ?: seededAt
-        auctionHouse.lowestDelay = auctionHouse.lowestDelay ?: 0L
-        auctionHouse.avgDelay = auctionHouse.avgDelay ?: 60L
-        auctionHouse.highestDelay = auctionHouse.highestDelay ?: 0L
-        auctionHouse.updateAttempts = auctionHouse.updateAttempts ?: 0
+        auctionHouse.lowestDelay = auctionHouse.lowestDelay
+        auctionHouse.avgDelay = auctionHouse.avgDelay
+        auctionHouse.highestDelay = auctionHouse.highestDelay
+        auctionHouse.updateAttempts = auctionHouse.updateAttempts
 
         val savedAuctionHouse = auctionHouseEntityRepository.save(auctionHouse)
         if (connectedRealm.auctionHouse.id != savedAuctionHouse.id) {
@@ -57,16 +57,12 @@ class AuctionHouseService(
         id: Int,
         newLastModified: Instant?,
         isSuccess: Boolean,
-        url: String? = null,
     ) {
-        val auctionHouse = repository.findById(id).orElse(null) ?: return
+        val auctionHouse = repository.findById(id) ?: return
 
         if (isSuccess && newLastModified != null) {
-            requireNotNull(url) { "URL must be provided for successful updates" }
-
             auctionHouse.lastModified = newLastModified
             auctionHouse.updateAttempts = 0
-            auctionHouse.url = url
             repository.save(auctionHouse)
 
             val (lowestDelay, avgDelay, highestDelay) = getUpdateStats(id)
@@ -90,7 +86,7 @@ class AuctionHouseService(
      * Returns the min, avg and max delay summary based on file-log rows from the past 72 hours.
      */
     private fun getUpdateStats(id: Int): Triple<Long, Long, Long> {
-        val stats = auctionHouseFileLogRepository.findDelayStatsByConnectedId(id)
+        val stats = auctionUpdateHistoryRepository.findDelayStatsByConnectedId(id)
         val lowestDelay =
             stats.getMinDelayMinutes()?.coerceAtLeast(MINIMUM_DELAY_FLOOR_MINUTES) ?: DEFAULT_DELAY_MINUTES
         val avgDelay = stats.getAvgDelayMinutes() ?: DEFAULT_DELAY_MINUTES

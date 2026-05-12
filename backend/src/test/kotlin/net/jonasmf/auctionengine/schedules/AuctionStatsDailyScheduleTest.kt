@@ -6,11 +6,11 @@ import io.mockk.slot
 import io.mockk.verify
 import net.jonasmf.auctionengine.config.BlizzardApiProperties
 import net.jonasmf.auctionengine.constant.Region
-import net.jonasmf.auctionengine.dbo.dynamodb.RealmDynamo
-import net.jonasmf.auctionengine.domain.AuctionHouse
+import net.jonasmf.auctionengine.domain.realm.AuctionHouse
 import net.jonasmf.auctionengine.service.AuctionHouseService
 import net.jonasmf.auctionengine.service.AuctionStatsDailyService
 import net.jonasmf.auctionengine.service.AuctionStatsDailyUpdateResult
+import net.jonasmf.auctionengine.testsupport.builder.buildRealm
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -43,7 +43,7 @@ class AuctionStatsDailyScheduleTest {
                 connectedId = 1,
                 region = Region.Europe,
                 lastDailyPriceUpdate = Instant.parse("2026-01-01T11:00:00Z"),
-                realms = listOf(RealmDynamo(timezone = "Pacific/Auckland")),
+                realms = listOf(buildRealm(timezone = "Pacific/Auckland")),
             )
         val taiwanHouse =
             AuctionHouse(
@@ -51,7 +51,7 @@ class AuctionStatsDailyScheduleTest {
                 connectedId = 2,
                 region = Region.Taiwan,
                 lastDailyPriceUpdate = null,
-                realms = listOf(RealmDynamo(timezone = "Asia/Taipei")),
+                realms = listOf(buildRealm(timezone = "Asia/Taipei")),
             )
 
         every { auctionHouseService.findAllByRegion(Region.Europe) } returns listOf(europeHouse)

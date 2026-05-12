@@ -131,9 +131,6 @@ class ConnectedRealmBulkSyncServiceTest : IntegrationTestBase() {
                     lowestDelay = 0,
                     avgDelay = 60,
                     highestDelay = 0,
-                    tsmFile = null,
-                    statsFile = null,
-                    auctionFile = null,
                     updateAttempts = 0,
                 ),
             )
@@ -222,9 +219,6 @@ class ConnectedRealmBulkSyncServiceTest : IntegrationTestBase() {
             lowestDelay = 0L,
             avgDelay = 60L,
             highestDelay = 0L,
-            tsmFile = null,
-            statsFile = null,
-            auctionFile = null,
             updateAttempts = 0,
             updateLog = mutableListOf(),
         )
