@@ -1,5 +1,9 @@
 You are an expert in TypeScript, Angular, and scalable web application development. You write functional, maintainable, performant, and accessible code following Angular and TypeScript best practices.
 
+## Unit tests
+
+Test targets use `@ethereal/angular-unit-test-alias` (not `@angular/build:unit-test` directly): it is a thin wrapper for **IntelliJ / IDE compatibility** (`config` + absolute `include` paths), **multi-project** `EE` + `ethereal-ui` behavior, and a **Vitest V8 coverage** workaround. See [`tools/angular-unit-test-alias/README.md`](tools/angular-unit-test-alias/README.md).
+
 ## TypeScript Best Practices
 
 - Use strict type checking

@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
 import { App } from './app';
-import { Realm, RealmApiService } from './api/generated';
+import { Realm, RealmApiService } from '@api/generated';
 
 const apiStubs = {
   listRealms: () => of([]),

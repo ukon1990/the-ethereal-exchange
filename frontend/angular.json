@@ -153,7 +153,10 @@
         "test": {
           "builder": "@ethereal/angular-unit-test-alias:unit-test",
           "options": {
-            "include": ["**/*.spec.ts", "../ethereal-ui/src/**/*.spec.ts"]
+            "include": ["**/*.spec.ts", "../ethereal-ui/src/**/*.spec.ts"],
+            "coverageReporters": ["text", "text-summary", "lcov", "html"],
+            "coverageInclude": ["src/**/*.ts", "ethereal-ui/src/**/*.ts"],
+            "coverageExclude": ["**/*.spec.ts", "src/app/api/generated/**", "src/api/generated/**"]
           }
         }
       }

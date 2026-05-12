@@ -1,7 +1,28 @@
 const { createBuilder } = require('@angular-devkit/architect');
+const fs = require('node:fs');
+const Module = require('node:module');
 const { dirname, join, normalize } = require('node:path');
 
+/**
+ * Wraps @angular/build unit-test — see README.md (IDE / multiproject / coverage).
+ */
 const angularBuildRoot = dirname(require.resolve('@angular/build/package.json'));
+const angularVitestPluginsPath = join(
+  angularBuildRoot,
+  'src/builders/unit-test/runners/vitest/plugins.js',
+);
+
+const originalJsHandler = Module._extensions['.js'];
+Module._extensions['.js'] = function etherealVitestCoverageHook(module, filename) {
+  if (filename === angularVitestPluginsPath) {
+    const code = fs
+      .readFileSync(filename, 'utf8')
+      .replace(/excludeAfterRemap:\s*true/, 'excludeAfterRemap: false');
+    return module._compile(code, filename);
+  }
+  return originalJsHandler(module, filename);
+};
+
 const { execute } = require(join(angularBuildRoot, 'src/builders/unit-test/index.js'));
 
 function asArray(value) {
