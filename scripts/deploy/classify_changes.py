@@ -20,7 +20,7 @@ def main() -> int:
         "backend/Dockerfile",
         "backend/src/main/resources/**",
         "backend/src/test/**",
-        ".github/workflows/backend-ci.yml",
+        ".github/workflows/ci.yml",
         ".github/actions/**",
     ]
     frontend_patterns = [
@@ -34,7 +34,7 @@ def main() -> int:
         "frontend/.postcssrc.json",
         "frontend/eslint.config.*",
         "frontend/Dockerfile",
-        ".github/workflows/backend-ci.yml",
+        ".github/workflows/ci.yml",
         ".github/actions/**",
     ]
     backend_runtime_patterns = [

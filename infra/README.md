@@ -18,7 +18,7 @@ It is not a Kubernetes or EKS deployment.
 - `infra/cloudformation/app-region.yaml`: reusable per-region CloudFormation stack
 - `scripts/deploy/sync-ssm-parameters.sh`: writes runtime configuration to SSM Parameter Store
 - `scripts/deploy/restart-container.sh`: restarts backend and frontend containers on the EC2 instance through SSM
-- `.github/workflows/backend-ci.yml`: verifies backend/frontend changes and uploads deployable artifacts on `master`
+- `.github/workflows/ci.yml`: verifies backend/frontend changes and uploads deployable artifacts on `master`
 - `.github/workflows/deploy-production.yml`: orchestrates production deployment from `master`
 - `.github/workflows/reusable-build-image.yml`: builds backend or frontend runtime images from deployable artifacts
 - `.github/workflows/reusable-deploy-region.yml`: deploys one region at a time

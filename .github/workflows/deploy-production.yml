@@ -1,7 +1,12 @@
 name: Deploy Production
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.workflow_run.head_branch }}
+  group: >-
+    deploy-production-${{
+      github.event_name == 'workflow_run'
+        && github.event.workflow_run.head_sha
+        || github.sha
+    }}
   cancel-in-progress: true
 
 env:
@@ -18,13 +23,28 @@ on:
       - App PR Checks
     types:
       - completed
+  workflow_dispatch:
+    inputs:
+      ci_workflow_run_id:
+        description: Optional App PR Checks run id to reuse backend-war and frontend-dist artifacts (omit to build from source in image jobs).
+        required: false
+        type: string
+        default: ""
+      force_app_rollout:
+        description: Run backend and frontend rollouts even if change classification would skip them (does not force Cognito/infra).
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   classify-changes:
     if: >-
       ${{
-        github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.head_branch == 'master'
+        (github.event_name == 'workflow_run' &&
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.head_branch == 'master') ||
+        (github.event_name == 'workflow_dispatch' &&
+          github.ref == 'refs/heads/master')
       }}
     runs-on: ubuntu-latest
     outputs:
@@ -40,21 +60,31 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 2
 
       - name: Read workflow context
         id: config
         shell: bash
+        env:
+          DISPATCH_CI_RUN_ID: ${{ github.event.inputs.ci_workflow_run_id || '' }}
         run: |
           set -euo pipefail
-          echo "git_ref=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
-          echo "image_tag=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
-          echo "workflow_run_id=${{ github.event.workflow_run.id }}" >> "$GITHUB_OUTPUT"
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            echo "git_ref=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+            echo "image_tag=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+            echo "workflow_run_id=${DISPATCH_CI_RUN_ID}" >> "$GITHUB_OUTPUT"
+          else
+            echo "git_ref=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
+            echo "image_tag=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
+            echo "workflow_run_id=${{ github.event.workflow_run.id }}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Classify changed files
         id: classify
         shell: bash
+        env:
+          FORCE_APP_ROLLOUT: ${{ github.event.inputs.force_app_rollout }}
         run: |
           set -euo pipefail
           parent_sha="$(git rev-list --parents -n 1 HEAD | awk '{print $2}')"
@@ -69,6 +99,12 @@ jobs:
           echo "frontend_rollout_required=$(python3 -c "import json,sys; print(str(json.load(sys.stdin)['frontend_rollout_required']).lower())" <<< "$classification")" >> "$GITHUB_OUTPUT"
           echo "infra_apply_required=$(python3 -c "import json,sys; print(str(json.load(sys.stdin)['infra_apply_required']).lower())" <<< "$classification")" >> "$GITHUB_OUTPUT"
           echo "relevant_changed=$(python3 -c "import json,sys; print(str(json.load(sys.stdin)['relevant_changed']).lower())" <<< "$classification")" >> "$GITHUB_OUTPUT"
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" && "${FORCE_APP_ROLLOUT:-}" == "true" ]]; then
+            echo "app_rollout_required=true" >> "$GITHUB_OUTPUT"
+            echo "backend_rollout_required=true" >> "$GITHUB_OUTPUT"
+            echo "frontend_rollout_required=true" >> "$GITHUB_OUTPUT"
+            echo "relevant_changed=true" >> "$GITHUB_OUTPUT"
+          fi
 
   load-regions:
     needs: classify-changes
