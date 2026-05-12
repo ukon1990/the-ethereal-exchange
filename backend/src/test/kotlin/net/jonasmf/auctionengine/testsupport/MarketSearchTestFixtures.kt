@@ -289,8 +289,8 @@ object MarketSearchTestFixtures {
             """
             INSERT INTO auction_house (
                 id, auto_update, avg_delay, connected_id, game_build, highest_delay, last_modified, lowest_delay,
-                next_update, region, stats_last_modified, update_attempts
-            ) VALUES (?, 1, 60, ?, 0, 60, ?, 60, ?, 'Europe', 0, 0)
+                next_update, region, update_attempts
+            ) VALUES (?, 1, 60, ?, 0, 60, ?, 60, ?, 'Europe', 0)
             """.trimIndent(),
             id,
             connectedId,

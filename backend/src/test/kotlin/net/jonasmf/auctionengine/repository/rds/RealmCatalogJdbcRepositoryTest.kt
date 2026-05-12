@@ -86,8 +86,8 @@ class RealmCatalogJdbcRepositoryTest : IntegrationTestBase() {
             """
             INSERT INTO auction_house (
                 id, auto_update, avg_delay, connected_id, game_build, highest_delay,
-                lowest_delay, stats_last_modified, update_attempts
-            ) VALUES (?, 0, 60, ?, 0, 0, 0, 0, 0)
+                lowest_delay, update_attempts
+            ) VALUES (?, 0, 60, ?, 0, 0, 0, 0)
             """.trimIndent(),
             103,
             103,
@@ -163,7 +163,6 @@ class RealmCatalogJdbcRepositoryTest : IntegrationTestBase() {
                     avgDelay = 60L,
                     highestDelay = 0L,
                     gameBuild = 0,
-                    statsLastModified = 0L,
                     updateAttempts = 0,
                 ),
             realms =

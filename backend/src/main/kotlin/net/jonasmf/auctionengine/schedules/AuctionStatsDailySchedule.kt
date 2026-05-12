@@ -1,8 +1,7 @@
 package net.jonasmf.auctionengine.schedules
 
 import net.jonasmf.auctionengine.config.BlizzardApiProperties
-import net.jonasmf.auctionengine.dbo.dynamodb.converters.toKotlin
-import net.jonasmf.auctionengine.domain.AuctionHouse
+import net.jonasmf.auctionengine.domain.realm.AuctionHouse
 import net.jonasmf.auctionengine.service.AuctionHouseService
 import net.jonasmf.auctionengine.service.AuctionStatsDailyService
 import net.jonasmf.auctionengine.utility.resolveZone
@@ -12,6 +11,7 @@ import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.toJavaInstant
+import kotlin.time.toKotlinInstant
 
 @Component
 class AuctionStatsDailySchedule(
@@ -90,7 +90,7 @@ class AuctionStatsDailySchedule(
                 return
             }
 
-            val marker = lastProcessedDate.atStartOfDay(zone).toInstant().toKotlin()
+            val marker = lastProcessedDate.atStartOfDay(zone).toInstant().toKotlinInstant()
             auctionHouseService.updateLastDailyPriceUpdate(connectedRealmId, marker)
             log.info(
                 "Updated daily price statistics marker for connected realm {} to local date {} in zone {} after {} rows.",

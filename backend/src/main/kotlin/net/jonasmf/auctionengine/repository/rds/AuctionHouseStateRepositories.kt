@@ -1,20 +1,17 @@
 package net.jonasmf.auctionengine.repository.rds
 
 import net.jonasmf.auctionengine.constant.Region
-import net.jonasmf.auctionengine.dbo.dynamodb.RealmDynamo
-import net.jonasmf.auctionengine.dbo.dynamodb.StatsDynamo
-import net.jonasmf.auctionengine.dbo.dynamodb.converters.toKotlin
-import net.jonasmf.auctionengine.dbo.rds.FileReference
 import net.jonasmf.auctionengine.dbo.rds.realm.AuctionHouse
-import net.jonasmf.auctionengine.dbo.rds.realm.AuctionHouseFileLog
+import net.jonasmf.auctionengine.dbo.rds.realm.AuctionUpdateHistory
 import net.jonasmf.auctionengine.domain.AuctionHouseUpdateLog
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Repository
-import java.time.ZonedDateTime
 import java.util.Optional
 import kotlin.time.Instant
 import kotlin.time.toJavaInstant
-import net.jonasmf.auctionengine.domain.AuctionHouse as AuctionHouseDomain
+import kotlin.time.toKotlinInstant
+import net.jonasmf.auctionengine.domain.realm.AuctionHouse as AuctionHouseDomain
+import net.jonasmf.auctionengine.domain.realm.Realm as RealmDomain
 import net.jonasmf.auctionengine.repository.AuctionHouseRepository as AuctionHouseStateRepository
 import net.jonasmf.auctionengine.repository.AuctionHouseUpdateLogRepository as AuctionHouseLogRepository
 
@@ -71,16 +68,14 @@ class AuctionHouseStateRepositoryImpl(
                 auctionHouseRepository.save(entity)
             }
 
-        val fileSize = saved.auctionFile?.size ?: auctionHouse.size
-        val fileUrl = saved.auctionFile?.path ?: auctionHouse.url
-        auctionHouseUpdateLogRepository.save(connectedId, auctionHouse.lastModified!!, fileSize, fileUrl)
+        auctionHouseUpdateLogRepository.save(connectedId, auctionHouse.lastModified!!)
         return saved.toDomain(resolveRealms(connectedId))
     }
 
-    private fun resolveRealms(connectedId: Int): List<RealmDynamo> {
+    private fun resolveRealms(connectedId: Int): List<RealmDomain> {
         val connectedRealm = connectedRealmRepository.findById(connectedId).orElse(null) ?: return emptyList()
         return connectedRealm.realms.map {
-            RealmDynamo(
+            RealmDomain(
                 id = it.id.toLong(),
                 locale = it.locale.name,
                 name = it.name,
@@ -95,7 +90,7 @@ class AuctionHouseStateRepositoryImpl(
 class AuctionHouseUpdateLogRepositoryImpl(
     private val auctionHouseRepository: AuctionHouseRepository,
     private val connectedRealmRepository: ConnectedRealmRepository,
-    private val auctionHouseFileLogRepository: AuctionHouseFileLogRepository,
+    private val auctionHouseFileLogRepository: AuctionUpdateHistoryRepository,
 ) : AuctionHouseLogRepository {
     override fun findByIdAndMostRecentLastModified(connectedRealmId: Int): List<AuctionHouseUpdateLog> =
         auctionHouseFileLogRepository
@@ -111,8 +106,6 @@ class AuctionHouseUpdateLogRepositoryImpl(
     override fun save(
         connectedId: Int,
         lastModified: Instant,
-        size: Double,
-        url: String,
     ): AuctionHouseUpdateLog {
         val auctionHouse =
             auctionHouseRepository.findByConnectedId(connectedId).orElse(null)
@@ -139,32 +132,19 @@ class AuctionHouseUpdateLogRepositoryImpl(
             if (previousLogEntry?.lastModified == null) {
                 0L
             } else {
-                lastModified.minus(previousLogEntry.lastModified!!.toKotlin()).inWholeMilliseconds
+                lastModified.minus(previousLogEntry.lastModified!!.toKotlinInstant()).inWholeMilliseconds
             }
 
         val saved =
             auctionHouseFileLogRepository.save(
-                AuctionHouseFileLog(
+                AuctionUpdateHistory(
                     lastModified = lastModifiedInstant,
                     timeSincePreviousDump = timeSincePrevious,
-                    file =
-                        FileReference(
-                            path = url,
-                            bucketName = extractBucketName(url),
-                            created = ZonedDateTime.now(),
-                            size = size,
-                        ),
                     auctionHouse = auctionHouse,
                 ),
             )
         return saved.toDomain()
     }
-
-    private fun extractBucketName(url: String): String =
-        url
-            .substringAfter("://", "")
-            .substringBefore('/')
-            .ifBlank { "unknown" }
 }
 
 private fun AuctionHouse.applyDomain(domain: AuctionHouseDomain): AuctionHouse {
@@ -185,18 +165,13 @@ private fun AuctionHouse.applyDomain(domain: AuctionHouseDomain): AuctionHouse {
         lastHistoryDeleteEventDaily = domain.lastHistoryDeleteEventDaily?.toJavaInstant()
         lastModified = domain.lastModified?.toJavaInstant()
         lastRequested = domain.lastRequested?.toJavaInstant()
-        lastStatsInsert = domain.lastStatsInsert?.toJavaInstant()
-        lastTrendUpdateInitiation = domain.lastTrendUpdateInitiation?.toJavaInstant()
         lowestDelay = domain.lowestDelay
         nextUpdate = domain.nextUpdate?.toJavaInstant()
-        statsLastModified = domain.stats.lastModified
         updateAttempts = domain.updateAttempts
-        auctionFile = domain.url.toFileReference(domain.size, auctionFile)
-        statsFile = domain.stats.url.toFileReference(statsFile?.size ?: 0.0, statsFile)
     }
 }
 
-private fun AuctionHouse.toDomain(realms: List<RealmDynamo>): AuctionHouseDomain =
+private fun AuctionHouse.toDomain(realms: List<RealmDomain>): AuctionHouseDomain =
     AuctionHouseDomain(
         id = connectedId,
         region = region,
@@ -205,48 +180,20 @@ private fun AuctionHouse.toDomain(realms: List<RealmDynamo>): AuctionHouseDomain
         connectedId = connectedId,
         gameBuild = gameBuild,
         highestDelay = highestDelay,
-        lastDailyPriceUpdate = lastDailyPriceUpdate?.toKotlin(),
-        lastHistoryDeleteEvent = lastHistoryDeleteEvent?.toKotlin(),
-        lastHistoryDeleteEventDaily = lastHistoryDeleteEventDaily?.toKotlin(),
-        lastModified = lastModified?.toKotlin(),
-        lastRequested = lastRequested?.toKotlin(),
-        lastStatsInsert = lastStatsInsert?.toKotlin(),
-        lastTrendUpdateInitiation = lastTrendUpdateInitiation?.toKotlin(),
+        lastDailyPriceUpdate = lastDailyPriceUpdate?.toKotlinInstant(),
+        lastHistoryDeleteEvent = lastHistoryDeleteEvent?.toKotlinInstant(),
+        lastHistoryDeleteEventDaily = lastHistoryDeleteEventDaily?.toKotlinInstant(),
+        lastModified = lastModified?.toKotlinInstant(),
+        lastRequested = lastRequested?.toKotlinInstant(),
         lowestDelay = lowestDelay ?: 0L,
-        nextUpdate = nextUpdate?.toKotlin(),
+        nextUpdate = nextUpdate?.toKotlinInstant(),
         realms = realms,
-        size = auctionFile?.size ?: 0.0,
-        stats =
-            StatsDynamo(
-                lastModified = statsLastModified ?: 0L,
-                url = statsFile?.path.orEmpty(),
-            ),
         updateAttempts = updateAttempts ?: 0,
-        url = auctionFile?.path.orEmpty(),
     )
 
-private fun AuctionHouseFileLog.toDomain(): AuctionHouseUpdateLog =
+private fun AuctionUpdateHistory.toDomain(): AuctionHouseUpdateLog =
     AuctionHouseUpdateLog(
         id = auctionHouse?.connectedId ?: 0,
-        lastModified = requireNotNull(lastModified).toKotlin(),
-        size = file.size,
+        lastModified = requireNotNull(lastModified).toKotlinInstant(),
         timeSincePreviousDump = timeSincePreviousDump,
-        url = file.path,
     )
-
-private fun String.toFileReference(
-    size: Double,
-    existing: FileReference?,
-): FileReference? {
-    if (isBlank()) {
-        return existing
-    }
-
-    return FileReference(
-        id = existing?.id,
-        path = this,
-        bucketName = substringAfter("://", "").substringBefore('/').ifBlank { existing?.bucketName.orEmpty() },
-        created = existing?.created ?: ZonedDateTime.now(),
-        size = size,
-    )
-}

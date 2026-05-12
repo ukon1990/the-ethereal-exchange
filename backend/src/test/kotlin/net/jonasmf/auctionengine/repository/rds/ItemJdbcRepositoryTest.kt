@@ -66,9 +66,6 @@ class ItemJdbcRepositoryTest : IntegrationTestBase() {
                         nextUpdate = Instant.now(),
                         lowestDelay = 0L,
                         highestDelay = 0L,
-                        tsmFile = null,
-                        statsFile = null,
-                        auctionFile = null,
                     ),
             ),
         )

@@ -1,7 +1,7 @@
 package net.jonasmf.auctionengine.utility
 
+import net.jonasmf.auctionengine.domain.realm.AuctionHouse
 import net.jonasmf.auctionengine.dbo.rds.realm.ConnectedRealm
-import net.jonasmf.auctionengine.domain.AuctionHouse
 import java.time.ZoneId
 import java.time.ZoneOffset
 

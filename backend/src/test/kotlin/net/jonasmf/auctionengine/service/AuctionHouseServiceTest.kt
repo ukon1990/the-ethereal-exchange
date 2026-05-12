@@ -8,8 +8,8 @@ import net.jonasmf.auctionengine.constant.Region
 import net.jonasmf.auctionengine.dbo.rds.realm.ConnectedRealm
 import net.jonasmf.auctionengine.dbo.rds.realm.Realm
 import net.jonasmf.auctionengine.dbo.rds.realm.RegionDBO
-import net.jonasmf.auctionengine.domain.AuctionHouse
 import net.jonasmf.auctionengine.domain.AuctionHouseUpdateLog
+import net.jonasmf.auctionengine.domain.realm.AuctionHouse
 import net.jonasmf.auctionengine.repository.AuctionHouseRepository
 import net.jonasmf.auctionengine.repository.AuctionHouseUpdateLogRepository
 import net.jonasmf.auctionengine.repository.rds.ConnectedRealmRepository
@@ -116,8 +116,6 @@ class AuctionHouseServiceTest : IntegrationTestBase() {
             AuctionHouseUpdateLog(
                 id = auctionHouseIdWithLogs,
                 lastModified = auctionHouseIdWithLogsLastModified.minus((it * 60).minutes),
-                size = 1.0,
-                url = "",
                 timeSincePreviousDump = 0,
             )
         }
@@ -133,8 +131,6 @@ class AuctionHouseServiceTest : IntegrationTestBase() {
             auctionHouseUpdateLogRepository.save(
                 it.id,
                 it.lastModified,
-                it.size,
-                it.url,
             )
         }
     }
@@ -156,9 +152,6 @@ class AuctionHouseServiceTest : IntegrationTestBase() {
                             lowestDelay = 60,
                             avgDelay = 60,
                             highestDelay = 60,
-                            tsmFile = null,
-                            statsFile = null,
-                            auctionFile = null,
                             updateAttempts = 0,
                         ),
                     realms =
@@ -201,9 +194,6 @@ class AuctionHouseServiceTest : IntegrationTestBase() {
                             lowestDelay = 0,
                             avgDelay = 60,
                             highestDelay = 0,
-                            tsmFile = null,
-                            statsFile = null,
-                            auctionFile = null,
                             updateAttempts = 0,
                         ),
                     realms =
@@ -248,7 +238,6 @@ class AuctionHouseServiceTest : IntegrationTestBase() {
                 connectedRealmId,
                 lastModified.plus(35.minutes),
                 true,
-                "https://example.json/1",
             )
             lastModified = requireNotNull(repository.findById(connectedRealmId).get().lastModified)
 
@@ -256,7 +245,6 @@ class AuctionHouseServiceTest : IntegrationTestBase() {
                 connectedRealmId,
                 lastModified.plus(48.minutes),
                 true,
-                "https://example.json/2",
             )
 
             house = repository.findById(connectedRealmId).get()
@@ -288,7 +276,6 @@ class AuctionHouseServiceTest : IntegrationTestBase() {
                 connectedRealmId,
                 getOffsetFromNow(-5),
                 true,
-                "https://example.json/default",
             )
 
             val result = repository.findById(connectedRealmId).get()
@@ -318,7 +305,6 @@ class AuctionHouseServiceTest : IntegrationTestBase() {
                 connectedRealmId,
                 lastModified.plus(20.minutes),
                 true,
-                "https://example.json/old-window",
             )
             lastModified = requireNotNull(repository.findById(connectedRealmId).get().lastModified)
 
@@ -326,7 +312,6 @@ class AuctionHouseServiceTest : IntegrationTestBase() {
                 connectedRealmId,
                 lastModified.plus(70.minutes),
                 true,
-                "https://example.json/recent-window",
             )
 
             val result = repository.findById(connectedRealmId).get()
@@ -356,7 +341,6 @@ class AuctionHouseServiceTest : IntegrationTestBase() {
                 connectedRealmId,
                 lastModified.plus(20.minutes),
                 true,
-                "https://example.json/min-clamp",
             )
             lastModified = requireNotNull(repository.findById(connectedRealmId).get().lastModified)
 
@@ -364,7 +348,6 @@ class AuctionHouseServiceTest : IntegrationTestBase() {
                 connectedRealmId,
                 lastModified.plus(130.minutes),
                 true,
-                "https://example.json/max-clamp",
             )
 
             val result = repository.findById(connectedRealmId).get()
@@ -378,7 +361,7 @@ class AuctionHouseServiceTest : IntegrationTestBase() {
         fun `should update the next update time, and add a new log entry for successful updates`() {
             val originalState = repository.findById(1).get()
             val newLastModified = originalState.lastModified?.plus(60.minutes)
-            auctionHouseService.updateTimes(1, newLastModified, true, "https://example.json")
+            auctionHouseService.updateTimes(1, newLastModified, true)
 
             val result = repository.findById(1).get()
             assertEquals(newLastModified, result.lastModified)
@@ -427,9 +410,6 @@ class AuctionHouseServiceTest : IntegrationTestBase() {
                     lowestDelay = auctionHouse.lowestDelay,
                     avgDelay = auctionHouse.avgDelay,
                     highestDelay = auctionHouse.highestDelay,
-                    tsmFile = null,
-                    statsFile = null,
-                    auctionFile = null,
                     updateAttempts = auctionHouse.updateAttempts,
                 ),
             realms =

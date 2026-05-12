@@ -2,14 +2,11 @@ package net.jonasmf.auctionengine.service
 
 import net.jonasmf.auctionengine.config.BlizzardApiProperties
 import net.jonasmf.auctionengine.constant.Region
-import net.jonasmf.auctionengine.dbo.dynamodb.converters.toKotlin
 import net.jonasmf.auctionengine.dbo.rds.realm.ConnectedRealm
-import net.jonasmf.auctionengine.domain.AuctionHouse
+import net.jonasmf.auctionengine.domain.realm.AuctionHouse
 import net.jonasmf.auctionengine.dto.auction.AuctionDTO
-import net.jonasmf.auctionengine.dto.auction.AuctionDataResponse
 import net.jonasmf.auctionengine.integration.blizzard.BlizzardApiClientException
 import net.jonasmf.auctionengine.integration.blizzard.BlizzardAuctionApiClient
-import net.jonasmf.auctionengine.integration.blizzard.DownloadedAuctionPayload
 import net.jonasmf.auctionengine.utility.JvmRuntimeDiagnostics
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -19,15 +16,14 @@ import org.springframework.stereotype.Service
 import java.sql.SQLException
 import java.time.Instant
 import java.time.ZonedDateTime
-import java.util.Locale
 import java.util.TimeZone
 import kotlin.io.path.deleteIfExists
+import kotlin.time.toKotlinInstant
 
 @Service
 class BlizzardAuctionService(
     private val properties: BlizzardApiProperties,
     private val blizzardAuctionApiClient: BlizzardAuctionApiClient,
-    private val amazonS3: AmazonS3Service,
     private val auctionStatsHourlyService: AuctionStatsHourlyService,
     private val realmService: ConnectedRealmService,
     private val auctionSnapshotPersistenceService: AuctionSnapshotPersistenceService,
@@ -106,7 +102,6 @@ class BlizzardAuctionService(
 
             if (house.lastModified == null || lastModifiedInstant.isAfter(house.lastModified)) {
                 logger.info("New auction data available for $connectedRealmId. Last modified: $lastModified")
-                saveDumpPathToS3(region, connectedRealmId, response)
                 processAuctionData(response.url, region, connectedRealm, connectedRealmId, lastModified)
             } else {
                 logger.debug(
@@ -118,7 +113,7 @@ class BlizzardAuctionService(
                 auctionHouseService.updateTimes(
                     // TODO: Cleanup so that the original lastModified also is Instant
                     connectedRealmId,
-                    lastModified.toInstant().toKotlin(),
+                    lastModified.toInstant().toKotlinInstant(),
                     false,
                 )
             }
@@ -139,7 +134,7 @@ class BlizzardAuctionService(
     ) {
         auctionHouseService.updateTimes(
             connectedRealmId,
-            lastModified?.toInstant()?.toKotlin(),
+            lastModified?.toInstant()?.toKotlinInstant(),
             false,
         )
     }
@@ -222,9 +217,8 @@ class BlizzardAuctionService(
                 )
                 auctionHouseService.updateTimes(
                     connectedRealmId,
-                    lastModified.toInstant().toKotlin(),
+                    lastModified.toInstant().toKotlinInstant(),
                     true,
-                    s3Url,
                 )
             } finally {
                 downloadedPayload.path.deleteIfExists()
@@ -354,24 +348,6 @@ class BlizzardAuctionService(
         val message: String,
         val warnOnly: Boolean,
     )
-
-
-    private fun saveDumpPathToS3(
-        region: Region,
-        connectedRealmId: Int,
-        response: AuctionDataResponse,
-    ) {
-        val filePath = "auctions/${region.name.lowercase(
-            Locale.getDefault(),
-        )}/${if (connectedRealmId < 0) "commodity" else "$connectedRealmId"}/dump-path.json"
-
-        try {
-            amazonS3.uploadFile(region, filePath, response)
-            logger.debug("Successfully uploaded dump path to S3: $filePath")
-        } catch (e: Exception) {
-            logger.error("Failed to upload dump path to S3: $filePath", e)
-        }
-    }
 
     /**
      * Stores the full auctions in the database

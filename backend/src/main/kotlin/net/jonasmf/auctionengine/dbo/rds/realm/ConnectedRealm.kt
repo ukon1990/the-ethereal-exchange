@@ -13,10 +13,10 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.OrderBy
+import jakarta.persistence.Table
 import net.jonasmf.auctionengine.constant.GameBuildVersion
 import net.jonasmf.auctionengine.constant.Locale
 import net.jonasmf.auctionengine.constant.Region
-import net.jonasmf.auctionengine.dbo.rds.FileReference
 import java.time.Instant
 
 @Entity
@@ -30,14 +30,13 @@ class ConnectedRealm(
 )
 
 @Entity
-class AuctionHouseFileLog(
+@Table(name = "auction_update_history")
+class AuctionUpdateHistory(
     @Id
     @GeneratedValue
     var id: Long? = null,
     var lastModified: Instant? = null,
     var timeSincePreviousDump: Long = 0L,
-    @ManyToOne(cascade = [CascadeType.ALL], optional = false)
-    var file: FileReference = FileReference(),
     @ManyToOne(optional = false)
     @JoinColumn(name = "auction_house_id")
     var auctionHouse: AuctionHouse? = null,
@@ -70,27 +69,12 @@ class AuctionHouse(
     @Nullable
     var lastHistoryDeleteEvent: Instant? = null,
     @Nullable
-    var lastHistoryDeleteEventDaily: Instant? = null,
-    @Nullable
-    var lastStatsInsert: Instant? = null,
-    @Nullable
-    var lastTrendUpdateInitiation: Instant? = null,
-    @Nullable
-    var statsLastModified: Long = 0L,
+    var lastHistoryDeleteEventDaily: Instant? = null, // TODO: Probably redundant due to SQL query?
     @Nullable
     var updateAttempts: Int = 0,
-    @ManyToOne(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
-    @Nullable
-    var tsmFile: FileReference? = null,
-    @ManyToOne(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
-    @Nullable
-    var statsFile: FileReference? = null,
-    @ManyToOne(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
-    @Nullable
-    var auctionFile: FileReference? = null,
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.EAGER, mappedBy = "auctionHouse", orphanRemoval = true)
     @OrderBy("lastModified DESC")
-    var updateLog: MutableList<AuctionHouseFileLog> = mutableListOf(),
+    var updateLog: MutableList<AuctionUpdateHistory> = mutableListOf(),
 )
 
 @Entity(name = "region")
