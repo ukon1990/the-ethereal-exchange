@@ -2,8 +2,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { DestroyRef, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
-import { filter } from 'rxjs';
-import { firstValueFrom } from 'rxjs';
+import { filter, firstValueFrom } from 'rxjs';
 
 import { Realm, RealmApiService, RealmDetail } from '@api/generated';
 
@@ -31,23 +30,23 @@ function toRegionEnum(region: string): Realm.RegionEnum | null {
 
 @Injectable({ providedIn: 'root' })
 export class RealmSelectionService {
+  readonly commodityDetails = signal<RealmDetail['commodity'] | null>(null);
+  readonly auctionHouseDetails = signal<RealmDetail['auctionHouse'] | null>(null);
   private readonly realmApi = inject(RealmApiService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
-
   private readonly realmsSignal = signal<readonly Realm[]>([]);
+  readonly realms = this.realmsSignal.asReadonly();
   private readonly selectedSignal = signal<Realm | null>(null);
+  readonly selected = this.selectedSignal.asReadonly();
   /** Composed from selected-realm and commodity `lastModified`; null until `getRealm` succeeds in the browser. */
   private readonly marketDataVersionSignal = signal<string | null>(null);
+  /** When set, market browser may serve cached search/filter responses for this snapshot. */
+  readonly marketDataVersion = this.marketDataVersionSignal.asReadonly();
   private catalogPromise: Promise<readonly Realm[]> | null = null;
   private inflightHydrate: Promise<boolean> | null = null;
   private inflightHydrateKey: string | null = null;
-
-  readonly realms = this.realmsSignal.asReadonly();
-  readonly selected = this.selectedSignal.asReadonly();
-  /** When set, market browser may serve cached search/filter responses for this snapshot. */
-  readonly marketDataVersion = this.marketDataVersionSignal.asReadonly();
 
   constructor() {
     const stored = this.readStoredSelection();
@@ -114,6 +113,8 @@ export class RealmSelectionService {
     const promise = firstValueFrom(this.realmApi.getRealm(r, slug))
       .then((detail) => {
         this.selectedSignal.set(detail.realm);
+        this.commodityDetails.set(detail.commodity);
+        this.auctionHouseDetails.set(detail.auctionHouse);
         this.persistSelection({ region: detail.realm.region, slug: detail.realm.slug });
         this.marketDataVersionSignal.set(composeMarketDataVersion(detail));
         return true;

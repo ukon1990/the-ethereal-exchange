@@ -1,5 +1,17 @@
 <div class="flex min-h-0 flex-1 overflow-hidden">
-  <ee-page-frame [title]="pageTitle()" [eyebrow]="pageEyebrow()" bodyLayout="fill">
+  <!-- TODO: Maybe add back later?
+   <ee-side-nav
+    [items]="viewModel().professionNavItems"
+    [activeId]="viewModel().activeProfessionId"
+    [character]="viewModel().character"
+    [primaryNavItems]="viewModel().primaryNavItems"
+    [activePrimaryId]="viewModel().activePrimaryNavId"
+    [mobileOpen]="mobileNavOpen()"
+    (mobileOpenChange)="mobileNavOpen.set($event)"
+    (primarySelected)="onPrimaryNavSelected($event)"
+    (selected)="onProfessionSelected($event)"
+  />*/}}-->
+  <ee-page-frame [eyebrow]="pageEyebrow()" [title]="pageTitle()" bodyLayout="fill">
     <div class="flex items-center gap-2">
       <ee-search-input [formControl]="searchField" class="min-w-0 flex-1" />
       <button
@@ -28,26 +40,26 @@
         (nextPage)="onNextPage()"
         (previousPage)="onPreviousPage()"
         (sortingChange)="onTableSortingChange($event)"
-        [bodyRowClassFn]="bodyRowClass"
+        [bodyRowClassFn]="marketRowClass"
         [clickableRows]="false"
-        [columns]="activeColumns()"
-        [contentMinWidthClass]="tableMinWidth"
+        [columns]="activeMarketColumns()"
+        [contentMinWidthClass]="marketTableMinWidth"
         [data]="currentRows()"
         [footerSummary]="paginationSummary()"
-        [getRowId]="rowId"
-        [headerRowClass]="headerRowClass"
+        [getRowId]="marketRowId"
+        [headerRowClass]="marketTableHeaderRow"
         [loading]="isLoading()"
         [manualSorting]="true"
-        [rowGridTemplateColumns]="rowGridTemplate()"
+        [rowGridTemplateColumns]="marketRowGridTemplate()"
         [showFooter]="true"
         [showPagination]="true"
-        [skeletonRowClass]="skeletonRowClass"
-        [skeletonRowCount]="pageSize()"
-        [sorting]="tableSorting()"
-        emptyMessage="No recipes available."
-        i18n-emptyMessage="@@crafting.pagination.empty"
-        i18n-sectionAriaLabel="@@crafting.table.aria"
-        sectionAriaLabel="Crafting recipes"
+        [skeletonRowClass]="marketSkeletonRowClass"
+        [skeletonRowCount]="pageSize ?? 25"
+        [sorting]="marketTableSorting()"
+        emptyMessage="No market items available."
+        i18n-emptyMessage="@@market.pagination.empty"
+        i18n-sectionAriaLabel="@@market.table.aria"
+        sectionAriaLabel="Market items"
       />
     </div>
     <div
@@ -60,7 +72,6 @@
       [class.opacity-100]="mobileFiltersOpen()"
       [class.pointer-events-none]="!mobileFiltersOpen()"
       class="fixed inset-0 z-50 flex transition-opacity duration-300 lg:hidden"
-      (keydown.escape)="closeMobileFilters()"
     >
       <button
         (click)="closeMobileFilters()"

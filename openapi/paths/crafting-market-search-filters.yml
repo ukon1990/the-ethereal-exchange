@@ -1,7 +1,7 @@
 get:
   tags:
-    - AuctionMarket
-  operationId: getCraftingMarketFilters
+    - CraftingMarket
+  operationId: filters
   summary: Return crafting search filter definitions
   description: Returns profession options for crafting market filters.
   parameters:
@@ -27,7 +27,7 @@ get:
       content:
         application/json:
           schema:
-            $ref: ../components/schemas/crafting-market-filter-response.yml
+            $ref: ../components/schemas/auction-market-filter-response.yml
     "400":
       description: Invalid filter request.
     "404":

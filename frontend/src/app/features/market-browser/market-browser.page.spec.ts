@@ -2,66 +2,44 @@ import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-
-import { MarketBrowserService } from '../../core/services/market-browser.service';
 import { MarketBrowserPage } from './market-browser.page';
+import { AuctionItemService } from '@core/services/auction-item.service';
 
 describe('MarketBrowserPage', () => {
   const serviceStub = {
-    viewModel: signal({
-      primaryNavItems: [],
-      activePrimaryNavId: 'market-browser',
-      professionNavItems: [],
-      activeProfessionId: 'alchemy',
-      character: {
-        name: 'Tester',
-        realm: 'Argent Dawn-EU',
-        level: 70,
-        profession: 'Alchemy',
-        skill: 'Skill Level 100/100',
-      },
-      filterSections: [],
-      rows: [
-        {
-          id: '19019',
-          name: 'Healing Potion',
-          itemClassName: 'Consumable',
-          itemSubclassName: 'Potion',
-          quality: 'rare' as const,
-          minBuyout: { gold: 1 },
-          marketValue: {},
-          regionalAverage: { gold: 1 },
-          saleRate: 0,
-          selectedQuantity: 4,
-        },
-      ],
-      paginationSummary: 'Showing 1-1 of 1 items',
-      searchQuery: '',
-      page: 0,
-      pageSize: 10,
-      totalPages: 1,
+    queryParams: signal({
       sortBy: 'itemName' as const,
       sortDirection: 'asc' as const,
-      loading: false,
     }),
-    bindRoute: vitest.fn(),
-    loadFromRoute: vitest.fn(),
-    setActivePrimaryNavId: vitest.fn(),
-    setActiveProfessionId: vitest.fn(),
+    currentRows: signal([
+      {
+        id: '19019',
+        name: 'Healing Potion',
+        itemClassName: 'Consumable',
+        itemSubclassName: 'Potion',
+        quality: 'rare' as const,
+        minBuyout: { gold: 1 },
+        marketValue: {},
+        regionalAverage: { gold: 1 },
+        saleRate: 0,
+        selectedQuantity: 4,
+      },
+    ]),
+    filterSections: signal([]),
+    pageData: signal({
+      page: {
+        pageSize: 10,
+      },
+    }),
+    isLoading: signal(false),
     setSearchQuery: vitest.fn(),
-    toggleFilter: vitest.fn(),
-    selectFilter: vitest.fn(),
-    setRangeFilter: vitest.fn(),
-    resetFilters: vitest.fn(),
-    goToPreviousPage: vitest.fn(),
-    goToNextPage: vitest.fn(),
   };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MarketBrowserPage],
       providers: [
-        { provide: MarketBrowserService, useValue: serviceStub },
+        { provide: AuctionItemService, useValue: serviceStub },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -102,7 +80,5 @@ describe('MarketBrowserPage', () => {
     expect(compiled.textContent).toContain('Healing Potion');
     expect(compiled.textContent).toContain('Consumable');
     expect(compiled.textContent).toContain('Potion');
-    expect(compiled.textContent).toContain('Showing 1-1 of 1 items');
-    expect(serviceStub.loadFromRoute).toHaveBeenCalled();
   });
 });

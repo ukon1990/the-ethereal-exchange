@@ -1,0 +1,93 @@
+import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { of } from 'rxjs';
+import { CraftingBrowserPage } from './crafting-browser.page';
+import { CraftingItemService } from '@core/services/crafting-item.service';
+import { LocaleService } from '@core/services/locale.service';
+
+describe('CraftingBrowserPage', () => {
+  const serviceStub = {
+    queryParams: signal({
+      sortBy: 'itemName' as const,
+      sortDirection: 'asc' as const,
+      query: '',
+    }),
+    currentRows: signal([
+      {
+        rowId: '1',
+        recipeId: 1,
+        craftedItemId: 19019,
+        craftedItemName: 'Healing Potion',
+        recipeName: 'Healing Potion',
+        professionName: 'Alchemy',
+        variantSummary: 'Default',
+        listingKey: { bonusKey: '', modifierKey: '', petSpeciesId: 0 },
+        quality: 'rare' as const,
+        outputPriceCopper: 100,
+        reagentCostCopper: 50,
+        profitCopper: 50,
+        roiPercent: 100,
+        outputPriceChangePercent: null,
+        listingQuantity: 4,
+        minBuyoutCopper: 100,
+      },
+    ]),
+    filterSections: signal([]),
+    pageData: signal({
+      page: {
+        page: 0,
+        pageSize: 25,
+        totalItems: 1,
+        totalPages: 1,
+      },
+    }),
+    isLoading: signal(false),
+    setSearchQuery: vitest.fn(),
+    toggleFilter: vitest.fn(),
+    setRangeFilter: vitest.fn(),
+    resetFilters: vitest.fn(),
+    goToPreviousPage: vitest.fn(),
+    goToNextPage: vitest.fn(),
+    upsertSorting: vitest.fn(),
+  };
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [CraftingBrowserPage],
+      providers: [
+        { provide: CraftingItemService, useValue: serviceStub },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { paramMap: convertToParamMap({}) },
+            queryParamMap: of(convertToParamMap({})),
+          },
+        },
+        {
+          provide: LocaleService,
+          useValue: {
+            formatLocale: () => 'en',
+          },
+        },
+      ],
+    }).compileComponents();
+  });
+
+  it('renders the crafting browser shell with service data', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1400,
+    });
+    const fixture = TestBed.createComponent(CraftingBrowserPage);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.textContent).toContain('Crafting');
+    expect(compiled.textContent).toContain('Output');
+    expect(compiled.textContent).toContain('Healing Potion');
+    expect(compiled.textContent).toContain('Alchemy');
+  });
+});

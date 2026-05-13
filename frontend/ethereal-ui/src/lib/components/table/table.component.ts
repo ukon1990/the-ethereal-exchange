@@ -1,5 +1,12 @@
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import { booleanAttribute, ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import {
+  booleanAttribute,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  output,
+} from '@angular/core';
 import {
   ColumnDef,
   createAngularTable,
@@ -244,9 +251,9 @@ export class TableComponent<TData extends RowData> {
     return base;
   }) as unknown as Table<TData>;
 
-  protected showSkeleton(): boolean {
-    return this.loading() && this.skeletonRowCount() > 0 && this.skeletonRowClass() !== '';
-  }
+  protected showSkeleton = computed(
+    () => this.loading() && this.skeletonRowCount() > 0 && this.skeletonRowClass() !== '',
+  );
 
   protected skeletonRowIndices(): number[] {
     return Array.from({ length: this.skeletonRowCount() }, (_, i) => i);

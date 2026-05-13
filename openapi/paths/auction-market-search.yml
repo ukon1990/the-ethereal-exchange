@@ -1,7 +1,7 @@
 get:
   tags:
     - AuctionMarket
-  operationId: searchAuctionMarket
+  operationId: search
   summary: Search auction market items for a selected realm
   description: Returns paginated item market rows. Snapshot date and hour are derived from auction house state.
   parameters:

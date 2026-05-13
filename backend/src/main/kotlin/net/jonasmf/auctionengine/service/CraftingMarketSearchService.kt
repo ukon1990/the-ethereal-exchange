@@ -3,11 +3,11 @@ package net.jonasmf.auctionengine.service
 import net.jonasmf.auctionengine.generated.model.AuctionListingKey
 import net.jonasmf.auctionengine.generated.model.AuctionMarketFilter
 import net.jonasmf.auctionengine.generated.model.AuctionMarketFilterOption
+import net.jonasmf.auctionengine.generated.model.AuctionMarketFilterResponse
 import net.jonasmf.auctionengine.generated.model.AuctionMarketItem
 import net.jonasmf.auctionengine.generated.model.AuctionMarketNamedId
 import net.jonasmf.auctionengine.generated.model.AuctionMarketRecipe
 import net.jonasmf.auctionengine.generated.model.AuctionMarketSort
-import net.jonasmf.auctionengine.generated.model.CraftingMarketFilterResponse
 import net.jonasmf.auctionengine.generated.model.CraftingMarketSearchPage
 import net.jonasmf.auctionengine.generated.model.CraftingMarketSearchRow
 import net.jonasmf.auctionengine.generated.model.PageMetadata
@@ -195,7 +195,7 @@ class CraftingMarketSearchService(
         regionCode: String,
         realmSlug: String,
         localeOverride: String?,
-    ): CraftingMarketFilterResponse {
+    ): AuctionMarketFilterResponse {
         val context = auctionMarketContextService.resolve(regionCode, realmSlug, localeOverride)
         val options =
             craftingMarketSearchRepository
@@ -207,7 +207,7 @@ class CraftingMarketSearchService(
                         parentId = it.parentId,
                     )
                 }
-        return CraftingMarketFilterResponse(
+        return AuctionMarketFilterResponse(
             filters =
                 listOf(
                     AuctionMarketFilter(

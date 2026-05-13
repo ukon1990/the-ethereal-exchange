@@ -4,6 +4,16 @@ import { FilterOption, FilterSection } from '../../models/ui-models';
 import { QualityBadgeComponent } from '../primitives/quality-badge.component';
 import { SymbolIconComponent } from '../primitives/symbol-icon.component';
 
+export type FilterRangeChanged = {
+  sectionId: string;
+  bound: 'min' | 'max';
+  value: number | null;
+};
+export type FilterOptionChanged = {
+  sectionId: string;
+  optionId: string | null;
+};
+
 @Component({
   selector: 'ee-filter-panel',
   imports: [QualityBadgeComponent, SymbolIconComponent],
@@ -30,7 +40,11 @@ import { SymbolIconComponent } from '../primitives/symbol-icon.component';
                   [attr.min]="section.min ?? null"
                   [attr.max]="section.max ?? null"
                   (change)="
-                    rangeChanged.emit({ id: section.id, bound: 'min', value: rangeValue($event) })
+                    rangeChanged.emit({
+                      sectionId: section.id,
+                      bound: 'min',
+                      value: rangeValue($event),
+                    })
                   "
                 />
                 <input
@@ -42,7 +56,11 @@ import { SymbolIconComponent } from '../primitives/symbol-icon.component';
                   [attr.min]="section.min ?? null"
                   [attr.max]="section.max ?? null"
                   (change)="
-                    rangeChanged.emit({ id: section.id, bound: 'max', value: rangeValue($event) })
+                    rangeChanged.emit({
+                      sectionId: section.id,
+                      bound: 'max',
+                      value: rangeValue($event),
+                    })
                   "
                 />
               </div>
@@ -103,8 +121,8 @@ export class FilterPanelComponent {
   readonly sections = input.required<readonly FilterSection[]>();
   readonly panelClass = input('ee-glass flex w-72 shrink-0 flex-col overflow-hidden rounded-lg');
   readonly optionToggled = output<string>();
-  readonly optionSelected = output<{ sectionId: string; optionId: string | null }>();
-  readonly rangeChanged = output<{ id: string; bound: 'min' | 'max'; value: number | null }>();
+  readonly optionSelected = output<FilterOptionChanged>();
+  readonly rangeChanged = output<FilterRangeChanged>();
   readonly reset = output<void>();
 
   protected selectedOptionId(section: FilterSection): string {

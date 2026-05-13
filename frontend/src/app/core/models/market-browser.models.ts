@@ -1,17 +1,14 @@
-import { CharacterSummary, FilterSection, MarketItemRow, NavItem } from '@ui';
-
-export interface MarketBrowserViewModel {
-  readonly primaryNavItems: readonly NavItem[];
-  readonly activePrimaryNavId: string;
-  readonly professionNavItems: readonly NavItem[];
-  readonly activeProfessionId: string;
-  readonly character: CharacterSummary;
-  readonly filterSections: readonly FilterSection[];
-  readonly rows: readonly MarketItemRow[];
-  readonly paginationSummary: string;
-  readonly searchQuery: string;
+export interface MarketBrowserQueryState {
+  readonly query: string;
+  readonly qualityIds: readonly number[];
+  readonly itemClassIds: readonly number[];
+  readonly itemSubclassIds: readonly number[];
+  readonly recipeOnly: boolean | null;
+  readonly minPrice: number | null;
+  readonly maxPrice: number | null;
+  readonly minQuantity: number | null;
+  readonly maxQuantity: number | null;
   readonly page: number;
-  readonly totalPages: number;
   readonly pageSize: number;
   readonly sortBy:
     | 'itemName'
@@ -23,5 +20,4 @@ export interface MarketBrowserViewModel {
     | 'selectedQuantity'
     | 'commodityQuantity';
   readonly sortDirection: 'asc' | 'desc';
-  readonly loading: boolean;
 }

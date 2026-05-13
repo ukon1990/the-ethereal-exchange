@@ -1,6 +1,21 @@
 import { Route } from '@angular/router';
 
 import { realmSelectedGuard } from '@core/guards/realm-selected.guard';
+import {
+  readCraftingBrowserQueryState,
+  toCraftingBrowserQueryParams,
+} from '@core/mappers/crafting-browser-query.mapper';
+import {
+  readMarketBrowserQueryState,
+  toMarketBrowserQueryParams,
+} from '@core/mappers/market-browser-query.mapper';
+import {
+  QUERY_PARAM_MAPPER,
+  QueryService,
+  TO_QUERY_PARAMS_MAPPER,
+} from '@core/services/query.service';
+import { AuctionItemService } from '@core/services/auction-item.service';
+import { CraftingItemService } from '@core/services/crafting-item.service';
 
 export type TitledRoutes = (Route & {
   icon?: string;
@@ -40,6 +55,18 @@ export const routes: TitledRoutes = [
         icon: 'travel_explore',
         loadComponent: () =>
           import('./features/auctions/auctions-shell.page').then((m) => m.AuctionsShellPage),
+        providers: [
+          QueryService,
+          {
+            provide: QUERY_PARAM_MAPPER,
+            useValue: readMarketBrowserQueryState,
+          },
+          {
+            provide: TO_QUERY_PARAMS_MAPPER,
+            useValue: toMarketBrowserQueryParams,
+          },
+          AuctionItemService,
+        ],
         children: [
           {
             path: '',
@@ -67,6 +94,18 @@ export const routes: TitledRoutes = [
         icon: 'handyman',
         loadComponent: () =>
           import('./features/crafting/crafting-shell.page').then((m) => m.CraftingShellPage),
+        providers: [
+          QueryService,
+          {
+            provide: QUERY_PARAM_MAPPER,
+            useValue: readCraftingBrowserQueryState,
+          },
+          {
+            provide: TO_QUERY_PARAMS_MAPPER,
+            useValue: toCraftingBrowserQueryParams,
+          },
+          CraftingItemService,
+        ],
         children: [
           {
             path: '',

@@ -1,7 +1,7 @@
 get:
   tags:
     - AuctionMarket
-  operationId: getAuctionMarketFilters
+  operationId: filters
   summary: Return market search filter definitions
   description: Returns database-derived filters for the selected realm and locale.
   parameters:

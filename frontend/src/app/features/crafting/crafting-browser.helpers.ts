@@ -1,5 +1,3 @@
-import { ActivatedRoute } from '@angular/router';
-
 const RECIPE_MIN = 900;
 const PROF_MIN = 1040;
 const TREND_MIN = 1200;
@@ -14,16 +12,4 @@ export function activeColumnIdsForViewport(width: number): Set<string> {
     active.add('outputPriceChangePercent');
   }
   return active;
-}
-
-export function realmAncestorRoute(route: ActivatedRoute): ActivatedRoute {
-  let r: ActivatedRoute | null = route;
-  while (r) {
-    const m = r.snapshot.paramMap;
-    if (m.has('region') && m.has('realm')) {
-      return r;
-    }
-    r = r.parent;
-  }
-  return route;
 }

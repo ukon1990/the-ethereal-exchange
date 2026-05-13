@@ -1,14 +1,15 @@
 import { Component, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TestBed } from '@angular/core/testing';
-import { FormField, email, form, required } from '@angular/forms/signals';
-
-import { AdminEditableCellComponent } from '../market/admin-editable-cell.component';
-import { CheckboxInputComponent } from './checkbox-input.component';
-import { PillToggleComponent } from './pill-toggle.component';
-import { SearchInputComponent } from './search-input.component';
-import { SelectInputComponent } from './select-input.component';
-import { TextInputComponent } from './text-input.component';
+import { email, form, FormField, required } from '@angular/forms/signals';
+import {
+  AdminEditableCellComponent,
+  CheckboxInputComponent,
+  PillToggleComponent,
+  SearchInputComponent,
+  SelectInputComponent,
+  TextInputComponent,
+} from '@ui';
 
 @Component({
   imports: [

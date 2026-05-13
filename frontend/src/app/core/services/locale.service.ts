@@ -1,6 +1,5 @@
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { inject, Injectable, LOCALE_ID, PLATFORM_ID, signal } from '@angular/core';
-
 import { RealmSelectionService } from './realm-selection.service';
 import {
   apiLocaleOverrideFor,

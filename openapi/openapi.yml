@@ -12,6 +12,8 @@ tags:
     description: Realm catalog and per-realm auction house status.
   - name: AuctionMarket
     description: Auction market search and filter metadata.
+  - name: CraftingMarket
+    description: Crafting market search and filter metadata.
 paths:
   /health:
     $ref: ./paths/health.yml
@@ -19,15 +21,15 @@ paths:
     $ref: ./paths/realm.yml
   /realms/{region}/{slug}:
     $ref: ./paths/realm-detail.yml
-  /auctions/market-search:
+  /auctions/search:
     $ref: ./paths/auction-market-search.yml
-  /auctions/market-search/filters:
+  /auctions/search/filters:
     $ref: ./paths/auction-market-search-filters.yml
-  /auctions/market-items/detail:
+  /auctions/items/detail:
     $ref: ./paths/auction-market-item-detail.yml
-  /auctions/market-items/crafting-analytics:
+  /crafting/items/analytics:
     $ref: ./paths/auction-market-item-crafting-analytics.yml
-  /auctions/crafting-market/search:
+  /crafting/search:
     $ref: ./paths/crafting-market-search.yml
-  /auctions/crafting-market/filters:
+  /crafting/filters:
     $ref: ./paths/crafting-market-search-filters.yml

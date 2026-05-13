@@ -1,0 +1,241 @@
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
+import { RealmSelectionService } from '@core/services/realm-selection.service';
+import { LocaleService } from '@core/services/locale.service';
+import { catchError, finalize, firstValueFrom, Observable, of, tap } from 'rxjs';
+import { QueryService } from '@core/services/query.service';
+import { AuctionMarketFilter, AuctionMarketFilterResponse } from '@api/generated';
+import { MarketBrowserQueryState } from '@core/models/market-browser.models';
+import { toFilterSections } from '@core/mappers/filter-mapper';
+import { FilterSection, SortingState } from '@ui';
+import { ToastService } from '@core/services/toast.service';
+
+export type QueryBase = {
+  query?: string;
+  page: number;
+  pageSize: number;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
+};
+
+export const BASE_QUERY = (): QueryBase => ({
+  page: 1,
+  pageSize: 25,
+});
+
+type Metadata = {
+  id: number;
+  lastModified: string;
+};
+interface CacheEntry<DataType> {
+  metadata: {
+    commodity: Metadata;
+    auctionHouse: Metadata;
+    locale: string;
+  };
+  data: DataType;
+}
+
+@Injectable({
+  providedIn: 'root',
+})
+export abstract class BaseSearchService<
+  PageType,
+  SingularType,
+  OutputDataType,
+  QueryParams extends QueryBase,
+> {
+  readonly isLoading = signal<boolean>(false);
+  readonly isLoadingFilters = signal<boolean>(false);
+  protected readonly filterDefinitions = signal<readonly AuctionMarketFilter[]>([]);
+  readonly filterSections = computed(() => {
+    const filters = this.filterDefinitions();
+    if (!filters.length) return [];
+    return this.mapFiltersToSections(filters, this.currentQueryState());
+  });
+  protected readonly cache = signal(new Map<string, CacheEntry<PageType>>());
+  protected readonly cacheById = signal(new Map<string, CacheEntry<SingularType>>());
+  protected readonly queryService = inject(QueryService<QueryParams>);
+  readonly queryParams = this.queryService.queryParams;
+  readonly pageData = computed(() => {
+    const query = this.queryParams();
+    if (!query) return undefined;
+    const key = this.getCacheKey(query);
+    const cachedValue = this.cache().get(key);
+    return cachedValue?.data;
+  });
+  private readonly realmService = inject(RealmSelectionService);
+  private readonly locale = inject(LocaleService);
+  private readonly toast = inject(ToastService);
+  private readonly auctionHouseDetails = this.realmService.auctionHouseDetails;
+  private readonly commodityDetails = this.realmService.commodityDetails;
+  protected readonly defaultQueryParams: QueryParams;
+
+  private readonly _filterEffect = effect(() => {
+    const region = this.queryService.region();
+    const slug = this.queryService.realmSlug();
+    if (!region || !slug) return;
+
+    firstValueFrom(this.fetchFilterDefinitions());
+  });
+
+  protected constructor(
+    defaultQueryParams: QueryParams,
+    private getFiltersCallback: (
+      region: 'us' | 'eu' | 'kr' | 'tw',
+      realmSlug: string,
+      locale?: string,
+    ) => Observable<AuctionMarketFilterResponse>,
+  ) {
+    this.defaultQueryParams = defaultQueryParams;
+  }
+
+  getById(
+    id: number,
+    query: QueryParams,
+    observable: Observable<SingularType>,
+  ): Observable<SingularType> {
+    const cacheKey = this.getCacheKey(query, id);
+    const cache = this.cacheById().get(cacheKey);
+    if (cache) return of(cache.data);
+    const metadata = this.getAhMetadata();
+
+    // Realm and commodity ah details and locale must be available before we can search
+    if (!metadata) return observable;
+
+    this.isLoading.set(true);
+    return observable.pipe(
+      tap((data: SingularType) => {
+        const cache = this.cacheById();
+        cache.set(cacheKey, { metadata, data });
+        this.cacheById.set(cache);
+      }),
+      catchError((error) => {
+        this.toast.error(
+          $localize`:@@search.loadItemError:Could not load item details. Please try again later.`,
+        );
+        console.error(error);
+        return of();
+      }),
+      finalize(() => this.isLoading.set(false)),
+    );
+  }
+
+  search(
+    query: QueryParams,
+    observable: Observable<PageType>,
+  ): Observable<PageType> | Observable<null> {
+    const cacheKey = this.getCacheKey(query);
+    const cache = this.cache().get(cacheKey);
+    if (cache) return of(cache.data);
+    const metadata = this.getAhMetadata();
+
+    // Realm and commodity ah details and locale must be available before we can search
+    if (!metadata) return observable;
+
+    this.isLoading.set(true);
+    return observable.pipe(
+      tap((data: PageType) => {
+        const cache = this.cache();
+        cache.set(cacheKey, { metadata, data });
+        this.cache.set(new Map(cache));
+      }),
+      catchError((error) => {
+        this.toast.error(
+          $localize`:@@search.loadResultsError:Could not load search results. Please try again later.`,
+        );
+        console.error(error);
+        return of();
+      }),
+      finalize(() => this.isLoading.set(false)),
+    );
+  }
+
+  protected currentQueryState(): QueryParams {
+    return this.queryParams() ?? this.defaultQueryParams;
+  }
+
+  protected navigateQueryState(state: QueryParams): void {
+    this.queryService.navigateWithState(state);
+  }
+
+  protected mapFiltersToSections(
+    filters: readonly AuctionMarketFilter[],
+    state: QueryParams,
+  ): readonly FilterSection[] {
+    return toFilterSections(filters, state as unknown as MarketBrowserQueryState);
+  }
+
+  public setSearchQuery(query: string): void {
+    this.queryService.navigateWithState({
+      ...this.currentQueryState(),
+      query,
+      page: this.defaultQueryParams.page,
+    });
+  }
+  public upsertSorting(sorting: SortingState): void {
+    this.queryService.navigateWithState({
+      ...this.currentQueryState(),
+      sortBy: sorting[0]?.id,
+      sortDirection: sorting[0]?.desc ? 'desc' : 'asc',
+      page: this.defaultQueryParams.page,
+    });
+  }
+
+  public resetFilters(): void {
+    this.queryService.navigateWithState(this.defaultQueryParams);
+  }
+
+  protected fetchFilterDefinitions() {
+    const region = this.queryService.region();
+    const slug = this.queryService.realmSlug();
+    const locale = this.queryService.locale();
+    if (!region || !slug) return of(null);
+
+    this.isLoadingFilters.set(true);
+    return this.getFiltersCallback(region, slug, locale).pipe(
+      tap((response) => this.filterDefinitions.set(response.filters ?? [])),
+      catchError((error) => {
+        this.toast.error(
+          $localize`:@@search.loadFiltersError:Could not load filter definitions. Please try again later.`,
+        );
+        console.error(error);
+        return of();
+      }),
+      finalize(() => this.isLoadingFilters.set(false)),
+    );
+  }
+
+  private getAhMetadata(): CacheEntry<OutputDataType>['metadata'] | null {
+    const auctionHouse = this.auctionHouseDetails();
+    const commodity = this.commodityDetails();
+    const locale = this.locale.activeLocale();
+    if (!auctionHouse || !commodity || !locale) return null;
+
+    return {
+      commodity: {
+        id: commodity.connectedRealmId,
+        lastModified: commodity.lastModified!,
+      },
+      auctionHouse: {
+        id: auctionHouse?.connectedRealmId,
+        lastModified: auctionHouse.lastModified!,
+      },
+      locale,
+    };
+  }
+
+  private getCacheKey(query: QueryParams, id?: number) {
+    const queryKey = Object.keys(query).map((key) => {
+      let value: string = (query as never)[key] as string;
+      if (Array.isArray(value)) {
+        value = value.join(', ');
+      }
+      return `${key}:${value}`;
+    });
+    const auctionHouseLastModified = this.auctionHouseDetails()?.lastModified || 0;
+    const commodityLastModified = this.commodityDetails()?.lastModified || 0;
+    const timeKey = `c=${commodityLastModified}-r=${auctionHouseLastModified};`;
+
+    return `${queryKey}|${timeKey}|${this.locale.activeLocale()}|${id || ''}`;
+  }
+}

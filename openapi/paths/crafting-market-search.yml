@@ -1,7 +1,7 @@
 get:
   tags:
-    - AuctionMarket
-  operationId: searchCraftingMarket
+    - CraftingMarket
+  operationId: search
   summary: Search crafting recipes with per-variant pricing and ROI
   description: Returns paginated recipe rows, one per crafted output AH variant at the realm snapshot hour.
   parameters:
