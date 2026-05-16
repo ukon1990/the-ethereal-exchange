@@ -1,0 +1,254 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/profession/755/skill-tier/2914?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "id": 2914,
+    "name": {
+        "en_US": "Midnight Jewelcrafting",
+        "es_MX": "Joyería de Midnight",
+        "pt_BR": "Joalheria de Midnight",
+        "de_DE": "Juwelierskunst von Midnight",
+        "en_GB": "Midnight Jewelcrafting",
+        "es_ES": "Joyería de Midnight",
+        "fr_FR": "Joaillerie de Midnight",
+        "it_IT": "Oreficeria di Midnight",
+        "ru_RU": "Ювелирное дело Midnight",
+        "ko_KR": "한밤 보석세공",
+        "zh_TW": "至暗之夜珠寶設計",
+        "zh_CN": "至暗之夜珠宝加工"
+    },
+    "minimum_skill_level": 1,
+    "maximum_skill_level": 100,
+    "categories": [
+        {
+            "name": {
+                "en_US": "Recrafting",
+                "es_MX": "Refabricación",
+                "pt_BR": "Recriação",
+                "de_DE": "Umfertigen",
+                "en_GB": "Recrafting",
+                "es_ES": "Refabricación",
+                "fr_FR": "Refaçonner",
+                "it_IT": "Nuova Creazione",
+                "ru_RU": "Переделка",
+                "ko_KR": "재제작",
+                "zh_TW": "重新製作",
+                "zh_CN": "再造"
+            },
+            "recipes": [
+                {
+                    "key": {
+                        "href": "https://us.api.blizzard.com/data/wow/recipe/51525?namespace=static-12.0.5_66741-us"
+                    },
+                    "name": {
+                        "en_US": "Recraft Equipment",
+                        "es_MX": "Refabricar equipamiento",
+                        "pt_BR": "Recriar Equipamento",
+                        "de_DE": "Ausrüstung umfertigen",
+                        "en_GB": "Recraft Equipment",
+                        "es_ES": "Refabricar equipo",
+                        "fr_FR": "Refaçonner de l’équipement",
+                        "it_IT": "Ricreazione Equipaggiamento",
+                        "ru_RU": "Переделка снаряжения",
+                        "ko_KR": "장비 재제작",
+                        "zh_TW": "重新製作裝備",
+                        "zh_CN": "再造装备"
+                    },
+                    "id": 51525
+                }
+            ]
+        },
+        {
+            "name": {
+                "en_US": "Powerful Peridots",
+                "es_MX": "Peridotos poderosos",
+                "pt_BR": "Peridotos Poderosos",
+                "de_DE": "Prächtiger Peridot",
+                "en_GB": "Powerful Peridots",
+                "es_ES": "Peridotos poderosos",
+                "fr_FR": "Olivines puissantes",
+                "it_IT": "Olivine Potenti",
+                "ru_RU": "Хитроумные хризолиты",
+                "ko_KR": "강렬한 감람석",
+                "zh_TW": "強力橄欖石",
+                "zh_CN": "震撼榄石"
+            },
+            "recipes": [
+                {
+                    "key": {
+                        "href": "https://us.api.blizzard.com/data/wow/recipe/52572?namespace=static-12.0.5_66741-us"
+                    },
+                    "name": {
+                        "en_US": "Quick Peridot",
+                        "es_MX": "Peridoto presto",
+                        "pt_BR": "Peridoto Veloz",
+                        "de_DE": "Flinker Peridot",
+                        "en_GB": "Quick Peridot",
+                        "es_ES": "Peridoto rápido",
+                        "fr_FR": "Olivine rapide",
+                        "it_IT": "Olivina Rapida",
+                        "ru_RU": "Хризолит скорости",
+                        "ko_KR": "쾌속의 감람석",
+                        "zh_TW": "迅速的橄欖石",
+                        "zh_CN": "迅捷榄石"
+                    },
+                    "id": 52572
+                }
+            ]
+        },
+        {
+            "name": {
+                "en_US": "Lustrous Lapis",
+                "es_MX": "Lapislázuli lustroso",
+                "pt_BR": "Lápis Lustroso",
+                "de_DE": "Luxuriöser Lapis",
+                "en_GB": "Lustrous Lapis",
+                "es_ES": "Lapislázulis lustrosos",
+                "fr_FR": "Lapis lustrés",
+                "it_IT": "Lapislazzuli Lucido",
+                "ru_RU": "Лучезарный лазурит",
+                "ko_KR": "반짝이는 청금석",
+                "zh_TW": "閃耀青金石",
+                "zh_CN": "通透青金石"
+            },
+            "recipes": [
+                {
+                    "key": {
+                        "href": "https://us.api.blizzard.com/data/wow/recipe/52580?namespace=static-12.0.5_66741-us"
+                    },
+                    "name": {
+                        "en_US": "Quick Lapis",
+                        "es_MX": "Lapis presto",
+                        "pt_BR": "Lápis Veloz",
+                        "de_DE": "Flinker Lapis",
+                        "en_GB": "Quick Lapis",
+                        "es_ES": "Lapislázuli rápido",
+                        "fr_FR": "Lapis rapide",
+                        "it_IT": "Lapislazzuli Rapido",
+                        "ru_RU": "Лазурит скорости",
+                        "ko_KR": "쾌속의 청금석",
+                        "zh_TW": "迅速的青金石",
+                        "zh_CN": "迅捷青金石"
+                    },
+                    "id": 52580
+                }
+            ]
+        },
+        {
+            "name": {
+                "en_US": "Austere Amethysts",
+                "es_MX": "Amatistas austeras",
+                "pt_BR": "Ametistas Austeras",
+                "de_DE": "Asketischer Amethyst",
+                "en_GB": "Austere Amethysts",
+                "es_ES": "Amatistas austeras",
+                "fr_FR": "Améthystes austères",
+                "it_IT": "Ametiste Austere",
+                "ru_RU": "Августейшие аметисты",
+                "ko_KR": "근엄한 자수정",
+                "zh_TW": "嚴峻紫水晶",
+                "zh_CN": "质朴紫晶"
+            },
+            "recipes": [
+                {
+                    "key": {
+                        "href": "https://us.api.blizzard.com/data/wow/recipe/52588?namespace=static-12.0.5_66741-us"
+                    },
+                    "name": {
+                        "en_US": "Quick Amethyst",
+                        "es_MX": "Amatista presta",
+                        "pt_BR": "Ametista Veloz",
+                        "de_DE": "Flinker Amethyst",
+                        "en_GB": "Quick Amethyst",
+                        "es_ES": "Amatista rápida",
+                        "fr_FR": "Améthyste rapide",
+                        "it_IT": "Ametista Rapida",
+                        "ru_RU": "Аметист скорости",
+                        "ko_KR": "쾌속의 자수정",
+                        "zh_TW": "迅速的紫水晶",
+                        "zh_CN": "迅捷紫晶"
+                    },
+                    "id": 52588
+                }
+            ]
+        },
+        {
+            "name": {
+                "en_US": "Glorious Garnets",
+                "es_MX": "Granates gloriosos",
+                "pt_BR": "Granadas Gloriosas",
+                "de_DE": "Glorreicher Granat",
+                "en_GB": "Glorious Garnets",
+                "es_ES": "Granates gloriosos",
+                "fr_FR": "Grenats glorieux",
+                "it_IT": "Granati Gloriosi",
+                "ru_RU": "Грандиозные гранаты",
+                "ko_KR": "영광스러운 석류석",
+                "zh_TW": "榮耀石榴石",
+                "zh_CN": "绚丽榴石"
+            },
+            "recipes": [
+                {
+                    "key": {
+                        "href": "https://us.api.blizzard.com/data/wow/recipe/52596?namespace=static-12.0.5_66741-us"
+                    },
+                    "name": {
+                        "en_US": "Quick Garnet",
+                        "es_MX": "Granate presto",
+                        "pt_BR": "Granada Veloz",
+                        "de_DE": "Flinker Granat",
+                        "en_GB": "Quick Garnet",
+                        "es_ES": "Granate rápido",
+                        "fr_FR": "Grenat rapide",
+                        "it_IT": "Granato Rapido",
+                        "ru_RU": "Гранат скорости",
+                        "ko_KR": "쾌속의 석류석",
+                        "zh_TW": "迅速的石榴石",
+                        "zh_CN": "迅捷榴石"
+                    },
+                    "id": 52596
+                }
+            ]
+        },
+        {
+            "name": {
+                "en_US": "Dazzling Diamonds",
+                "es_MX": "Diamantes deslumbrantes",
+                "pt_BR": "Diamantes Ofuscantes",
+                "de_DE": "Schillernder Diamant",
+                "en_GB": "Dazzling Diamonds",
+                "es_ES": "Diamantes deslumbrantes",
+                "fr_FR": "Diamants éblouissants",
+                "it_IT": "Diamanti Scintillanti",
+                "ru_RU": "Ослепительные алмазы",
+                "ko_KR": "휘황찬란한 다이아몬드",
+                "zh_TW": "璀璨鑽石",
+                "zh_CN": "炫目钻石"
+            },
+            "recipes": [
+                {
+                    "key": {
+                        "href": "https://us.api.blizzard.com/data/wow/recipe/52604?namespace=static-12.0.5_66741-us"
+                    },
+                    "name": {
+                        "en_US": "Powerful Eversong Diamond",
+                        "es_MX": "Diamante de Canción Eterna poderoso",
+                        "pt_BR": "Diamante do Canto Eterno Poderoso",
+                        "de_DE": "Mächtiger Immersangdiamant",
+                        "en_GB": "Powerful Eversong Diamond",
+                        "es_ES": "Diamante de Canción Eterna poderoso",
+                        "fr_FR": "Diamant des Chants éternels de puissance",
+                        "it_IT": "Diamante di Cantoeterno Potente",
+                        "ru_RU": "Могучий алмаз Вечной Песни",
+                        "ko_KR": "힘의 영원노래 다이아몬드",
+                        "zh_TW": "特強的永歌鑽石",
+                        "zh_CN": "强能之永歌钻石"
+                    },
+                    "id": 52604
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,99 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/recipe/52580?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "id": 52580,
+    "name": {
+        "en_US": "Quick Lapis",
+        "es_MX": "Lapis presto",
+        "pt_BR": "Lápis Veloz",
+        "de_DE": "Flinker Lapis",
+        "en_GB": "Quick Lapis",
+        "es_ES": "Lapislázuli rápido",
+        "fr_FR": "Lapis rapide",
+        "it_IT": "Lapislazzuli Rapido",
+        "ru_RU": "Лазурит скорости",
+        "ko_KR": "쾌속의 청금석",
+        "zh_TW": "迅速的青金石",
+        "zh_CN": "迅捷青金石"
+    },
+    "media": {
+        "key": {
+            "href": "https://us.api.blizzard.com/data/wow/media/recipe/52580?namespace=static-12.0.5_66741-us"
+        },
+        "id": 52580
+    },
+    "modified_crafting_slots": [
+        {
+            "slot_type": {
+                "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/406?namespace=static-12.0.5_66741-us"
+                },
+                "name": {
+                    "en_US": "Amani Lapis",
+                    "es_MX": "Lapislázuli amani",
+                    "pt_BR": "Lápis Amani",
+                    "de_DE": "Amanilapis",
+                    "en_GB": "Amani Lapis",
+                    "es_ES": "Lapislázuli Amani",
+                    "fr_FR": "Lapis amani",
+                    "it_IT": "Lapislazzuli degli Amani",
+                    "ru_RU": "Аманийский лазурит",
+                    "ko_KR": "아마니 청금석",
+                    "zh_TW": "阿曼尼青金石",
+                    "zh_CN": "阿曼尼青金石"
+                },
+                "id": 406
+            },
+            "display_order": 0
+        },
+        {
+            "slot_type": {
+                "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/414?namespace=static-12.0.5_66741-us"
+                },
+                "name": {
+                    "en_US": "Glimmering Gemdust",
+                    "es_MX": "Polvo de gemas reluciente",
+                    "pt_BR": "Pó de Gema Luzente",
+                    "de_DE": "Glitzernder Edelsteinstaub",
+                    "en_GB": "Glimmering Gemdust",
+                    "es_ES": "Polvo de gema de luz trémula",
+                    "fr_FR": "Poussière de gemme rougeoyante",
+                    "it_IT": "Polvere di Gemma Luccicante",
+                    "ru_RU": "Мерцающая самоцветная пыль",
+                    "ko_KR": "아른거리는 보석 가루",
+                    "zh_TW": "微光寶石粉",
+                    "zh_CN": "微光宝石尘"
+                },
+                "id": 414
+            },
+            "display_order": 1
+        },
+        {
+            "slot_type": {
+                "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/396?namespace=static-12.0.5_66741-us"
+                },
+                "name": {
+                    "en_US": "Artisan's Authenticity",
+                    "es_MX": "Autenticidad del artesano",
+                    "pt_BR": "Autenticidade do Artífice",
+                    "de_DE": "Authentizität des Kunsthandwerks",
+                    "en_GB": "Artisan's Authenticity",
+                    "es_ES": "Autenticidad de artesano",
+                    "fr_FR": "Authenticité artisanale",
+                    "it_IT": "Autenticità dell'Artigiano",
+                    "ru_RU": "Почерк ремесленника",
+                    "ko_KR": "장인의 진정성",
+                    "zh_TW": "工匠之保證",
+                    "zh_CN": "匠人之真"
+                },
+                "id": 396
+            },
+            "display_order": 2
+        }
+    ]
+}

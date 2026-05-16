@@ -1,0 +1,99 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/recipe/52588?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "id": 52588,
+    "name": {
+        "en_US": "Quick Amethyst",
+        "es_MX": "Amatista presta",
+        "pt_BR": "Ametista Veloz",
+        "de_DE": "Flinker Amethyst",
+        "en_GB": "Quick Amethyst",
+        "es_ES": "Amatista rápida",
+        "fr_FR": "Améthyste rapide",
+        "it_IT": "Ametista Rapida",
+        "ru_RU": "Аметист скорости",
+        "ko_KR": "쾌속의 자수정",
+        "zh_TW": "迅速的紫水晶",
+        "zh_CN": "迅捷紫晶"
+    },
+    "media": {
+        "key": {
+            "href": "https://us.api.blizzard.com/data/wow/media/recipe/52588?namespace=static-12.0.5_66741-us"
+        },
+        "id": 52588
+    },
+    "modified_crafting_slots": [
+        {
+            "slot_type": {
+                "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/410?namespace=static-12.0.5_66741-us"
+                },
+                "name": {
+                    "en_US": "Tenebrous Amethyst",
+                    "es_MX": "Amatista tenebrosa",
+                    "pt_BR": "Ametista Tenebrosa",
+                    "de_DE": "Finsteramethyst",
+                    "en_GB": "Tenebrous Amethyst",
+                    "es_ES": "Amatista tenebrosa",
+                    "fr_FR": "Améthyste ténébreuse",
+                    "it_IT": "Ametista Tenebrosa",
+                    "ru_RU": "Мрачный аметист",
+                    "ko_KR": "암영 자수정",
+                    "zh_TW": "陰暗紫水晶",
+                    "zh_CN": "晦暗紫晶"
+                },
+                "id": 410
+            },
+            "display_order": 0
+        },
+        {
+            "slot_type": {
+                "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/414?namespace=static-12.0.5_66741-us"
+                },
+                "name": {
+                    "en_US": "Glimmering Gemdust",
+                    "es_MX": "Polvo de gemas reluciente",
+                    "pt_BR": "Pó de Gema Luzente",
+                    "de_DE": "Glitzernder Edelsteinstaub",
+                    "en_GB": "Glimmering Gemdust",
+                    "es_ES": "Polvo de gema de luz trémula",
+                    "fr_FR": "Poussière de gemme rougeoyante",
+                    "it_IT": "Polvere di Gemma Luccicante",
+                    "ru_RU": "Мерцающая самоцветная пыль",
+                    "ko_KR": "아른거리는 보석 가루",
+                    "zh_TW": "微光寶石粉",
+                    "zh_CN": "微光宝石尘"
+                },
+                "id": 414
+            },
+            "display_order": 1
+        },
+        {
+            "slot_type": {
+                "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/396?namespace=static-12.0.5_66741-us"
+                },
+                "name": {
+                    "en_US": "Artisan's Authenticity",
+                    "es_MX": "Autenticidad del artesano",
+                    "pt_BR": "Autenticidade do Artífice",
+                    "de_DE": "Authentizität des Kunsthandwerks",
+                    "en_GB": "Artisan's Authenticity",
+                    "es_ES": "Autenticidad de artesano",
+                    "fr_FR": "Authenticité artisanale",
+                    "it_IT": "Autenticità dell'Artigiano",
+                    "ru_RU": "Почерк ремесленника",
+                    "ko_KR": "장인의 진정성",
+                    "zh_TW": "工匠之保證",
+                    "zh_CN": "匠人之真"
+                },
+                "id": 396
+            },
+            "display_order": 2
+        }
+    ]
+}

@@ -1,0 +1,76 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/recipe/21388?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "id": 21388,
+    "name": {
+        "en_US": "Bold Carnelian",
+        "es_MX": "Cornalina llamativa",
+        "pt_BR": "Cornalina Vistosa",
+        "de_DE": "Klobiger Karneol",
+        "en_GB": "Bold Carnelian",
+        "es_ES": "Cornalina llamativa",
+        "fr_FR": "Cornaline soutenue",
+        "it_IT": "Corniola Ardita",
+        "ru_RU": "Рельефный сердолик",
+        "ko_KR": "굵은 홍옥수",
+        "zh_TW": "清晰的紅玉髓",
+        "zh_CN": "朴素红玉髓"
+    },
+    "media": {
+        "key": {
+            "href": "https://us.api.blizzard.com/data/wow/media/recipe/21388?namespace=static-12.0.5_66741-us"
+        },
+        "id": 21388
+    },
+    "crafted_item": {
+        "key": {
+            "href": "https://us.api.blizzard.com/data/wow/item/52081?namespace=static-12.0.5_66741-us"
+        },
+        "name": {
+            "en_US": "Bold Carnelian",
+            "es_MX": "Cornalina llamativa",
+            "pt_BR": "Cornalina Vistosa",
+            "de_DE": "Klobiger Karneol",
+            "en_GB": "Bold Carnelian",
+            "es_ES": "Cornalina llamativa",
+            "fr_FR": "Cornaline soutenue",
+            "it_IT": "Corniola Ardita",
+            "ru_RU": "Рельефный сердолик",
+            "ko_KR": "굵은 홍옥수",
+            "zh_TW": "清晰的紅玉髓",
+            "zh_CN": "朴素红玉髓"
+        },
+        "id": 52081
+    },
+    "reagents": [
+        {
+            "reagent": {
+                "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/item/52177?namespace=static-12.0.5_66741-us"
+                },
+                "name": {
+                    "en_US": "Carnelian",
+                    "es_MX": "Cornalina",
+                    "pt_BR": "Cornalina",
+                    "de_DE": "Karneol",
+                    "en_GB": "Carnelian",
+                    "es_ES": "Cornalina",
+                    "fr_FR": "Cornaline",
+                    "it_IT": "Corniola",
+                    "ru_RU": "Сердолик",
+                    "ko_KR": "홍옥수",
+                    "zh_TW": "紅玉髓",
+                    "zh_CN": "红玉髓"
+                },
+                "id": 52177
+            },
+            "quantity": 1
+        }
+    ],
+    "crafted_quantity": {
+        "value": 1
+    }
+}

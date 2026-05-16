@@ -1,0 +1,76 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/recipe/21402?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "id": 21402,
+    "name": {
+        "en_US": "Sovereign Nightstone",
+        "es_MX": "Piedra nocturna soberana",
+        "pt_BR": "Noctilita Soberana",
+        "de_DE": "Stattlicher Nachtstein",
+        "en_GB": "Sovereign Nightstone",
+        "es_ES": "Piedra nocturna soberana",
+        "fr_FR": "Pierre de nuit souveraine",
+        "it_IT": "Pietra Notturna Assoluta",
+        "ru_RU": "Царственный камень ночи",
+        "ko_KR": "최상급 야밤석",
+        "zh_TW": "尊貴的夜石",
+        "zh_CN": "统御夜之石"
+    },
+    "media": {
+        "key": {
+            "href": "https://us.api.blizzard.com/data/wow/media/recipe/21402?namespace=static-12.0.5_66741-us"
+        },
+        "id": 21402
+    },
+    "crafted_item": {
+        "key": {
+            "href": "https://us.api.blizzard.com/data/wow/item/52095?namespace=static-12.0.5_66741-us"
+        },
+        "name": {
+            "en_US": "Sovereign Nightstone",
+            "es_MX": "Piedra nocturna soberana",
+            "pt_BR": "Noctilita Soberana",
+            "de_DE": "Stattlicher Nachtstein",
+            "en_GB": "Sovereign Nightstone",
+            "es_ES": "Piedra nocturna soberana",
+            "fr_FR": "Pierre de nuit souveraine",
+            "it_IT": "Pietra Notturna Assoluta",
+            "ru_RU": "Царственный камень ночи",
+            "ko_KR": "최상급 야밤석",
+            "zh_TW": "尊貴的夜石",
+            "zh_CN": "统御夜之石"
+        },
+        "id": 52095
+    },
+    "reagents": [
+        {
+            "reagent": {
+                "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/item/52180?namespace=static-12.0.5_66741-us"
+                },
+                "name": {
+                    "en_US": "Nightstone",
+                    "es_MX": "Piedra nocturna",
+                    "pt_BR": "Noctilita",
+                    "de_DE": "Nachtstein",
+                    "en_GB": "Nightstone",
+                    "es_ES": "Piedra nocturna",
+                    "fr_FR": "Pierre de nuit",
+                    "it_IT": "Pietra Notturna",
+                    "ru_RU": "Камень ночи",
+                    "ko_KR": "야밤석",
+                    "zh_TW": "夜石",
+                    "zh_CN": "夜之石"
+                },
+                "id": 52180
+            },
+            "quantity": 1
+        }
+    ],
+    "crafted_quantity": {
+        "value": 1
+    }
+}

@@ -1,0 +1,24 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/item-class/3/item-subclass/5?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "class_id": 3,
+    "subclass_id": 5,
+    "display_name": {
+        "en_US": "Critical Strike",
+        "es_MX": "Golpe crítico",
+        "pt_BR": "Acerto Crítico",
+        "de_DE": "Kritischer Trefferwert",
+        "en_GB": "Critical Strike",
+        "es_ES": "Golpe crítico",
+        "fr_FR": "Coup critique",
+        "it_IT": "Critico",
+        "ru_RU": "Критический удар",
+        "ko_KR": "치명타 및 극대화",
+        "zh_TW": "致命一擊",
+        "zh_CN": "爆击"
+    },
+    "hide_subclass_in_tooltips": true
+}

@@ -84,6 +84,26 @@
                 "zh_CN": "钓鱼"
             },
             "id": 356
+        },
+        {
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/profession/755?namespace=static-12.0.5_66741-us"
+            },
+            "name": {
+                "en_US": "Jewelcrafting",
+                "es_MX": "Joyería",
+                "pt_BR": "Joalheria",
+                "de_DE": "Juwelierskunst",
+                "en_GB": "Jewelcrafting",
+                "es_ES": "Joyería",
+                "fr_FR": "Joaillerie",
+                "it_IT": "Oreficeria",
+                "ru_RU": "Ювелирное дело",
+                "ko_KR": "보석세공",
+                "zh_TW": "珠寶設計",
+                "zh_CN": "珠宝加工"
+            },
+            "id": 755
         }
     ]
 }

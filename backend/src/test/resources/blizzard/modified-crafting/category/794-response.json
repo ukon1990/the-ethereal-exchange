@@ -1,0 +1,22 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/794?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "id": 794,
+    "name": {
+        "en_US": "Glimmering Gemdust",
+        "es_MX": "Polvo de gemas reluciente",
+        "pt_BR": "Pó de Gema Luzente",
+        "de_DE": "Glitzernder Edelsteinstaub",
+        "en_GB": "Glimmering Gemdust",
+        "es_ES": "Polvo de gema de luz trémula",
+        "fr_FR": "Poussière de gemme rougeoyante",
+        "it_IT": "Polvere di Gemma Luccicante",
+        "ru_RU": "Мерцающая самоцветная пыль",
+        "ko_KR": "아른거리는 보석 가루",
+        "zh_TW": "微光寶石粉",
+        "zh_CN": "微光宝石尘"
+    }
+}

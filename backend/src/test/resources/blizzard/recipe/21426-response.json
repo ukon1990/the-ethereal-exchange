@@ -1,0 +1,76 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/recipe/21426?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "id": 21426,
+    "name": {
+        "en_US": "Regal Jasper",
+        "es_MX": "Jaspe regio",
+        "pt_BR": "Jaspe Régio",
+        "de_DE": "Majestätischer Jaspis",
+        "en_GB": "Regal Jasper",
+        "es_ES": "Jaspe regio",
+        "fr_FR": "Jaspe régalien",
+        "it_IT": "Diaspro Regale",
+        "ru_RU": "Монаршая яшма",
+        "ko_KR": "제왕의 벽옥",
+        "zh_TW": "華貴的碧玉",
+        "zh_CN": "华丽碧玉"
+    },
+    "media": {
+        "key": {
+            "href": "https://us.api.blizzard.com/data/wow/media/recipe/21426?namespace=static-12.0.5_66741-us"
+        },
+        "id": 21426
+    },
+    "crafted_item": {
+        "key": {
+            "href": "https://us.api.blizzard.com/data/wow/item/52119?namespace=static-12.0.5_66741-us"
+        },
+        "name": {
+            "en_US": "Regal Jasper",
+            "es_MX": "Jaspe regio",
+            "pt_BR": "Jaspe Régio",
+            "de_DE": "Majestätischer Jaspis",
+            "en_GB": "Regal Jasper",
+            "es_ES": "Jaspe regio",
+            "fr_FR": "Jaspe régalien",
+            "it_IT": "Diaspro Regale",
+            "ru_RU": "Монаршая яшма",
+            "ko_KR": "제왕의 벽옥",
+            "zh_TW": "華貴的碧玉",
+            "zh_CN": "华丽碧玉"
+        },
+        "id": 52119
+    },
+    "reagents": [
+        {
+            "reagent": {
+                "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/item/52182?namespace=static-12.0.5_66741-us"
+                },
+                "name": {
+                    "en_US": "Jasper",
+                    "es_MX": "Jaspe",
+                    "pt_BR": "Jaspe",
+                    "de_DE": "Jaspis",
+                    "en_GB": "Jasper",
+                    "es_ES": "Jaspe",
+                    "fr_FR": "Jaspe",
+                    "it_IT": "Diaspro",
+                    "ru_RU": "Яшма",
+                    "ko_KR": "벽옥",
+                    "zh_TW": "碧玉",
+                    "zh_CN": "碧玉"
+                },
+                "id": 52182
+            },
+            "quantity": 1
+        }
+    ],
+    "crafted_quantity": {
+        "value": 1
+    }
+}

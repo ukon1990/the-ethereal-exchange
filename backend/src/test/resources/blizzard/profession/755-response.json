@@ -1,0 +1,101 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/profession/755?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "id": 755,
+    "name": {
+        "en_US": "Jewelcrafting",
+        "es_MX": "Joyería",
+        "pt_BR": "Joalheria",
+        "de_DE": "Juwelierskunst",
+        "en_GB": "Jewelcrafting",
+        "es_ES": "Joyería",
+        "fr_FR": "Joaillerie",
+        "it_IT": "Oreficeria",
+        "ru_RU": "Ювелирное дело",
+        "ko_KR": "보석세공",
+        "zh_TW": "珠寶設計",
+        "zh_CN": "珠宝加工"
+    },
+    "description": {
+        "en_US": "Higher jewelcrafting skill allows you to learn higher level jewelcrafting plans.  Jewelcrafting plans can be found on trainers around the world as well as from quests and monsters.",
+        "es_MX": "Con un nivel alto de habilidad en joyería, aprenderás diseños de nivel superior. Visita a los instructores dispersos por el mundo, completa misiones y derrota a los monstruos para conseguirlos.",
+        "pt_BR": "Um alto nível na perícia joalheria permite aprender instruções de nível mais alto.  As instruções podem ser aprendidas ou compradas dos instrutores de joalheria espalhados pelo mundo, bem como saqueadas de monstros e obtidas como recompensa de missões.",
+        "de_DE": "Eine hohe Juweliersfertigkeit ermöglicht es Euch, höherstufigere Vorlagen zu benutzen. Vorlagen bekommt Ihr bei allen Juwelierskunstlehrern, von toten Gegnern und als Questbelohnung.",
+        "en_GB": "Higher jewelcrafting skill allows you to learn higher level jewelcrafting plans.  Jewelcrafting plans can be found on trainers around the world as well as from quests and monsters.",
+        "es_ES": "Con un nivel alto de habilidad en joyería, aprenderás diseños de nivel superior. Visita a los instructores dispersos por el mundo, completa misiones y derrota a los monstruos para conseguirlos.",
+        "fr_FR": "Un plus haut score dans la compétence joaillerie vous permet d'apprendre des dessins de joaillier plus difficiles. Ces dessins peuvent être trouvés auprès de maîtres un peu partout dans le monde, sur des monstres ou en récompense de quêtes.",
+        "it_IT": "Una maggiore competenza in Oreficeria permette di apprendere progetti di livello superiore. I progetti possono essere acquistati da venditori o istruttori in giro per il mondo o essere ottenuti attraverso missioni o uccidendo mostri.",
+        "ru_RU": "Чем лучше развит этот навык, тем более сложные эскизы вы можете использовать. Эскизы можно найти у учителей, а также получить в качестве добычи или награды.",
+        "ko_KR": "보석세공 숙련도가 올라갈수록 고급 세공술을 배울 수 있습니다. 보석세공은 전문 보석세공인이나 퀘스트로 배울 수 있습니다.",
+        "zh_TW": "高級的珠寶設計技能使你可以學習高級的珠寶設計。你可以在訓練師那裡學習新的圖樣，也可以通過完成任務或殺死怪物獲得新的圖樣。",
+        "zh_CN": "高级的珠宝加工技能使你可以学习高级的珠宝加工图鉴。你可以在训练师那里学习新的图鉴，也可以通过完成任务或杀死怪物获得新的图鉴。"
+    },
+    "type": {
+        "type": "PRIMARY",
+        "name": {
+            "en_US": "Primary",
+            "es_MX": "Principal",
+            "pt_BR": "Principal",
+            "de_DE": "Primär",
+            "en_GB": "Primary",
+            "es_ES": "Principal",
+            "fr_FR": "Principaux",
+            "it_IT": "Primario",
+            "ru_RU": "Основное",
+            "ko_KR": "주",
+            "zh_TW": "主要",
+            "zh_CN": "主要"
+        }
+    },
+    "media": {
+        "key": {
+            "href": "https://us.api.blizzard.com/data/wow/media/profession/755?namespace=static-12.0.5_66741-us"
+        },
+        "id": 755
+    },
+    "skill_tiers": [
+        {
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/profession/755/skill-tier/2521?namespace=static-12.0.5_66741-us"
+            },
+            "name": {
+                "en_US": "Cataclysm Jewelcrafting",
+                "es_MX": "Joyería de Cataclysm",
+                "pt_BR": "Joalheria de Cataclysm",
+                "de_DE": "Juwelierskunst des Kataklysmus",
+                "en_GB": "Cataclysm Jewelcrafting",
+                "es_ES": "Joyería de Cataclysm",
+                "fr_FR": "Joaillerie de Cataclysm",
+                "it_IT": "Oreficeria di Cataclysm",
+                "ru_RU": "Ювелирное дело времен Катаклизма",
+                "ko_KR": "대격변 보석세공",
+                "zh_TW": "大災變珠寶設計",
+                "zh_CN": "大地的裂变珠宝加工"
+            },
+            "id": 2521
+        },
+        {
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/profession/755/skill-tier/2914?namespace=static-12.0.5_66741-us"
+            },
+            "name": {
+                "en_US": "Midnight Jewelcrafting",
+                "es_MX": "Joyería de Midnight",
+                "pt_BR": "Joalheria de Midnight",
+                "de_DE": "Juwelierskunst von Midnight",
+                "en_GB": "Midnight Jewelcrafting",
+                "es_ES": "Joyería de Midnight",
+                "fr_FR": "Joaillerie de Midnight",
+                "it_IT": "Oreficeria di Midnight",
+                "ru_RU": "Ювелирное дело Midnight",
+                "ko_KR": "한밤 보석세공",
+                "zh_TW": "至暗之夜珠寶設計",
+                "zh_CN": "至暗之夜珠宝加工"
+            },
+            "id": 2914
+        }
+    ]
+}

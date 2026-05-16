@@ -1,0 +1,24 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/item-class/3/item-subclass/7?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "class_id": 3,
+    "subclass_id": 7,
+    "display_name": {
+        "en_US": "Haste",
+        "es_MX": "Celeridad",
+        "pt_BR": "Aceleração",
+        "de_DE": "Tempo",
+        "en_GB": "Haste",
+        "es_ES": "Celeridad",
+        "fr_FR": "Hâte",
+        "it_IT": "Celerità",
+        "ru_RU": "Скорость",
+        "ko_KR": "가속",
+        "zh_TW": "加速",
+        "zh_CN": "急速"
+    },
+    "hide_subclass_in_tooltips": true
+}

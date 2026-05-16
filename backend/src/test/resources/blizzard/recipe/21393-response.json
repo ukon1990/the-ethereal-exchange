@@ -1,0 +1,76 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/recipe/21393?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "id": 21393,
+    "name": {
+        "en_US": "Solid Zephyrite",
+        "es_MX": "Cefirita sólida",
+        "pt_BR": "Zefirita Maciça",
+        "de_DE": "Gediegener Zephyrit",
+        "en_GB": "Solid Zephyrite",
+        "es_ES": "Cefirita sólida",
+        "fr_FR": "Zéphyrite solide",
+        "it_IT": "Zefirite Solida",
+        "ru_RU": "Цельный зефирит",
+        "ko_KR": "단단한 서풍석",
+        "zh_TW": "堅固的西風石",
+        "zh_CN": "致密泽菲蓝晶石"
+    },
+    "media": {
+        "key": {
+            "href": "https://us.api.blizzard.com/data/wow/media/recipe/21393?namespace=static-12.0.5_66741-us"
+        },
+        "id": 21393
+    },
+    "crafted_item": {
+        "key": {
+            "href": "https://us.api.blizzard.com/data/wow/item/52086?namespace=static-12.0.5_66741-us"
+        },
+        "name": {
+            "en_US": "Solid Zephyrite",
+            "es_MX": "Cefirita sólida",
+            "pt_BR": "Zefirita Maciça",
+            "de_DE": "Gediegener Zephyrit",
+            "en_GB": "Solid Zephyrite",
+            "es_ES": "Cefirita sólida",
+            "fr_FR": "Zéphyrite solide",
+            "it_IT": "Zefirite Solida",
+            "ru_RU": "Цельный зефирит",
+            "ko_KR": "단단한 서풍석",
+            "zh_TW": "堅固的西風石",
+            "zh_CN": "致密泽菲蓝晶石"
+        },
+        "id": 52086
+    },
+    "reagents": [
+        {
+            "reagent": {
+                "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/item/52178?namespace=static-12.0.5_66741-us"
+                },
+                "name": {
+                    "en_US": "Zephyrite",
+                    "es_MX": "Cefirita",
+                    "pt_BR": "Zefirita",
+                    "de_DE": "Zephyrit",
+                    "en_GB": "Zephyrite",
+                    "es_ES": "Cefirita",
+                    "fr_FR": "Zéphyrite",
+                    "it_IT": "Zefirite",
+                    "ru_RU": "Зефирит",
+                    "ko_KR": "서풍석",
+                    "zh_TW": "西風石",
+                    "zh_CN": "泽菲蓝晶石"
+                },
+                "id": 52178
+            },
+            "quantity": 1
+        }
+    ],
+    "crafted_quantity": {
+        "value": 1
+    }
+}

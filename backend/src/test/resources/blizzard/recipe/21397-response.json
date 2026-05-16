@@ -1,0 +1,76 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/recipe/21397?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "id": 21397,
+    "name": {
+        "en_US": "Subtle Alicite",
+        "es_MX": "Alicita sutil",
+        "pt_BR": "Alicita Sutil",
+        "de_DE": "Fragiler Alazit",
+        "en_GB": "Subtle Alicite",
+        "es_ES": "Alicita sutil",
+        "fr_FR": "Alicite subtile",
+        "it_IT": "Alicite Scaltra",
+        "ru_RU": "Изящный алицит",
+        "ko_KR": "미묘한 알리사이트",
+        "zh_TW": "精巧的蛋白玻璃石",
+        "zh_CN": "诡秘阿里锡黄晶"
+    },
+    "media": {
+        "key": {
+            "href": "https://us.api.blizzard.com/data/wow/media/recipe/21397?namespace=static-12.0.5_66741-us"
+        },
+        "id": 21397
+    },
+    "crafted_item": {
+        "key": {
+            "href": "https://us.api.blizzard.com/data/wow/item/52090?namespace=static-12.0.5_66741-us"
+        },
+        "name": {
+            "en_US": "Subtle Alicite",
+            "es_MX": "Alicita sutil",
+            "pt_BR": "Alicita Sutil",
+            "de_DE": "Fragiler Alazit",
+            "en_GB": "Subtle Alicite",
+            "es_ES": "Alicita sutil",
+            "fr_FR": "Alicite subtile",
+            "it_IT": "Alicite Scaltra",
+            "ru_RU": "Изящный алицит",
+            "ko_KR": "미묘한 알리사이트",
+            "zh_TW": "精巧的蛋白玻璃石",
+            "zh_CN": "诡秘阿里锡黄晶"
+        },
+        "id": 52090
+    },
+    "reagents": [
+        {
+            "reagent": {
+                "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/item/52179?namespace=static-12.0.5_66741-us"
+                },
+                "name": {
+                    "en_US": "Alicite",
+                    "es_MX": "Alicita",
+                    "pt_BR": "Alicita",
+                    "de_DE": "Alazit",
+                    "en_GB": "Alicite",
+                    "es_ES": "Alicita",
+                    "fr_FR": "Alicite",
+                    "it_IT": "Alicite",
+                    "ru_RU": "Алицит",
+                    "ko_KR": "알리사이트",
+                    "zh_TW": "蛋白玻璃石",
+                    "zh_CN": "阿里锡黄晶"
+                },
+                "id": 52179
+            },
+            "quantity": 1
+        }
+    ],
+    "crafted_quantity": {
+        "value": 1
+    }
+}

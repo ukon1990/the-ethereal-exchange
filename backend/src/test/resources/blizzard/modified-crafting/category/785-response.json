@@ -1,0 +1,22 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/785?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "id": 785,
+    "name": {
+        "en_US": "Tenebrous Amethyst",
+        "es_MX": "Amatista tenebrosa",
+        "pt_BR": "Ametista Tenebrosa",
+        "de_DE": "Finsteramethyst",
+        "en_GB": "Tenebrous Amethyst",
+        "es_ES": "Amatista tenebrosa",
+        "fr_FR": "Améthyste ténébreuse",
+        "it_IT": "Ametista Tenebrosa",
+        "ru_RU": "Мрачный аметист",
+        "ko_KR": "암영 자수정",
+        "zh_TW": "陰暗紫水晶",
+        "zh_CN": "晦暗紫晶"
+    }
+}

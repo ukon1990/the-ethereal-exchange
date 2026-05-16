@@ -1,0 +1,22 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/792?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "id": 792,
+    "name": {
+        "en_US": "Kaleidoscopic Prism",
+        "es_MX": "Prisma caleidoscópico",
+        "pt_BR": "Prisma Caleidoscópico",
+        "de_DE": "Kaleidoskopisches Prisma",
+        "en_GB": "Kaleidoscopic Prism",
+        "es_ES": "Prisma caleidoscópico",
+        "fr_FR": "Prisme kaléidoscopique",
+        "it_IT": "Prisma Caleidoscopico",
+        "ru_RU": "Калейдоскопическая призма",
+        "ko_KR": "만화 분광경",
+        "zh_TW": "萬花筒稜石",
+        "zh_CN": "万花棱镜"
+    }
+}

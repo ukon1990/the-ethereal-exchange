@@ -1,0 +1,44 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/408?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "id": 408,
+    "description": {
+        "en_US": "Harandar Peridot",
+        "es_MX": "Peridoto de Harandar",
+        "pt_BR": "Peridoto de Harandar",
+        "de_DE": "Peridot von Harandar",
+        "en_GB": "Harandar Peridot",
+        "es_ES": "Peridoto de Harandar",
+        "fr_FR": "Olivine d’Harandar",
+        "it_IT": "Olivina di Harandar",
+        "ru_RU": "Харандарский хризолит",
+        "ko_KR": "하란다르 감람석",
+        "zh_TW": "哈朗達橄欖石",
+        "zh_CN": "哈籁恩达尔榄石"
+    },
+    "compatible_categories": [
+        {
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/783?namespace=static-12.0.5_66741-us"
+            },
+            "name": {
+                "en_US": "Harandar Peridot",
+                "es_MX": "Peridoto de Harandar",
+                "pt_BR": "Peridoto de Harandar",
+                "de_DE": "Peridot aus Harandar",
+                "en_GB": "Harandar Peridot",
+                "es_ES": "Peridoto de Harandar",
+                "fr_FR": "Olivine d’Harandar",
+                "it_IT": "Olivina di Harandar",
+                "ru_RU": "Харандарский хризолит",
+                "ko_KR": "하란다르 감람석",
+                "zh_TW": "哈朗達橄欖石",
+                "zh_CN": "哈籁恩达尔榄石"
+            },
+            "id": 783
+        }
+    ]
+}

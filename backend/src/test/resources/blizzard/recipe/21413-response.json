@@ -1,0 +1,76 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/recipe/21413?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "id": 21413,
+    "name": {
+        "en_US": "Polished Hessonite",
+        "es_MX": "Grosularia pulida",
+        "pt_BR": "Hessonita Polida",
+        "de_DE": "Polierter Hessonit",
+        "en_GB": "Polished Hessonite",
+        "es_ES": "Grosularia pulida",
+        "fr_FR": "Hessonite polie",
+        "it_IT": "Essonite Lucida",
+        "ru_RU": "Полированный гессонит",
+        "ko_KR": "광택나는 헤소나이트",
+        "zh_TW": "拋光的桂榴石",
+        "zh_CN": "抛光桂榴石"
+    },
+    "media": {
+        "key": {
+            "href": "https://us.api.blizzard.com/data/wow/media/recipe/21413?namespace=static-12.0.5_66741-us"
+        },
+        "id": 21413
+    },
+    "crafted_item": {
+        "key": {
+            "href": "https://us.api.blizzard.com/data/wow/item/52106?namespace=static-12.0.5_66741-us"
+        },
+        "name": {
+            "en_US": "Polished Hessonite",
+            "es_MX": "Grosularia pulida",
+            "pt_BR": "Hessonita Polida",
+            "de_DE": "Polierter Hessonit",
+            "en_GB": "Polished Hessonite",
+            "es_ES": "Grosularia pulida",
+            "fr_FR": "Hessonite polie",
+            "it_IT": "Essonite Lucida",
+            "ru_RU": "Полированный гессонит",
+            "ko_KR": "광택나는 헤소나이트",
+            "zh_TW": "拋光的桂榴石",
+            "zh_CN": "抛光桂榴石"
+        },
+        "id": 52106
+    },
+    "reagents": [
+        {
+            "reagent": {
+                "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/item/52181?namespace=static-12.0.5_66741-us"
+                },
+                "name": {
+                    "en_US": "Hessonite",
+                    "es_MX": "Grosularia",
+                    "pt_BR": "Hessonita",
+                    "de_DE": "Hessonit",
+                    "en_GB": "Hessonite",
+                    "es_ES": "Grosularia",
+                    "fr_FR": "Hessonite",
+                    "it_IT": "Essonite",
+                    "ru_RU": "Гессонит",
+                    "ko_KR": "헤소나이트",
+                    "zh_TW": "桂榴石",
+                    "zh_CN": "桂榴石"
+                },
+                "id": 52181
+            },
+            "quantity": 1
+        }
+    ],
+    "crafted_quantity": {
+        "value": 1
+    }
+}

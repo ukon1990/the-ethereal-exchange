@@ -15,10 +15,11 @@ export const ROOT_SELECTIONS = {
     profession: {
         sampleSize: blizzardConfig.samplePerTier,
         professions: [
-            { id: 164, name: "Blacksmithing", skillTierIds: [2907, 2751] },
-            { id: 333, name: "Enchanting", skillTierIds: [2909, 2753] },
-            { id: 182, name: "Herbalism", skillTierIds: [2912, 2550] },
-            { id: 356, name: "Fishing", skillTierIds: [2911, 2826] },
+            {id: 164, name: "Blacksmithing", skillTierIds: [2907, 2751]},
+            {id: 333, name: "Enchanting", skillTierIds: [2909, 2753]},
+            {id: 182, name: "Herbalism", skillTierIds: [2912, 2550]},
+            {id: 356, name: "Fishing", skillTierIds: [2911, 2826]},
+            {id: 755, name: "Jewelcrafting", skillTierIds: [2521, 2914]},
         ],
     },
 };

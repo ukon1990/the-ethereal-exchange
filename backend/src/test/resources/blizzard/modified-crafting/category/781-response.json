@@ -1,0 +1,22 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/781?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "id": 781,
+    "name": {
+        "en_US": "Amani Lapis",
+        "es_MX": "Lapislázuli amani",
+        "pt_BR": "Lápis Amani",
+        "de_DE": "Amanilapis",
+        "en_GB": "Amani Lapis",
+        "es_ES": "Lapislázuli Amani",
+        "fr_FR": "Lapis amani",
+        "it_IT": "Lapislazzuli degli Amani",
+        "ru_RU": "Аманийский лазурит",
+        "ko_KR": "아마니 청금석",
+        "zh_TW": "阿曼尼青金石",
+        "zh_CN": "阿曼尼青金石"
+    }
+}

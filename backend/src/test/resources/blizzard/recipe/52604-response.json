@@ -1,0 +1,124 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/recipe/52604?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "id": 52604,
+    "name": {
+        "en_US": "Powerful Eversong Diamond",
+        "es_MX": "Diamante de Canción Eterna poderoso",
+        "pt_BR": "Diamante do Canto Eterno Poderoso",
+        "de_DE": "Mächtiger Immersangdiamant",
+        "en_GB": "Powerful Eversong Diamond",
+        "es_ES": "Diamante de Canción Eterna poderoso",
+        "fr_FR": "Diamant des Chants éternels de puissance",
+        "it_IT": "Diamante di Cantoeterno Potente",
+        "ru_RU": "Могучий алмаз Вечной Песни",
+        "ko_KR": "힘의 영원노래 다이아몬드",
+        "zh_TW": "特強的永歌鑽石",
+        "zh_CN": "强能之永歌钻石"
+    },
+    "media": {
+        "key": {
+            "href": "https://us.api.blizzard.com/data/wow/media/recipe/52604?namespace=static-12.0.5_66741-us"
+        },
+        "id": 52604
+    },
+    "reagents": [
+        {
+            "reagent": {
+                "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/item/251285?namespace=static-12.0.5_66741-us"
+                },
+                "name": {
+                    "en_US": "Petrified Root",
+                    "es_MX": "Raíz petrificada",
+                    "pt_BR": "Raiz Petrificada",
+                    "de_DE": "Versteinerte Wurzel",
+                    "en_GB": "Petrified Root",
+                    "es_ES": "Raíz petrificada",
+                    "fr_FR": "Racine pétrifiée",
+                    "it_IT": "Radice Pietrificata",
+                    "ru_RU": "Окаменелый корень",
+                    "ko_KR": "석화된 뿌리",
+                    "zh_TW": "石化根",
+                    "zh_CN": "石化之根"
+                },
+                "id": 251285
+            },
+            "quantity": 2
+        }
+    ],
+    "modified_crafting_slots": [
+        {
+            "slot_type": {
+                "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/429?namespace=static-12.0.5_66741-us"
+                },
+                "name": {
+                    "en_US": "Eversong Diamond",
+                    "es_MX": "Diamante de Canción Eterna",
+                    "pt_BR": "Diamante do Canto Eterno",
+                    "de_DE": "Immersangdiamant",
+                    "en_GB": "Eversong Diamond",
+                    "es_ES": "Diamante de Canción Eterna",
+                    "fr_FR": "Diamant des Chants éternels",
+                    "it_IT": "Diamante di Cantoeterno",
+                    "ru_RU": "Алмаз Вечной Песни",
+                    "ko_KR": "영원노래 다이아몬드",
+                    "zh_TW": "永歌鑽石",
+                    "zh_CN": "永歌钻石"
+                },
+                "id": 429
+            },
+            "display_order": 0
+        },
+        {
+            "slot_type": {
+                "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/418?namespace=static-12.0.5_66741-us"
+                },
+                "name": {
+                    "en_US": "Kaleidoscopic Prism",
+                    "es_MX": "Prisma caleidoscópico",
+                    "pt_BR": "Prisma Caleidoscópico",
+                    "de_DE": "Kaleidoskopisches Prisma",
+                    "en_GB": "Kaleidoscopic Prism",
+                    "es_ES": "Prisma caleidoscópico",
+                    "fr_FR": "Prisme kaléidoscopique",
+                    "it_IT": "Prisma Caleidoscopico",
+                    "ru_RU": "Калейдоскопическая призма",
+                    "ko_KR": "만화 분광경",
+                    "zh_TW": "萬花筒稜石",
+                    "zh_CN": "万花棱镜"
+                },
+                "id": 418
+            },
+            "display_order": 1
+        },
+        {
+            "slot_type": {
+                "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/497?namespace=static-12.0.5_66741-us"
+                },
+                "name": {
+                    "en_US": "Artisan's Authenticity",
+                    "es_MX": "Autenticidad del artesano",
+                    "pt_BR": "Autenticidade do Artífice",
+                    "de_DE": "Authentizität des Kunsthandwerks",
+                    "en_GB": "Artisan's Authenticity",
+                    "es_ES": "Autenticidad de artesano",
+                    "fr_FR": "Authenticité artisanale",
+                    "it_IT": "Autenticità dell'Artigiano",
+                    "ru_RU": "Почерк ремесленника",
+                    "ko_KR": "장인의 진정성",
+                    "zh_TW": "工匠之保證",
+                    "zh_CN": "匠人之真"
+                },
+                "id": 497
+            },
+            "display_order": 2
+        }
+    ]
+}

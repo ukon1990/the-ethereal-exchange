@@ -1,0 +1,24 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/item-class/3/item-subclass/4?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "class_id": 3,
+    "subclass_id": 4,
+    "display_name": {
+        "en_US": "Spirit",
+        "es_MX": "Espíritu",
+        "pt_BR": "Espírito",
+        "de_DE": "Willenskraft",
+        "en_GB": "Spirit",
+        "es_ES": "Espíritu",
+        "fr_FR": "Esprit",
+        "it_IT": "Spirito",
+        "ru_RU": "Дух",
+        "ko_KR": "정신력",
+        "zh_TW": "精神",
+        "zh_CN": "精神"
+    },
+    "hide_subclass_in_tooltips": true
+}

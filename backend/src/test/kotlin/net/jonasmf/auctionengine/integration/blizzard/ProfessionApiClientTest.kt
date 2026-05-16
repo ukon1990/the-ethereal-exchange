@@ -22,7 +22,7 @@ class ProfessionApiClientTest {
 
             val professions = client.getAll(Region.Europe)
 
-            assertEquals(4, professions.size)
+            assertEquals(5, professions.size)
             assertEquals(2, professions[0].skillTiers.size)
             assertEquals(
                 6,

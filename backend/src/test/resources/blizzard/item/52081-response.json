@@ -1,0 +1,335 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/item/52081?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "id": 52081,
+    "name": {
+        "en_US": "Bold Carnelian",
+        "es_MX": "Cornalina llamativa",
+        "pt_BR": "Cornalina Vistosa",
+        "de_DE": "Klobiger Karneol",
+        "en_GB": "Bold Carnelian",
+        "es_ES": "Cornalina llamativa",
+        "fr_FR": "Cornaline soutenue",
+        "it_IT": "Corniola Ardita",
+        "ru_RU": "Рельефный сердолик",
+        "ko_KR": "굵은 홍옥수",
+        "zh_TW": "清晰的紅玉髓",
+        "zh_CN": "朴素红玉髓"
+    },
+    "quality": {
+        "type": "UNCOMMON",
+        "name": {
+            "en_US": "Uncommon",
+            "es_MX": "Inusual",
+            "pt_BR": "Incomum",
+            "de_DE": "Ungewöhnlich",
+            "en_GB": "Uncommon",
+            "es_ES": "Inusual",
+            "fr_FR": "Inhabituel",
+            "it_IT": "Pregiato",
+            "ru_RU": "Необычное",
+            "ko_KR": "고급",
+            "zh_TW": "優秀",
+            "zh_CN": "优秀"
+        }
+    },
+    "level": 30,
+    "required_level": 0,
+    "media": {
+        "key": {
+            "href": "https://us.api.blizzard.com/data/wow/media/item/52081?namespace=static-12.0.5_66741-us"
+        },
+        "id": 52081
+    },
+    "item_class": {
+        "key": {
+            "href": "https://us.api.blizzard.com/data/wow/item-class/3?namespace=static-12.0.5_66741-us"
+        },
+        "name": {
+            "en_US": "Gem",
+            "es_MX": "Gema",
+            "pt_BR": "Gema",
+            "de_DE": "Edelstein",
+            "en_GB": "Gem",
+            "es_ES": "Gema",
+            "fr_FR": "Gemme",
+            "it_IT": "Gemme",
+            "ru_RU": "Самоцвет",
+            "ko_KR": "보석",
+            "zh_TW": "寶石",
+            "zh_CN": "宝石"
+        },
+        "id": 3
+    },
+    "item_subclass": {
+        "key": {
+            "href": "https://us.api.blizzard.com/data/wow/item-class/3/item-subclass/2?namespace=static-12.0.5_66741-us"
+        },
+        "name": {
+            "en_US": "Strength",
+            "es_MX": "Fuerza",
+            "pt_BR": "Força",
+            "de_DE": "Stärke",
+            "en_GB": "Strength",
+            "es_ES": "Fuerza",
+            "fr_FR": "Force",
+            "it_IT": "Forza",
+            "ru_RU": "Сила",
+            "ko_KR": "힘",
+            "zh_TW": "力量",
+            "zh_CN": "力量"
+        },
+        "id": 2
+    },
+    "inventory_type": {
+        "type": "NON_EQUIP",
+        "name": {
+            "en_US": "Non-equippable",
+            "es_MX": "No equipable",
+            "pt_BR": "Não equipável",
+            "de_DE": "Nicht anlegbar",
+            "en_GB": "Non-equippable",
+            "es_ES": "No se puede equipar",
+            "fr_FR": "Objet hors équipement",
+            "it_IT": "Non equipaggiabile",
+            "ru_RU": "Неэкипируемое",
+            "ko_KR": "착용 불가",
+            "zh_TW": "無法裝備",
+            "zh_CN": "无法装备"
+        }
+    },
+    "purchase_price": 37500,
+    "sell_price": 8250,
+    "max_count": 0,
+    "is_equippable": false,
+    "is_stackable": true,
+    "description": {
+        "en_US": "Matches any socket.",
+        "es_MX": "Encaja en cualquier ranura.",
+        "pt_BR": "Encaixa-se em qualquer engaste.",
+        "de_DE": "Passt in jeden Sockel.",
+        "en_GB": "Matches any socket.",
+        "es_ES": "Encaja en cualquier ranura.",
+        "fr_FR": "Correspond à n'importe quelle châsse.",
+        "it_IT": "Compatibile con un incavo di qualsiasi colore.",
+        "ru_RU": "Для любого гнезда.",
+        "ko_KR": "아무 보석 홈에나 잘 맞습니다.",
+        "zh_TW": "與任何插槽相容。",
+        "zh_CN": "对应任意插槽。"
+    },
+    "preview_item": {
+        "item": {
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/item/52081?namespace=static-12.0.5_66741-us"
+            },
+            "id": 52081
+        },
+        "quality": {
+            "type": "UNCOMMON",
+            "name": {
+                "en_US": "Uncommon",
+                "es_MX": "Inusual",
+                "pt_BR": "Incomum",
+                "de_DE": "Ungewöhnlich",
+                "en_GB": "Uncommon",
+                "es_ES": "Inusual",
+                "fr_FR": "Inhabituel",
+                "it_IT": "Pregiato",
+                "ru_RU": "Необычное",
+                "ko_KR": "고급",
+                "zh_TW": "優秀",
+                "zh_CN": "优秀"
+            }
+        },
+        "name": {
+            "en_US": "Bold Carnelian",
+            "es_MX": "Cornalina llamativa",
+            "pt_BR": "Cornalina Vistosa",
+            "de_DE": "Klobiger Karneol",
+            "en_GB": "Bold Carnelian",
+            "es_ES": "Cornalina llamativa",
+            "fr_FR": "Cornaline soutenue",
+            "it_IT": "Corniola Ardita",
+            "ru_RU": "Рельефный сердолик",
+            "ko_KR": "굵은 홍옥수",
+            "zh_TW": "清晰的紅玉髓",
+            "zh_CN": "朴素红玉髓"
+        },
+        "media": {
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/media/item/52081?namespace=static-12.0.5_66741-us"
+            },
+            "id": 52081
+        },
+        "item_class": {
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/item-class/3?namespace=static-12.0.5_66741-us"
+            },
+            "name": {
+                "en_US": "Gem",
+                "es_MX": "Gema",
+                "pt_BR": "Gema",
+                "de_DE": "Edelstein",
+                "en_GB": "Gem",
+                "es_ES": "Gema",
+                "fr_FR": "Gemme",
+                "it_IT": "Gemme",
+                "ru_RU": "Самоцвет",
+                "ko_KR": "보석",
+                "zh_TW": "寶石",
+                "zh_CN": "宝石"
+            },
+            "id": 3
+        },
+        "item_subclass": {
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/item-class/3/item-subclass/2?namespace=static-12.0.5_66741-us"
+            },
+            "name": {
+                "en_US": "Strength",
+                "es_MX": "Fuerza",
+                "pt_BR": "Força",
+                "de_DE": "Stärke",
+                "en_GB": "Strength",
+                "es_ES": "Fuerza",
+                "fr_FR": "Force",
+                "it_IT": "Forza",
+                "ru_RU": "Сила",
+                "ko_KR": "힘",
+                "zh_TW": "力量",
+                "zh_CN": "力量"
+            },
+            "id": 2
+        },
+        "inventory_type": {
+            "type": "NON_EQUIP",
+            "name": {
+                "en_US": "Non-equippable",
+                "es_MX": "No equipable",
+                "pt_BR": "Não equipável",
+                "de_DE": "Nicht anlegbar",
+                "en_GB": "Non-equippable",
+                "es_ES": "No se puede equipar",
+                "fr_FR": "Objet hors équipement",
+                "it_IT": "Non equipaggiabile",
+                "ru_RU": "Неэкипируемое",
+                "ko_KR": "착용 불가",
+                "zh_TW": "無法裝備",
+                "zh_CN": "无法装备"
+            }
+        },
+        "sell_price": {
+            "value": 8250,
+            "display_strings": {
+                "header": {
+                    "en_US": "Sell Price:",
+                    "es_MX": "Precio de venta:",
+                    "pt_BR": "Preço de Venda:",
+                    "de_DE": "Verkaufspreis:",
+                    "en_GB": "Sell Price:",
+                    "es_ES": "Precio de venta:",
+                    "fr_FR": "Prix de vente :",
+                    "it_IT": "Prezzo di vendita:",
+                    "ru_RU": "Цена продажи:",
+                    "ko_KR": "판매 가격:",
+                    "zh_TW": "售價:",
+                    "zh_CN": "卖价:"
+                },
+                "gold": {
+                    "en_US": "0",
+                    "es_MX": "0",
+                    "pt_BR": "0",
+                    "de_DE": "0",
+                    "en_GB": "0",
+                    "es_ES": "0",
+                    "fr_FR": "0",
+                    "it_IT": "0",
+                    "ru_RU": "0",
+                    "ko_KR": "0",
+                    "zh_TW": "0",
+                    "zh_CN": "0"
+                },
+                "silver": {
+                    "en_US": "82",
+                    "es_MX": "82",
+                    "pt_BR": "82",
+                    "de_DE": "82",
+                    "en_GB": "82",
+                    "es_ES": "82",
+                    "fr_FR": "82",
+                    "it_IT": "82",
+                    "ru_RU": "82",
+                    "ko_KR": "82",
+                    "zh_TW": "82",
+                    "zh_CN": "82"
+                },
+                "copper": {
+                    "en_US": "50",
+                    "es_MX": "50",
+                    "pt_BR": "50",
+                    "de_DE": "50",
+                    "en_GB": "50",
+                    "es_ES": "50",
+                    "fr_FR": "50",
+                    "it_IT": "50",
+                    "ru_RU": "50",
+                    "ko_KR": "50",
+                    "zh_TW": "50",
+                    "zh_CN": "50"
+                }
+            }
+        },
+        "description": {
+            "en_US": "Matches any socket.",
+            "es_MX": "Encaja en cualquier ranura.",
+            "pt_BR": "Encaixa-se em qualquer engaste.",
+            "de_DE": "Passt in jeden Sockel.",
+            "en_GB": "Matches any socket.",
+            "es_ES": "Encaja en cualquier ranura.",
+            "fr_FR": "Correspond à n'importe quelle châsse.",
+            "it_IT": "Compatibile con un incavo di qualsiasi colore.",
+            "ru_RU": "Для любого гнезда.",
+            "ko_KR": "아무 보석 홈에나 잘 맞습니다.",
+            "zh_TW": "與任何插槽相容。",
+            "zh_CN": "对应任意插槽。"
+        },
+        "is_subclass_hidden": true,
+        "gem_properties": {
+            "min_item_level": {
+                "value": 10,
+                "display_string": {
+                    "en_US": "Requires Item Level: 10",
+                    "es_MX": "Requiere nivel de objeto: 10",
+                    "pt_BR": "Requer nível de item: 10",
+                    "de_DE": "Benötigte Gegenstandsstufe: 10",
+                    "en_GB": "Requires Item Level: 10",
+                    "es_ES": "Requiere nivel de objeto: 10",
+                    "fr_FR": "Exige un objet de niveau : 10",
+                    "it_IT": "Richiede un oggetto di livello 10.",
+                    "ru_RU": "Требуемый уровень предметов: 10",
+                    "ko_KR": "필요한 아이템 레벨: 10",
+                    "zh_TW": "需要物品等級：10",
+                    "zh_CN": "需要物品等级：10"
+                }
+            },
+            "effect": {
+                "en_US": "+2 Strength",
+                "es_MX": "+2 fuerza",
+                "pt_BR": "+2 de Força",
+                "de_DE": "+2 Stärke",
+                "en_GB": "+2 Strength",
+                "es_ES": "+2 fuerza",
+                "fr_FR": "+2 à la Force",
+                "it_IT": "+2 Forza",
+                "ru_RU": "+2 к силе",
+                "ko_KR": "힘 +2",
+                "zh_TW": "+2力量",
+                "zh_CN": "+2 力量"
+            }
+        }
+    },
+    "purchase_quantity": 1
+}

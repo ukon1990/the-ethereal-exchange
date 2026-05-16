@@ -40,11 +40,11 @@ class RecipeApiClientTest {
         val webClient = buildWebClient { handleRequest(it) }
         val client = RecipeApiClient(createSupport(webClient))
 
-        val recipe = client.getById(21487, Region.Europe)
+        val recipe = client.getById(21426, Region.Europe)
 
-        assertEquals(21487, recipe.id)
-        assertEquals("Brilliant Chimera's Eye", recipe.name.en_US)
-        assertEquals(52257, recipe.craftedItemId)
+        assertEquals(21426, recipe.id)
+        assertEquals("Regal Jasper", recipe.name.en_US)
+        assertEquals(52119, recipe.craftedItemId)
         assertEquals(1, recipe.reagents.size)
         assertEquals(0, recipe.modifiedCraftingSlots.size)
     }

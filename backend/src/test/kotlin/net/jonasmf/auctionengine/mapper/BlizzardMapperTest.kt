@@ -166,12 +166,12 @@ class BlizzardMapperTest {
 
     @Test
     fun `should deserialize recipe dto when modified_crafting_slots is omitted`() {
-        val dto: RecipeDTO = mapper.readValue(loadFixture(this, "/blizzard/recipe/21487-response.json"))
+        val dto: RecipeDTO = mapper.readValue(loadFixture(this, "/blizzard/recipe/21426-response.json"))
 
         assertEquals(null, dto.modifiedCraftingSlots)
         assertEquals(0, dto.toDomain().modifiedCraftingSlots.size)
-        assertEquals(21487, dto.toDomain().id)
-        assertEquals(52257, dto.toDomain().craftedItemId)
+        assertEquals(21426, dto.toDomain().id)
+        assertEquals(52119, dto.toDomain().craftedItemId)
     }
 
     @Test
@@ -196,7 +196,7 @@ class BlizzardMapperTest {
                 """.trimIndent(),
             )
 
-        assertEquals(null, dto.modifiedCraftingSlots)
+        assertEquals(emptyList(), dto.modifiedCraftingSlots)
         assertEquals(0, dto.toDomain().modifiedCraftingSlots.size)
     }
 

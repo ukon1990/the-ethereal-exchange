@@ -1,0 +1,254 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/profession/755/skill-tier/2521?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "id": 2521,
+    "name": {
+        "en_US": "Cataclysm Jewelcrafting",
+        "es_MX": "Joyería de Cataclysm",
+        "pt_BR": "Joalheria de Cataclysm",
+        "de_DE": "Juwelierskunst des Kataklysmus",
+        "en_GB": "Cataclysm Jewelcrafting",
+        "es_ES": "Joyería de Cataclysm",
+        "fr_FR": "Joaillerie de Cataclysm",
+        "it_IT": "Oreficeria di Cataclysm",
+        "ru_RU": "Ювелирное дело времен Катаклизма",
+        "ko_KR": "대격변 보석세공",
+        "zh_TW": "大災變珠寶設計",
+        "zh_CN": "大地的裂变珠宝加工"
+    },
+    "minimum_skill_level": 1,
+    "maximum_skill_level": 75,
+    "categories": [
+        {
+            "name": {
+                "en_US": "Red Gems",
+                "es_MX": "Gemas rojas",
+                "pt_BR": "Gemas Vermelhas",
+                "de_DE": "Rote Edelsteine",
+                "en_GB": "Red Gems",
+                "es_ES": "Gemas rojas",
+                "fr_FR": "Gemmes rouges",
+                "it_IT": "Gemme Rosse",
+                "ru_RU": "Красные самоцветы",
+                "ko_KR": "붉은색 보석",
+                "zh_TW": "紅色寶石",
+                "zh_CN": "红色宝石"
+            },
+            "recipes": [
+                {
+                    "key": {
+                        "href": "https://us.api.blizzard.com/data/wow/recipe/21388?namespace=static-12.0.5_66741-us"
+                    },
+                    "name": {
+                        "en_US": "Bold Carnelian",
+                        "es_MX": "Cornalina llamativa",
+                        "pt_BR": "Cornalina Vistosa",
+                        "de_DE": "Klobiger Karneol",
+                        "en_GB": "Bold Carnelian",
+                        "es_ES": "Cornalina llamativa",
+                        "fr_FR": "Cornaline soutenue",
+                        "it_IT": "Corniola Ardita",
+                        "ru_RU": "Рельефный сердолик",
+                        "ko_KR": "굵은 홍옥수",
+                        "zh_TW": "清晰的紅玉髓",
+                        "zh_CN": "朴素红玉髓"
+                    },
+                    "id": 21388
+                }
+            ]
+        },
+        {
+            "name": {
+                "en_US": "Blue Gems",
+                "es_MX": "Gemas azules",
+                "pt_BR": "Gemas Azuis",
+                "de_DE": "Blaue Edelsteine",
+                "en_GB": "Blue Gems",
+                "es_ES": "Gemas azules",
+                "fr_FR": "Gemmes bleues",
+                "it_IT": "Gemme Blu",
+                "ru_RU": "Синие самоцветы",
+                "ko_KR": "푸른색 보석",
+                "zh_TW": "藍色寶石",
+                "zh_CN": "蓝色宝石"
+            },
+            "recipes": [
+                {
+                    "key": {
+                        "href": "https://us.api.blizzard.com/data/wow/recipe/21393?namespace=static-12.0.5_66741-us"
+                    },
+                    "name": {
+                        "en_US": "Solid Zephyrite",
+                        "es_MX": "Cefirita sólida",
+                        "pt_BR": "Zefirita Maciça",
+                        "de_DE": "Gediegener Zephyrit",
+                        "en_GB": "Solid Zephyrite",
+                        "es_ES": "Cefirita sólida",
+                        "fr_FR": "Zéphyrite solide",
+                        "it_IT": "Zefirite Solida",
+                        "ru_RU": "Цельный зефирит",
+                        "ko_KR": "단단한 서풍석",
+                        "zh_TW": "堅固的西風石",
+                        "zh_CN": "致密泽菲蓝晶石"
+                    },
+                    "id": 21393
+                }
+            ]
+        },
+        {
+            "name": {
+                "en_US": "Yellow Gems",
+                "es_MX": "Gemas amarillas",
+                "pt_BR": "Gemas Amarelas",
+                "de_DE": "Gelbe Edelsteine",
+                "en_GB": "Yellow Gems",
+                "es_ES": "Gemas amarillas",
+                "fr_FR": "Gemmes jaunes",
+                "it_IT": "Gemme Gialle",
+                "ru_RU": "Желтые самоцветы",
+                "ko_KR": "노란색 보석",
+                "zh_TW": "黃色寶石",
+                "zh_CN": "黄色宝石"
+            },
+            "recipes": [
+                {
+                    "key": {
+                        "href": "https://us.api.blizzard.com/data/wow/recipe/21397?namespace=static-12.0.5_66741-us"
+                    },
+                    "name": {
+                        "en_US": "Subtle Alicite",
+                        "es_MX": "Alicita sutil",
+                        "pt_BR": "Alicita Sutil",
+                        "de_DE": "Fragiler Alazit",
+                        "en_GB": "Subtle Alicite",
+                        "es_ES": "Alicita sutil",
+                        "fr_FR": "Alicite subtile",
+                        "it_IT": "Alicite Scaltra",
+                        "ru_RU": "Изящный алицит",
+                        "ko_KR": "미묘한 알리사이트",
+                        "zh_TW": "精巧的蛋白玻璃石",
+                        "zh_CN": "诡秘阿里锡黄晶"
+                    },
+                    "id": 21397
+                }
+            ]
+        },
+        {
+            "name": {
+                "en_US": "Purple Gems",
+                "es_MX": "Gemas moradas",
+                "pt_BR": "Gemas Roxas",
+                "de_DE": "Violette Edelsteine",
+                "en_GB": "Purple Gems",
+                "es_ES": "Gemas moradas",
+                "fr_FR": "Gemmes violettes",
+                "it_IT": "Gemme Viola",
+                "ru_RU": "Фиолетовые самоцветы",
+                "ko_KR": "보라색 보석",
+                "zh_TW": "紫色寶石",
+                "zh_CN": "紫色宝石"
+            },
+            "recipes": [
+                {
+                    "key": {
+                        "href": "https://us.api.blizzard.com/data/wow/recipe/21402?namespace=static-12.0.5_66741-us"
+                    },
+                    "name": {
+                        "en_US": "Sovereign Nightstone",
+                        "es_MX": "Piedra nocturna soberana",
+                        "pt_BR": "Noctilita Soberana",
+                        "de_DE": "Stattlicher Nachtstein",
+                        "en_GB": "Sovereign Nightstone",
+                        "es_ES": "Piedra nocturna soberana",
+                        "fr_FR": "Pierre de nuit souveraine",
+                        "it_IT": "Pietra Notturna Assoluta",
+                        "ru_RU": "Царственный камень ночи",
+                        "ko_KR": "최상급 야밤석",
+                        "zh_TW": "尊貴的夜石",
+                        "zh_CN": "统御夜之石"
+                    },
+                    "id": 21402
+                }
+            ]
+        },
+        {
+            "name": {
+                "en_US": "Orange Gems",
+                "es_MX": "Gemas naranjas",
+                "pt_BR": "Gemas Laranja",
+                "de_DE": "Orangefarbene Edelsteine",
+                "en_GB": "Orange Gems",
+                "es_ES": "Gemas naranjas",
+                "fr_FR": "Gemmes orange",
+                "it_IT": "Gemme Arancioni",
+                "ru_RU": "Оранжевые самоцветы",
+                "ko_KR": "주황색 보석",
+                "zh_TW": "橘色寶石",
+                "zh_CN": "橙色宝石"
+            },
+            "recipes": [
+                {
+                    "key": {
+                        "href": "https://us.api.blizzard.com/data/wow/recipe/21413?namespace=static-12.0.5_66741-us"
+                    },
+                    "name": {
+                        "en_US": "Polished Hessonite",
+                        "es_MX": "Grosularia pulida",
+                        "pt_BR": "Hessonita Polida",
+                        "de_DE": "Polierter Hessonit",
+                        "en_GB": "Polished Hessonite",
+                        "es_ES": "Grosularia pulida",
+                        "fr_FR": "Hessonite polie",
+                        "it_IT": "Essonite Lucida",
+                        "ru_RU": "Полированный гессонит",
+                        "ko_KR": "광택나는 헤소나이트",
+                        "zh_TW": "拋光的桂榴石",
+                        "zh_CN": "抛光桂榴石"
+                    },
+                    "id": 21413
+                }
+            ]
+        },
+        {
+            "name": {
+                "en_US": "Green Gems",
+                "es_MX": "Gemas verdes",
+                "pt_BR": "Gemas Verdes",
+                "de_DE": "Grüne Edelsteine",
+                "en_GB": "Green Gems",
+                "es_ES": "Gemas verdes",
+                "fr_FR": "Gemmes vertes",
+                "it_IT": "Gemme Verdi",
+                "ru_RU": "Зеленые самоцветы",
+                "ko_KR": "녹색 보석",
+                "zh_TW": "綠色寶石",
+                "zh_CN": "绿色宝石"
+            },
+            "recipes": [
+                {
+                    "key": {
+                        "href": "https://us.api.blizzard.com/data/wow/recipe/21426?namespace=static-12.0.5_66741-us"
+                    },
+                    "name": {
+                        "en_US": "Regal Jasper",
+                        "es_MX": "Jaspe regio",
+                        "pt_BR": "Jaspe Régio",
+                        "de_DE": "Majestätischer Jaspis",
+                        "en_GB": "Regal Jasper",
+                        "es_ES": "Jaspe regio",
+                        "fr_FR": "Jaspe régalien",
+                        "it_IT": "Diaspro Regale",
+                        "ru_RU": "Монаршая яшма",
+                        "ko_KR": "제왕의 벽옥",
+                        "zh_TW": "華貴的碧玉",
+                        "zh_CN": "华丽碧玉"
+                    },
+                    "id": 21426
+                }
+            ]
+        }
+    ]
+}

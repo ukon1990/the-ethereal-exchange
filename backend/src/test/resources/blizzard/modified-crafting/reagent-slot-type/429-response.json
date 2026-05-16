@@ -1,0 +1,44 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/429?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "id": 429,
+    "description": {
+        "en_US": "Eversong Diamond",
+        "es_MX": "Diamante de Canción Eterna",
+        "pt_BR": "Diamante do Canto Eterno",
+        "de_DE": "Immersangdiamant",
+        "en_GB": "Eversong Diamond",
+        "es_ES": "Diamante de Canción Eterna",
+        "fr_FR": "Diamant des Chants éternels",
+        "it_IT": "Diamante di Cantoeterno",
+        "ru_RU": "Алмаз Вечной Песни",
+        "ko_KR": "영원노래 다이아몬드",
+        "zh_TW": "永歌鑽石",
+        "zh_CN": "永歌钻石"
+    },
+    "compatible_categories": [
+        {
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/789?namespace=static-12.0.5_66741-us"
+            },
+            "name": {
+                "en_US": "Eversong Diamond",
+                "es_MX": "Diamante de Canción Eterna",
+                "pt_BR": "Diamante do Canto Eterno",
+                "de_DE": "Immersangdiamant",
+                "en_GB": "Eversong Diamond",
+                "es_ES": "Diamante de Canción Eterna",
+                "fr_FR": "Diamant des Chants éternels",
+                "it_IT": "Diamante di Cantoeterno",
+                "ru_RU": "Алмаз Вечной Песни",
+                "ko_KR": "영원노래 다이아몬드",
+                "zh_TW": "永歌鑽石",
+                "zh_CN": "永歌钻石"
+            },
+            "id": 789
+        }
+    ]
+}

@@ -1758,5 +1758,445 @@
                 }
             }
         ]
+    },
+    {
+        "professionId": 755,
+        "professionName": {
+            "en_US": "Jewelcrafting",
+            "es_MX": "Joyería",
+            "pt_BR": "Joalheria",
+            "de_DE": "Juwelierskunst",
+            "en_GB": "Jewelcrafting",
+            "es_ES": "Joyería",
+            "fr_FR": "Joaillerie",
+            "it_IT": "Oreficeria",
+            "ru_RU": "Ювелирное дело",
+            "ko_KR": "보석세공",
+            "zh_TW": "珠寶設計",
+            "zh_CN": "珠宝加工"
+        },
+        "skillTierId": 2521,
+        "skillTierName": {
+            "en_US": "Cataclysm Jewelcrafting",
+            "es_MX": "Joyería de Cataclysm",
+            "pt_BR": "Joalheria de Cataclysm",
+            "de_DE": "Juwelierskunst des Kataklysmus",
+            "en_GB": "Cataclysm Jewelcrafting",
+            "es_ES": "Joyería de Cataclysm",
+            "fr_FR": "Joaillerie de Cataclysm",
+            "it_IT": "Oreficeria di Cataclysm",
+            "ru_RU": "Ювелирное дело времен Катаклизма",
+            "ko_KR": "대격변 보석세공",
+            "zh_TW": "大災變珠寶設計",
+            "zh_CN": "大地的裂变珠宝加工"
+        },
+        "recipes": [
+            {
+                "id": 21388,
+                "name": {
+                    "en_US": "Bold Carnelian",
+                    "es_MX": "Cornalina llamativa",
+                    "pt_BR": "Cornalina Vistosa",
+                    "de_DE": "Klobiger Karneol",
+                    "en_GB": "Bold Carnelian",
+                    "es_ES": "Cornalina llamativa",
+                    "fr_FR": "Cornaline soutenue",
+                    "it_IT": "Corniola Ardita",
+                    "ru_RU": "Рельефный сердолик",
+                    "ko_KR": "굵은 홍옥수",
+                    "zh_TW": "清晰的紅玉髓",
+                    "zh_CN": "朴素红玉髓"
+                },
+                "category": {
+                    "en_US": "Red Gems",
+                    "es_MX": "Gemas rojas",
+                    "pt_BR": "Gemas Vermelhas",
+                    "de_DE": "Rote Edelsteine",
+                    "en_GB": "Red Gems",
+                    "es_ES": "Gemas rojas",
+                    "fr_FR": "Gemmes rouges",
+                    "it_IT": "Gemme Rosse",
+                    "ru_RU": "Красные самоцветы",
+                    "ko_KR": "붉은색 보석",
+                    "zh_TW": "紅色寶石",
+                    "zh_CN": "红色宝石"
+                }
+            },
+            {
+                "id": 21393,
+                "name": {
+                    "en_US": "Solid Zephyrite",
+                    "es_MX": "Cefirita sólida",
+                    "pt_BR": "Zefirita Maciça",
+                    "de_DE": "Gediegener Zephyrit",
+                    "en_GB": "Solid Zephyrite",
+                    "es_ES": "Cefirita sólida",
+                    "fr_FR": "Zéphyrite solide",
+                    "it_IT": "Zefirite Solida",
+                    "ru_RU": "Цельный зефирит",
+                    "ko_KR": "단단한 서풍석",
+                    "zh_TW": "堅固的西風石",
+                    "zh_CN": "致密泽菲蓝晶石"
+                },
+                "category": {
+                    "en_US": "Blue Gems",
+                    "es_MX": "Gemas azules",
+                    "pt_BR": "Gemas Azuis",
+                    "de_DE": "Blaue Edelsteine",
+                    "en_GB": "Blue Gems",
+                    "es_ES": "Gemas azules",
+                    "fr_FR": "Gemmes bleues",
+                    "it_IT": "Gemme Blu",
+                    "ru_RU": "Синие самоцветы",
+                    "ko_KR": "푸른색 보석",
+                    "zh_TW": "藍色寶石",
+                    "zh_CN": "蓝色宝石"
+                }
+            },
+            {
+                "id": 21397,
+                "name": {
+                    "en_US": "Subtle Alicite",
+                    "es_MX": "Alicita sutil",
+                    "pt_BR": "Alicita Sutil",
+                    "de_DE": "Fragiler Alazit",
+                    "en_GB": "Subtle Alicite",
+                    "es_ES": "Alicita sutil",
+                    "fr_FR": "Alicite subtile",
+                    "it_IT": "Alicite Scaltra",
+                    "ru_RU": "Изящный алицит",
+                    "ko_KR": "미묘한 알리사이트",
+                    "zh_TW": "精巧的蛋白玻璃石",
+                    "zh_CN": "诡秘阿里锡黄晶"
+                },
+                "category": {
+                    "en_US": "Yellow Gems",
+                    "es_MX": "Gemas amarillas",
+                    "pt_BR": "Gemas Amarelas",
+                    "de_DE": "Gelbe Edelsteine",
+                    "en_GB": "Yellow Gems",
+                    "es_ES": "Gemas amarillas",
+                    "fr_FR": "Gemmes jaunes",
+                    "it_IT": "Gemme Gialle",
+                    "ru_RU": "Желтые самоцветы",
+                    "ko_KR": "노란색 보석",
+                    "zh_TW": "黃色寶石",
+                    "zh_CN": "黄色宝石"
+                }
+            },
+            {
+                "id": 21402,
+                "name": {
+                    "en_US": "Sovereign Nightstone",
+                    "es_MX": "Piedra nocturna soberana",
+                    "pt_BR": "Noctilita Soberana",
+                    "de_DE": "Stattlicher Nachtstein",
+                    "en_GB": "Sovereign Nightstone",
+                    "es_ES": "Piedra nocturna soberana",
+                    "fr_FR": "Pierre de nuit souveraine",
+                    "it_IT": "Pietra Notturna Assoluta",
+                    "ru_RU": "Царственный камень ночи",
+                    "ko_KR": "최상급 야밤석",
+                    "zh_TW": "尊貴的夜石",
+                    "zh_CN": "统御夜之石"
+                },
+                "category": {
+                    "en_US": "Purple Gems",
+                    "es_MX": "Gemas moradas",
+                    "pt_BR": "Gemas Roxas",
+                    "de_DE": "Violette Edelsteine",
+                    "en_GB": "Purple Gems",
+                    "es_ES": "Gemas moradas",
+                    "fr_FR": "Gemmes violettes",
+                    "it_IT": "Gemme Viola",
+                    "ru_RU": "Фиолетовые самоцветы",
+                    "ko_KR": "보라색 보석",
+                    "zh_TW": "紫色寶石",
+                    "zh_CN": "紫色宝石"
+                }
+            },
+            {
+                "id": 21413,
+                "name": {
+                    "en_US": "Polished Hessonite",
+                    "es_MX": "Grosularia pulida",
+                    "pt_BR": "Hessonita Polida",
+                    "de_DE": "Polierter Hessonit",
+                    "en_GB": "Polished Hessonite",
+                    "es_ES": "Grosularia pulida",
+                    "fr_FR": "Hessonite polie",
+                    "it_IT": "Essonite Lucida",
+                    "ru_RU": "Полированный гессонит",
+                    "ko_KR": "광택나는 헤소나이트",
+                    "zh_TW": "拋光的桂榴石",
+                    "zh_CN": "抛光桂榴石"
+                },
+                "category": {
+                    "en_US": "Orange Gems",
+                    "es_MX": "Gemas naranjas",
+                    "pt_BR": "Gemas Laranja",
+                    "de_DE": "Orangefarbene Edelsteine",
+                    "en_GB": "Orange Gems",
+                    "es_ES": "Gemas naranjas",
+                    "fr_FR": "Gemmes orange",
+                    "it_IT": "Gemme Arancioni",
+                    "ru_RU": "Оранжевые самоцветы",
+                    "ko_KR": "주황색 보석",
+                    "zh_TW": "橘色寶石",
+                    "zh_CN": "橙色宝石"
+                }
+            },
+            {
+                "id": 21426,
+                "name": {
+                    "en_US": "Regal Jasper",
+                    "es_MX": "Jaspe regio",
+                    "pt_BR": "Jaspe Régio",
+                    "de_DE": "Majestätischer Jaspis",
+                    "en_GB": "Regal Jasper",
+                    "es_ES": "Jaspe regio",
+                    "fr_FR": "Jaspe régalien",
+                    "it_IT": "Diaspro Regale",
+                    "ru_RU": "Монаршая яшма",
+                    "ko_KR": "제왕의 벽옥",
+                    "zh_TW": "華貴的碧玉",
+                    "zh_CN": "华丽碧玉"
+                },
+                "category": {
+                    "en_US": "Green Gems",
+                    "es_MX": "Gemas verdes",
+                    "pt_BR": "Gemas Verdes",
+                    "de_DE": "Grüne Edelsteine",
+                    "en_GB": "Green Gems",
+                    "es_ES": "Gemas verdes",
+                    "fr_FR": "Gemmes vertes",
+                    "it_IT": "Gemme Verdi",
+                    "ru_RU": "Зеленые самоцветы",
+                    "ko_KR": "녹색 보석",
+                    "zh_TW": "綠色寶石",
+                    "zh_CN": "绿色宝石"
+                }
+            }
+        ]
+    },
+    {
+        "professionId": 755,
+        "professionName": {
+            "en_US": "Jewelcrafting",
+            "es_MX": "Joyería",
+            "pt_BR": "Joalheria",
+            "de_DE": "Juwelierskunst",
+            "en_GB": "Jewelcrafting",
+            "es_ES": "Joyería",
+            "fr_FR": "Joaillerie",
+            "it_IT": "Oreficeria",
+            "ru_RU": "Ювелирное дело",
+            "ko_KR": "보석세공",
+            "zh_TW": "珠寶設計",
+            "zh_CN": "珠宝加工"
+        },
+        "skillTierId": 2914,
+        "skillTierName": {
+            "en_US": "Midnight Jewelcrafting",
+            "es_MX": "Joyería de Midnight",
+            "pt_BR": "Joalheria de Midnight",
+            "de_DE": "Juwelierskunst von Midnight",
+            "en_GB": "Midnight Jewelcrafting",
+            "es_ES": "Joyería de Midnight",
+            "fr_FR": "Joaillerie de Midnight",
+            "it_IT": "Oreficeria di Midnight",
+            "ru_RU": "Ювелирное дело Midnight",
+            "ko_KR": "한밤 보석세공",
+            "zh_TW": "至暗之夜珠寶設計",
+            "zh_CN": "至暗之夜珠宝加工"
+        },
+        "recipes": [
+            {
+                "id": 51525,
+                "name": {
+                    "en_US": "Recraft Equipment",
+                    "es_MX": "Refabricar equipamiento",
+                    "pt_BR": "Recriar Equipamento",
+                    "de_DE": "Ausrüstung umfertigen",
+                    "en_GB": "Recraft Equipment",
+                    "es_ES": "Refabricar equipo",
+                    "fr_FR": "Refaçonner de l’équipement",
+                    "it_IT": "Ricreazione Equipaggiamento",
+                    "ru_RU": "Переделка снаряжения",
+                    "ko_KR": "장비 재제작",
+                    "zh_TW": "重新製作裝備",
+                    "zh_CN": "再造装备"
+                },
+                "category": {
+                    "en_US": "Recrafting",
+                    "es_MX": "Refabricación",
+                    "pt_BR": "Recriação",
+                    "de_DE": "Umfertigen",
+                    "en_GB": "Recrafting",
+                    "es_ES": "Refabricación",
+                    "fr_FR": "Refaçonner",
+                    "it_IT": "Nuova Creazione",
+                    "ru_RU": "Переделка",
+                    "ko_KR": "재제작",
+                    "zh_TW": "重新製作",
+                    "zh_CN": "再造"
+                }
+            },
+            {
+                "id": 52572,
+                "name": {
+                    "en_US": "Quick Peridot",
+                    "es_MX": "Peridoto presto",
+                    "pt_BR": "Peridoto Veloz",
+                    "de_DE": "Flinker Peridot",
+                    "en_GB": "Quick Peridot",
+                    "es_ES": "Peridoto rápido",
+                    "fr_FR": "Olivine rapide",
+                    "it_IT": "Olivina Rapida",
+                    "ru_RU": "Хризолит скорости",
+                    "ko_KR": "쾌속의 감람석",
+                    "zh_TW": "迅速的橄欖石",
+                    "zh_CN": "迅捷榄石"
+                },
+                "category": {
+                    "en_US": "Powerful Peridots",
+                    "es_MX": "Peridotos poderosos",
+                    "pt_BR": "Peridotos Poderosos",
+                    "de_DE": "Prächtiger Peridot",
+                    "en_GB": "Powerful Peridots",
+                    "es_ES": "Peridotos poderosos",
+                    "fr_FR": "Olivines puissantes",
+                    "it_IT": "Olivine Potenti",
+                    "ru_RU": "Хитроумные хризолиты",
+                    "ko_KR": "강렬한 감람석",
+                    "zh_TW": "強力橄欖石",
+                    "zh_CN": "震撼榄石"
+                }
+            },
+            {
+                "id": 52580,
+                "name": {
+                    "en_US": "Quick Lapis",
+                    "es_MX": "Lapis presto",
+                    "pt_BR": "Lápis Veloz",
+                    "de_DE": "Flinker Lapis",
+                    "en_GB": "Quick Lapis",
+                    "es_ES": "Lapislázuli rápido",
+                    "fr_FR": "Lapis rapide",
+                    "it_IT": "Lapislazzuli Rapido",
+                    "ru_RU": "Лазурит скорости",
+                    "ko_KR": "쾌속의 청금석",
+                    "zh_TW": "迅速的青金石",
+                    "zh_CN": "迅捷青金石"
+                },
+                "category": {
+                    "en_US": "Lustrous Lapis",
+                    "es_MX": "Lapislázuli lustroso",
+                    "pt_BR": "Lápis Lustroso",
+                    "de_DE": "Luxuriöser Lapis",
+                    "en_GB": "Lustrous Lapis",
+                    "es_ES": "Lapislázulis lustrosos",
+                    "fr_FR": "Lapis lustrés",
+                    "it_IT": "Lapislazzuli Lucido",
+                    "ru_RU": "Лучезарный лазурит",
+                    "ko_KR": "반짝이는 청금석",
+                    "zh_TW": "閃耀青金石",
+                    "zh_CN": "通透青金石"
+                }
+            },
+            {
+                "id": 52588,
+                "name": {
+                    "en_US": "Quick Amethyst",
+                    "es_MX": "Amatista presta",
+                    "pt_BR": "Ametista Veloz",
+                    "de_DE": "Flinker Amethyst",
+                    "en_GB": "Quick Amethyst",
+                    "es_ES": "Amatista rápida",
+                    "fr_FR": "Améthyste rapide",
+                    "it_IT": "Ametista Rapida",
+                    "ru_RU": "Аметист скорости",
+                    "ko_KR": "쾌속의 자수정",
+                    "zh_TW": "迅速的紫水晶",
+                    "zh_CN": "迅捷紫晶"
+                },
+                "category": {
+                    "en_US": "Austere Amethysts",
+                    "es_MX": "Amatistas austeras",
+                    "pt_BR": "Ametistas Austeras",
+                    "de_DE": "Asketischer Amethyst",
+                    "en_GB": "Austere Amethysts",
+                    "es_ES": "Amatistas austeras",
+                    "fr_FR": "Améthystes austères",
+                    "it_IT": "Ametiste Austere",
+                    "ru_RU": "Августейшие аметисты",
+                    "ko_KR": "근엄한 자수정",
+                    "zh_TW": "嚴峻紫水晶",
+                    "zh_CN": "质朴紫晶"
+                }
+            },
+            {
+                "id": 52596,
+                "name": {
+                    "en_US": "Quick Garnet",
+                    "es_MX": "Granate presto",
+                    "pt_BR": "Granada Veloz",
+                    "de_DE": "Flinker Granat",
+                    "en_GB": "Quick Garnet",
+                    "es_ES": "Granate rápido",
+                    "fr_FR": "Grenat rapide",
+                    "it_IT": "Granato Rapido",
+                    "ru_RU": "Гранат скорости",
+                    "ko_KR": "쾌속의 석류석",
+                    "zh_TW": "迅速的石榴石",
+                    "zh_CN": "迅捷榴石"
+                },
+                "category": {
+                    "en_US": "Glorious Garnets",
+                    "es_MX": "Granates gloriosos",
+                    "pt_BR": "Granadas Gloriosas",
+                    "de_DE": "Glorreicher Granat",
+                    "en_GB": "Glorious Garnets",
+                    "es_ES": "Granates gloriosos",
+                    "fr_FR": "Grenats glorieux",
+                    "it_IT": "Granati Gloriosi",
+                    "ru_RU": "Грандиозные гранаты",
+                    "ko_KR": "영광스러운 석류석",
+                    "zh_TW": "榮耀石榴石",
+                    "zh_CN": "绚丽榴石"
+                }
+            },
+            {
+                "id": 52604,
+                "name": {
+                    "en_US": "Powerful Eversong Diamond",
+                    "es_MX": "Diamante de Canción Eterna poderoso",
+                    "pt_BR": "Diamante do Canto Eterno Poderoso",
+                    "de_DE": "Mächtiger Immersangdiamant",
+                    "en_GB": "Powerful Eversong Diamond",
+                    "es_ES": "Diamante de Canción Eterna poderoso",
+                    "fr_FR": "Diamant des Chants éternels de puissance",
+                    "it_IT": "Diamante di Cantoeterno Potente",
+                    "ru_RU": "Могучий алмаз Вечной Песни",
+                    "ko_KR": "힘의 영원노래 다이아몬드",
+                    "zh_TW": "特強的永歌鑽石",
+                    "zh_CN": "强能之永歌钻石"
+                },
+                "category": {
+                    "en_US": "Dazzling Diamonds",
+                    "es_MX": "Diamantes deslumbrantes",
+                    "pt_BR": "Diamantes Ofuscantes",
+                    "de_DE": "Schillernder Diamant",
+                    "en_GB": "Dazzling Diamonds",
+                    "es_ES": "Diamantes deslumbrantes",
+                    "fr_FR": "Diamants éblouissants",
+                    "it_IT": "Diamanti Scintillanti",
+                    "ru_RU": "Ослепительные алмазы",
+                    "ko_KR": "휘황찬란한 다이아몬드",
+                    "zh_TW": "璀璨鑽石",
+                    "zh_CN": "炫目钻石"
+                }
+            }
+        ]
     }
 ]

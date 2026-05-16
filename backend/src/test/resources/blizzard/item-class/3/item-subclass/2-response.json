@@ -1,0 +1,24 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/item-class/3/item-subclass/2?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "class_id": 3,
+    "subclass_id": 2,
+    "display_name": {
+        "en_US": "Strength",
+        "es_MX": "Fuerza",
+        "pt_BR": "Força",
+        "de_DE": "Stärke",
+        "en_GB": "Strength",
+        "es_ES": "Fuerza",
+        "fr_FR": "Force",
+        "it_IT": "Forza",
+        "ru_RU": "Сила",
+        "ko_KR": "힘",
+        "zh_TW": "力量",
+        "zh_CN": "力量"
+    },
+    "hide_subclass_in_tooltips": true
+}

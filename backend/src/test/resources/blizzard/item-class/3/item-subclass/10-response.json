@@ -1,0 +1,23 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/item-class/3/item-subclass/10?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "class_id": 3,
+    "subclass_id": 10,
+    "display_name": {
+        "en_US": "Multiple Stats",
+        "es_MX": "Estadísticas múltiples",
+        "pt_BR": "Vários atributos",
+        "de_DE": "Mehrere Werte",
+        "en_GB": "Multiple Stats",
+        "es_ES": "Varias estadísticas",
+        "fr_FR": "Caractéristiques multiples",
+        "it_IT": "Statistiche Multiple",
+        "ru_RU": "Различные характеристики",
+        "ko_KR": "다수의 능력치",
+        "zh_TW": "多項屬性",
+        "zh_CN": "复合属性"
+    }
+}

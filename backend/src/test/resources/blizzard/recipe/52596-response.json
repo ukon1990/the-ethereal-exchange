@@ -1,0 +1,99 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/recipe/52596?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "id": 52596,
+    "name": {
+        "en_US": "Quick Garnet",
+        "es_MX": "Granate presto",
+        "pt_BR": "Granada Veloz",
+        "de_DE": "Flinker Granat",
+        "en_GB": "Quick Garnet",
+        "es_ES": "Granate rápido",
+        "fr_FR": "Grenat rapide",
+        "it_IT": "Granato Rapido",
+        "ru_RU": "Гранат скорости",
+        "ko_KR": "쾌속의 석류석",
+        "zh_TW": "迅速的石榴石",
+        "zh_CN": "迅捷榴石"
+    },
+    "media": {
+        "key": {
+            "href": "https://us.api.blizzard.com/data/wow/media/recipe/52596?namespace=static-12.0.5_66741-us"
+        },
+        "id": 52596
+    },
+    "modified_crafting_slots": [
+        {
+            "slot_type": {
+                "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/409?namespace=static-12.0.5_66741-us"
+                },
+                "name": {
+                    "en_US": "Sanguine Garnet",
+                    "es_MX": "Granate sanguíneo",
+                    "pt_BR": "Granada Sanguínea",
+                    "de_DE": "Blutgranat",
+                    "en_GB": "Sanguine Garnet",
+                    "es_ES": "Granate sanguino",
+                    "fr_FR": "Grenat hématique",
+                    "it_IT": "Granato Rosso Sangue",
+                    "ru_RU": "Кровавый гранат",
+                    "ko_KR": "선혈 석류석",
+                    "zh_TW": "血紅石榴石",
+                    "zh_CN": "血色榴石"
+                },
+                "id": 409
+            },
+            "display_order": 0
+        },
+        {
+            "slot_type": {
+                "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/414?namespace=static-12.0.5_66741-us"
+                },
+                "name": {
+                    "en_US": "Glimmering Gemdust",
+                    "es_MX": "Polvo de gemas reluciente",
+                    "pt_BR": "Pó de Gema Luzente",
+                    "de_DE": "Glitzernder Edelsteinstaub",
+                    "en_GB": "Glimmering Gemdust",
+                    "es_ES": "Polvo de gema de luz trémula",
+                    "fr_FR": "Poussière de gemme rougeoyante",
+                    "it_IT": "Polvere di Gemma Luccicante",
+                    "ru_RU": "Мерцающая самоцветная пыль",
+                    "ko_KR": "아른거리는 보석 가루",
+                    "zh_TW": "微光寶石粉",
+                    "zh_CN": "微光宝石尘"
+                },
+                "id": 414
+            },
+            "display_order": 1
+        },
+        {
+            "slot_type": {
+                "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/396?namespace=static-12.0.5_66741-us"
+                },
+                "name": {
+                    "en_US": "Artisan's Authenticity",
+                    "es_MX": "Autenticidad del artesano",
+                    "pt_BR": "Autenticidade do Artífice",
+                    "de_DE": "Authentizität des Kunsthandwerks",
+                    "en_GB": "Artisan's Authenticity",
+                    "es_ES": "Autenticidad de artesano",
+                    "fr_FR": "Authenticité artisanale",
+                    "it_IT": "Autenticità dell'Artigiano",
+                    "ru_RU": "Почерк ремесленника",
+                    "ko_KR": "장인의 진정성",
+                    "zh_TW": "工匠之保證",
+                    "zh_CN": "匠人之真"
+                },
+                "id": 396
+            },
+            "display_order": 2
+        }
+    ]
+}

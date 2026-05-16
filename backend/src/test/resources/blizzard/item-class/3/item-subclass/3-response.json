@@ -1,0 +1,24 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://us.api.blizzard.com/data/wow/item-class/3/item-subclass/3?namespace=static-12.0.5_66741-us"
+        }
+    },
+    "class_id": 3,
+    "subclass_id": 3,
+    "display_name": {
+        "en_US": "Stamina",
+        "es_MX": "Aguante",
+        "pt_BR": "Vigor",
+        "de_DE": "Ausdauer",
+        "en_GB": "Stamina",
+        "es_ES": "Aguante",
+        "fr_FR": "Endurance",
+        "it_IT": "Tempra",
+        "ru_RU": "Выносливость",
+        "ko_KR": "체력",
+        "zh_TW": "耐力",
+        "zh_CN": "耐力"
+    },
+    "hide_subclass_in_tooltips": true
+}
