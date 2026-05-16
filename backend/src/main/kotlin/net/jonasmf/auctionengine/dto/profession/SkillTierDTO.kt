@@ -2,6 +2,8 @@ package net.jonasmf.auctionengine.dto.profession
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonSetter
+import com.fasterxml.jackson.annotation.Nulls
 import net.jonasmf.auctionengine.dto.Links
 import net.jonasmf.auctionengine.dto.LocaleDTO
 import net.jonasmf.auctionengine.dto.ReferenceDTO
@@ -22,5 +24,6 @@ data class SkillTierDTO(
     val minimumSkillLevel: Int,
     @JsonProperty("maximum_skill_level")
     val maximumSkillLevel: Int,
+    @JsonSetter(nulls = Nulls.AS_EMPTY)
     val categories: List<CategoryDTO> = emptyList(),
 )

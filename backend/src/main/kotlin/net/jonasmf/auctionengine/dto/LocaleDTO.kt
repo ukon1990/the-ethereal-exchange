@@ -35,6 +35,10 @@ data class LocaleDTO(
         )
 }
 
+fun LocaleDTO?.orEmpty(): LocaleDTO = this ?: LocaleDTO()
+
+fun <T> List<T>?.orEmpty(): List<T> = this ?: emptyList()
+
 fun localeToProperty(
     locale: Locale,
     localeDTO: LocaleDTO,

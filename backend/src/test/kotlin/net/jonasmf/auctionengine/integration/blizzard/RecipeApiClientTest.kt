@@ -35,6 +35,20 @@ class RecipeApiClientTest {
         assertEquals(0, recipe.modifiedCraftingSlots.first().displayOrder)
     }
 
+    @Test
+    fun `getById returns legacy recipe without modified crafting slots`() {
+        val webClient = buildWebClient { handleRequest(it) }
+        val client = RecipeApiClient(createSupport(webClient))
+
+        val recipe = client.getById(21487, Region.Europe)
+
+        assertEquals(21487, recipe.id)
+        assertEquals("Brilliant Chimera's Eye", recipe.name.en_US)
+        assertEquals(52257, recipe.craftedItemId)
+        assertEquals(1, recipe.reagents.size)
+        assertEquals(0, recipe.modifiedCraftingSlots.size)
+    }
+
     private fun recipeById(id: Int): String = loadFixture(this, "/blizzard/recipe/$id-response.json")
 
     private fun handleRequest(request: ClientRequest): Mono<ClientResponse> {

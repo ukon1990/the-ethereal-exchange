@@ -2,6 +2,8 @@ package net.jonasmf.auctionengine.dto.recipe
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonSetter
+import com.fasterxml.jackson.annotation.Nulls
 import net.jonasmf.auctionengine.dto.Links
 import net.jonasmf.auctionengine.dto.LocaleDTO
 import net.jonasmf.auctionengine.dto.MediaDTO
@@ -32,14 +34,18 @@ data class RecipeDTO(
     val links: Links,
     val id: Int,
     val name: LocaleDTO,
+    @JsonSetter(nulls = Nulls.AS_EMPTY)
     val description: LocaleDTO? = null,
     val media: MediaDTO,
     @JsonProperty("crafted_item")
     val craftedItem: ReferenceDTO? = null,
+    @JsonSetter(nulls = Nulls.AS_EMPTY)
     val reagents: List<RecipeReagentDTO> = emptyList(),
     @JsonProperty("crafted_quantity")
     val craftedQuantity: CraftedQuantityDTO? = null,
+    @JsonSetter(nulls = Nulls.AS_EMPTY)
     val rank: Int? = null,
     @JsonProperty("modified_crafting_slots")
-    val modifiedCraftingSlots: List<RecipeModifiedCraftingSlotDTO> = emptyList(),
+    @JsonSetter(nulls = Nulls.AS_EMPTY)
+    val modifiedCraftingSlots: List<RecipeModifiedCraftingSlotDTO>? = null,
 )

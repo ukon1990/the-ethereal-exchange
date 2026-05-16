@@ -9,6 +9,7 @@ import net.jonasmf.auctionengine.domain.profession.ModifiedCraftingSlot
 import net.jonasmf.auctionengine.domain.profession.Recipe
 import net.jonasmf.auctionengine.domain.profession.RecipeReagent
 import net.jonasmf.auctionengine.dto.ReferenceDTO
+import net.jonasmf.auctionengine.dto.orEmpty
 import net.jonasmf.auctionengine.dto.recipe.RecipeDTO
 import net.jonasmf.auctionengine.dto.recipe.RecipeModifiedCraftingSlotDTO
 import net.jonasmf.auctionengine.dto.recipe.RecipeReagentDTO
@@ -17,20 +18,20 @@ import java.time.Instant
 fun ReferenceDTO.toRecipeStub() =
     Recipe(
         id = id,
-        name = name,
+        name = resolvedName(),
     )
 
 fun RecipeReagentDTO.toDomain() =
     RecipeReagent(
         itemId = reagent.id,
-        name = reagent.name,
+        name = reagent.resolvedName(),
         quantity = quantity,
     )
 
 fun RecipeModifiedCraftingSlotDTO.toDomain() =
     ModifiedCraftingSlot(
         id = slotType.id,
-        description = slotType.name,
+        description = slotType.resolvedName(),
         compatibleCategories = emptyList(),
         displayOrder = displayOrder,
     )
@@ -47,7 +48,7 @@ fun RecipeDTO.toDomain(lastModified: Instant? = null) =
         craftedItemId = craftedItem?.id,
         craftedQuantity = craftedQuantity?.value,
         reagents = reagents.map { it.toDomain() },
-        modifiedCraftingSlots = modifiedCraftingSlots.map { it.toDomain() },
+        modifiedCraftingSlots = modifiedCraftingSlots.orEmpty().map { it.toDomain() },
     )
 
 fun RecipeReagent.toDBO(

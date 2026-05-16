@@ -6,6 +6,8 @@ package net.jonasmf.auctionengine.dto
  */
 data class ReferenceDTO(
     val id: Int,
-    val name: LocaleDTO = LocaleDTO(),
+    val name: LocaleDTO? = null,
     val key: Href,
-)
+) {
+    fun resolvedName(): LocaleDTO = name ?: LocaleDTO()
+}

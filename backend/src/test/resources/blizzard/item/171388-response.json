@@ -426,38 +426,38 @@
             },
             {
                 "type": {
-                    "type": "MASTERY_RATING",
+                    "type": "VERSATILITY",
                     "name": {
-                        "en_US": "Mastery",
-                        "es_MX": "maestría",
-                        "pt_BR": "Maestria",
-                        "de_DE": "Meisterschaft",
-                        "en_GB": "Mastery",
-                        "es_ES": "maestría",
-                        "fr_FR": "Maîtrise",
-                        "it_IT": "Indice di maestria",
-                        "ru_RU": "к искусности",
-                        "ko_KR": "특화",
-                        "zh_TW": "精通",
-                        "zh_CN": "精通"
+                        "en_US": "Versatility",
+                        "es_MX": "versatilidad",
+                        "pt_BR": "Versatilidade",
+                        "de_DE": "Vielseitigkeit",
+                        "en_GB": "Versatility",
+                        "es_ES": "versatilidad",
+                        "fr_FR": "Polyvalence",
+                        "it_IT": "Indice di versatilità",
+                        "ru_RU": "к универсальности",
+                        "ko_KR": "유연성",
+                        "zh_TW": "臨機應變",
+                        "zh_CN": "全能"
                     }
                 },
                 "value": 3,
                 "is_equip_bonus": true,
                 "display": {
                     "display_string": {
-                        "en_US": "+3 Mastery",
-                        "es_MX": "+3 maestría",
-                        "pt_BR": "+3 Maestria",
-                        "de_DE": "+3 Meisterschaft",
-                        "en_GB": "+3 Mastery",
-                        "es_ES": "+3 maestría",
-                        "fr_FR": "+3 Maîtrise",
-                        "it_IT": "+3 Indice di maestria",
-                        "ru_RU": "+3 к искусности",
-                        "ko_KR": "특화 +3",
-                        "zh_TW": "+3精通",
-                        "zh_CN": "+3 精通"
+                        "en_US": "+3 Versatility",
+                        "es_MX": "+3 versatilidad",
+                        "pt_BR": "+3 Versatilidade",
+                        "de_DE": "+3 Vielseitigkeit",
+                        "en_GB": "+3 Versatility",
+                        "es_ES": "+3 versatilidad",
+                        "fr_FR": "+3 Polyvalence",
+                        "it_IT": "+3 Indice di versatilità",
+                        "ru_RU": "+3 к универсальности",
+                        "ko_KR": "유연성 +3",
+                        "zh_TW": "+3臨機應變",
+                        "zh_CN": "+3 全能"
                     },
                     "color": {
                         "r": 0,
@@ -584,6 +584,24 @@
         },
         "modified_crafting_stat": [
             {
+                "id": 40,
+                "type": "VERSATILITY",
+                "name": {
+                    "en_US": "Versatility",
+                    "es_MX": "versatilidad",
+                    "pt_BR": "Versatilidade",
+                    "de_DE": "Vielseitigkeit",
+                    "en_GB": "Versatility",
+                    "es_ES": "versatilidad",
+                    "fr_FR": "Polyvalence",
+                    "it_IT": "Indice di versatilità",
+                    "ru_RU": "к универсальности",
+                    "ko_KR": "유연성",
+                    "zh_TW": "臨機應變",
+                    "zh_CN": "全能"
+                }
+            },
+            {
                 "id": 36,
                 "type": "HASTE_RATING",
                 "name": {
@@ -599,24 +617,6 @@
                     "ko_KR": "가속",
                     "zh_TW": "加速",
                     "zh_CN": "急速"
-                }
-            },
-            {
-                "id": 49,
-                "type": "MASTERY_RATING",
-                "name": {
-                    "en_US": "Mastery",
-                    "es_MX": "maestría",
-                    "pt_BR": "Maestria",
-                    "de_DE": "Meisterschaft",
-                    "en_GB": "Mastery",
-                    "es_ES": "maestría",
-                    "fr_FR": "Maîtrise",
-                    "it_IT": "Indice di maestria",
-                    "ru_RU": "к искусности",
-                    "ko_KR": "특화",
-                    "zh_TW": "精通",
-                    "zh_CN": "精通"
                 }
             }
         ]

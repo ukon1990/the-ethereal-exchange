@@ -40,7 +40,7 @@ class ProfessionRecipeSchedule(
     )
     fun syncProfessionRecipesAfterStartup() {
         if (!shouldRunInCurrentDeploymentRegion("startup")) return
-        if (!professionRecipeSyncService.shouldInitiallySync()) return
+        // if (!professionRecipeSyncService.shouldInitiallySync()) return
         runSync("startup")
     }
 

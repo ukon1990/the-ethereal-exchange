@@ -408,38 +408,38 @@
             },
             {
                 "type": {
-                    "type": "VERSATILITY",
+                    "type": "CRIT_RATING",
                     "name": {
-                        "en_US": "Versatility",
-                        "es_MX": "versatilidad",
-                        "pt_BR": "Versatilidade",
-                        "de_DE": "Vielseitigkeit",
-                        "en_GB": "Versatility",
-                        "es_ES": "versatilidad",
-                        "fr_FR": "Polyvalence",
-                        "it_IT": "Indice di versatilità",
-                        "ru_RU": "к универсальности",
-                        "ko_KR": "유연성",
-                        "zh_TW": "臨機應變",
-                        "zh_CN": "全能"
+                        "en_US": "Critical Strike",
+                        "es_MX": "golpe crítico",
+                        "pt_BR": "Acerto Crítico",
+                        "de_DE": "Kritischer Trefferwert",
+                        "en_GB": "Critical Strike",
+                        "es_ES": "golpe crítico",
+                        "fr_FR": "Score de crit.",
+                        "it_IT": "Indice di critico",
+                        "ru_RU": "к критическому удару",
+                        "ko_KR": "치명타 및 극대화",
+                        "zh_TW": "致命一擊",
+                        "zh_CN": "爆击"
                     }
                 },
                 "value": 4,
                 "is_equip_bonus": true,
                 "display": {
                     "display_string": {
-                        "en_US": "+4 Versatility",
-                        "es_MX": "+4 versatilidad",
-                        "pt_BR": "+4 Versatilidade",
-                        "de_DE": "+4 Vielseitigkeit",
-                        "en_GB": "+4 Versatility",
-                        "es_ES": "+4 versatilidad",
-                        "fr_FR": "+4 Polyvalence",
-                        "it_IT": "+4 Indice di versatilità",
-                        "ru_RU": "+4 к универсальности",
-                        "ko_KR": "유연성 +4",
-                        "zh_TW": "+4臨機應變",
-                        "zh_CN": "+4 全能"
+                        "en_US": "+4 Critical Strike",
+                        "es_MX": "+4 golpe crítico",
+                        "pt_BR": "+4 Acerto Crítico",
+                        "de_DE": "+4 Kritischer Trefferwert",
+                        "en_GB": "+4 Critical Strike",
+                        "es_ES": "+4 golpe crítico",
+                        "fr_FR": "+4 Score de crit.",
+                        "it_IT": "+4 Indice di critico",
+                        "ru_RU": "+4 к критическому удару",
+                        "ko_KR": "치명타 및 극대화 +4",
+                        "zh_TW": "+4致命一擊",
+                        "zh_CN": "+4 爆击"
                     },
                     "color": {
                         "r": 0,
@@ -608,21 +608,21 @@
                 }
             },
             {
-                "id": 40,
-                "type": "VERSATILITY",
+                "id": 32,
+                "type": "CRIT_RATING",
                 "name": {
-                    "en_US": "Versatility",
-                    "es_MX": "versatilidad",
-                    "pt_BR": "Versatilidade",
-                    "de_DE": "Vielseitigkeit",
-                    "en_GB": "Versatility",
-                    "es_ES": "versatilidad",
-                    "fr_FR": "Polyvalence",
-                    "it_IT": "Indice di versatilità",
-                    "ru_RU": "к универсальности",
-                    "ko_KR": "유연성",
-                    "zh_TW": "臨機應變",
-                    "zh_CN": "全能"
+                    "en_US": "Critical Strike",
+                    "es_MX": "golpe crítico",
+                    "pt_BR": "Acerto Crítico",
+                    "de_DE": "Kritischer Trefferwert",
+                    "en_GB": "Critical Strike",
+                    "es_ES": "golpe crítico",
+                    "fr_FR": "Score de crit.",
+                    "it_IT": "Indice di critico",
+                    "ru_RU": "к критическому удару",
+                    "ko_KR": "치명타 및 극대화",
+                    "zh_TW": "致命一擊",
+                    "zh_CN": "爆击"
                 }
             }
         ]

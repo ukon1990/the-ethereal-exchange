@@ -6,7 +6,9 @@ import net.jonasmf.auctionengine.dto.item.ItemDTO
 import net.jonasmf.auctionengine.dto.itemappearance.ItemAppearanceDTO
 import net.jonasmf.auctionengine.dto.itemclass.ItemClassDTO
 import net.jonasmf.auctionengine.dto.itemclass.ItemSubclassDTO
+import net.jonasmf.auctionengine.dto.LocaleDTO
 import net.jonasmf.auctionengine.dto.modifiedcrafting.ModifiedCraftingCategoryDTO
+import net.jonasmf.auctionengine.dto.modifiedcrafting.ModifiedCraftingCategoryIndexDTO
 import net.jonasmf.auctionengine.dto.modifiedcrafting.ReagentSlotTypeDTO
 import net.jonasmf.auctionengine.dto.profession.SkillTierDTO
 import net.jonasmf.auctionengine.dto.recipe.CraftedQuantityDTO
@@ -65,6 +67,36 @@ class BlizzardMapperTest {
     }
 
     @Test
+    fun `should deserialize modified crafting category index when reference name is null`() {
+        val dto: ModifiedCraftingCategoryIndexDTO =
+            mapper.readValue(
+                """
+                {
+                  "_links": {
+                    "self": {
+                      "href": "https://eu.api.blizzard.com/data/wow/modified-crafting/category/index?namespace=static-eu"
+                    }
+                  },
+                  "categories": [
+                    {
+                      "id": 29,
+                      "name": null,
+                      "key": {
+                        "href": "https://eu.api.blizzard.com/data/wow/modified-crafting/category/29?namespace=static-eu"
+                      }
+                    }
+                  ]
+                }
+                """.trimIndent(),
+            )
+
+        assertEquals(1, dto.categories.size)
+        assertEquals(29, dto.categories.first().id)
+        assertEquals(null, dto.categories.first().name)
+        assertEquals(LocaleDTO(), dto.categories.first().resolvedName())
+    }
+
+    @Test
     fun `should map modified crafting category dto to domain`() {
         val dto: ModifiedCraftingCategoryDTO =
             mapper.readValue(loadFixture(this, "/blizzard/modified-crafting/category/828-response.json"))
@@ -73,6 +105,51 @@ class BlizzardMapperTest {
 
         assertEquals(828, domain.id)
         assertEquals("Global Finishing Reagent 03", domain.name.en_US)
+    }
+
+    @Test
+    fun `should map modified crafting category dto to domain when name is null`() {
+        val dto: ModifiedCraftingCategoryDTO =
+            mapper.readValue(
+                """
+                {
+                  "_links": {
+                    "self": {
+                      "href": "https://eu.api.blizzard.com/data/wow/modified-crafting/category/29?namespace=static-eu"
+                    }
+                  },
+                  "id": 29,
+                  "name": null
+                }
+                """.trimIndent(),
+            )
+
+        val domain = dto.toDomain()
+
+        assertEquals(29, domain.id)
+        assertEquals(LocaleDTO(), domain.name)
+    }
+
+    @Test
+    fun `should map modified crafting category dto to domain when name is omitted`() {
+        val dto: ModifiedCraftingCategoryDTO =
+            mapper.readValue(
+                """
+                {
+                  "_links": {
+                    "self": {
+                      "href": "https://eu.api.blizzard.com/data/wow/modified-crafting/category/502?namespace=static-eu"
+                    }
+                  },
+                  "id": 502
+                }
+                """.trimIndent(),
+            )
+
+        val domain = dto.toDomain()
+
+        assertEquals(502, domain.id)
+        assertEquals(LocaleDTO(), domain.name)
     }
 
     @Test
@@ -85,6 +162,42 @@ class BlizzardMapperTest {
         assertEquals(404, domain.id)
         assertEquals(1, domain.compatibleCategories.size)
         assertEquals(776, domain.compatibleCategories.first().id)
+    }
+
+    @Test
+    fun `should deserialize recipe dto when modified_crafting_slots is omitted`() {
+        val dto: RecipeDTO = mapper.readValue(loadFixture(this, "/blizzard/recipe/21487-response.json"))
+
+        assertEquals(null, dto.modifiedCraftingSlots)
+        assertEquals(0, dto.toDomain().modifiedCraftingSlots.size)
+        assertEquals(21487, dto.toDomain().id)
+        assertEquals(52257, dto.toDomain().craftedItemId)
+    }
+
+    @Test
+    fun `should deserialize recipe dto when modified_crafting_slots is null`() {
+        val dto: RecipeDTO =
+            mapper.readValue(
+                """
+                {
+                  "_links": {
+                    "self": {
+                      "href": "https://eu.api.blizzard.com/data/wow/recipe/21487?namespace=static-eu"
+                    }
+                  },
+                  "id": 21487,
+                  "name": { "en_US": "Legacy Recipe", "en_GB": "Legacy Recipe" },
+                  "media": {
+                    "key": { "href": "https://eu.api.blizzard.com/data/wow/media/recipe/21487?namespace=static-eu" },
+                    "id": 21487
+                  },
+                  "modified_crafting_slots": null
+                }
+                """.trimIndent(),
+            )
+
+        assertEquals(null, dto.modifiedCraftingSlots)
+        assertEquals(0, dto.toDomain().modifiedCraftingSlots.size)
     }
 
     @Test

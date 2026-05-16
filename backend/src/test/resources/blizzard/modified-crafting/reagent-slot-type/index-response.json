@@ -1,32 +1,14 @@
 {
     "_links": {
         "self": {
-            "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/index?namespace=static-12.0.5_66741-us"
+            "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/?namespace=static-12.0.5_66741-us"
         }
     },
     "slot_types": [
         {
-            "id": 46,
-            "name": {
-                "en_US": "Modify Item Level - Minor",
-                "es_MX": "Modifica el nivel de objeto - Poco",
-                "pt_BR": "Modificar Nível de Item - Menor",
-                "de_DE": "Gegenstandsstufe modifizieren - Gering",
-                "en_GB": "Modify Item Level - Minor",
-                "es_ES": "Modificar nivel de objeto: menor",
-                "fr_FR": "Changement de niveau d’objet - mineur",
-                "it_IT": "Modifica livello oggetto - Minore",
-                "ru_RU": "Модифицирует уровень предмета – слабый эффект",
-                "ko_KR": "아이템 레벨 변경 - 하급",
-                "zh_TW": "修改物品等級 - 次要",
-                "zh_CN": "修正物品等级 - 次级"
-            },
             "key": {
                 "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/46?namespace=static-12.0.5_66741-us"
-            }
-        },
-        {
-            "id": 77,
+            },
             "name": {
                 "en_US": "Modify Item Level - Minor",
                 "es_MX": "Modifica el nivel de objeto - Poco",
@@ -41,12 +23,32 @@
                 "zh_TW": "修改物品等級 - 次要",
                 "zh_CN": "修正物品等级 - 次级"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/77?namespace=static-12.0.5_66741-us"
-            }
+            "id": 46
         },
         {
-            "id": 110,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/77?namespace=static-12.0.5_66741-us"
+            },
+            "name": {
+                "en_US": "Modify Item Level - Minor",
+                "es_MX": "Modifica el nivel de objeto - Poco",
+                "pt_BR": "Modificar Nível de Item - Menor",
+                "de_DE": "Gegenstandsstufe modifizieren - Gering",
+                "en_GB": "Modify Item Level - Minor",
+                "es_ES": "Modificar nivel de objeto: menor",
+                "fr_FR": "Changement de niveau d’objet - mineur",
+                "it_IT": "Modifica livello oggetto - Minore",
+                "ru_RU": "Модифицирует уровень предмета – слабый эффект",
+                "ko_KR": "아이템 레벨 변경 - 하급",
+                "zh_TW": "修改物品等級 - 次要",
+                "zh_CN": "修正物品等级 - 次级"
+            },
+            "id": 77
+        },
+        {
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/110?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Increase Rank",
                 "es_MX": "Aumenta el rango",
@@ -61,12 +63,12 @@
                 "zh_TW": "提高等級",
                 "zh_CN": "提升技能等级"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/110?namespace=static-12.0.5_66741-us"
-            }
+            "id": 110
         },
         {
-            "id": 386,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/386?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Refulgent Copper Ingot",
                 "es_MX": "Lingote de cobre refulgente",
@@ -81,12 +83,12 @@
                 "zh_TW": "輝煌銅合金",
                 "zh_CN": "耀辉铜锭"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/386?namespace=static-12.0.5_66741-us"
-            }
+            "id": 386
         },
         {
-            "id": 388,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/388?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Artisan's Authenticity",
                 "es_MX": "Autenticidad del artesano",
@@ -101,32 +103,12 @@
                 "zh_TW": "工匠之保證",
                 "zh_CN": "匠人之真"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/388?namespace=static-12.0.5_66741-us"
-            }
+            "id": 388
         },
         {
-            "id": 390,
-            "name": {
-                "en_US": "Add Embellishment",
-                "es_MX": "Agrega ornamento",
-                "pt_BR": "Adicionar Ornamento",
-                "de_DE": "Verzierung hinzufügen",
-                "en_GB": "Add Embellishment",
-                "es_ES": "Añadir adorno",
-                "fr_FR": "Ajout d’embellissement",
-                "it_IT": "Aggiungi abbellimento",
-                "ru_RU": "Добавляет украшение",
-                "ko_KR": "장식 추가",
-                "zh_TW": "添加裝飾",
-                "zh_CN": "添加修饰"
-            },
             "key": {
                 "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/390?namespace=static-12.0.5_66741-us"
-            }
-        },
-        {
-            "id": 391,
+            },
             "name": {
                 "en_US": "Add Embellishment",
                 "es_MX": "Agrega ornamento",
@@ -141,12 +123,32 @@
                 "zh_TW": "添加裝飾",
                 "zh_CN": "添加修饰"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/391?namespace=static-12.0.5_66741-us"
-            }
+            "id": 390
         },
         {
-            "id": 393,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/391?namespace=static-12.0.5_66741-us"
+            },
+            "name": {
+                "en_US": "Add Embellishment",
+                "es_MX": "Agrega ornamento",
+                "pt_BR": "Adicionar Ornamento",
+                "de_DE": "Verzierung hinzufügen",
+                "en_GB": "Add Embellishment",
+                "es_ES": "Añadir adorno",
+                "fr_FR": "Ajout d’embellissement",
+                "it_IT": "Aggiungi abbellimento",
+                "ru_RU": "Добавляет украшение",
+                "ko_KR": "장식 추가",
+                "zh_TW": "添加裝飾",
+                "zh_CN": "添加修饰"
+            },
+            "id": 391
+        },
+        {
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/393?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Customize Secondary Stats",
                 "es_MX": "Personaliza estadísticas secundarias",
@@ -161,12 +163,12 @@
                 "zh_TW": "自訂次要屬性",
                 "zh_CN": "自定义副属性"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/393?namespace=static-12.0.5_66741-us"
-            }
+            "id": 393
         },
         {
-            "id": 395,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/395?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Customize Crafting Stat",
                 "es_MX": "Personaliza estadística de fabricación",
@@ -181,12 +183,12 @@
                 "zh_TW": "自訂製作屬性",
                 "zh_CN": "自定义制作属性"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/395?namespace=static-12.0.5_66741-us"
-            }
+            "id": 395
         },
         {
-            "id": 396,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/396?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Artisan's Authenticity",
                 "es_MX": "Autenticidad del artesano",
@@ -201,12 +203,12 @@
                 "zh_TW": "工匠之保證",
                 "zh_CN": "匠人之真"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/396?namespace=static-12.0.5_66741-us"
-            }
+            "id": 396
         },
         {
-            "id": 402,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/402?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Dawn Crystal",
                 "es_MX": "Cristal del alba",
@@ -221,12 +223,12 @@
                 "zh_TW": "黎明水晶",
                 "zh_CN": "黎明水晶"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/402?namespace=static-12.0.5_66741-us"
-            }
+            "id": 402
         },
         {
-            "id": 403,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/403?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Radiant Shard",
                 "es_MX": "Fragmento radiante",
@@ -241,12 +243,12 @@
                 "zh_TW": "璀璨裂片",
                 "zh_CN": "光耀碎片"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/403?namespace=static-12.0.5_66741-us"
-            }
+            "id": 403
         },
         {
-            "id": 404,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/404?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Eversinging Dust",
                 "es_MX": "Polvo cantoeterno",
@@ -261,12 +263,12 @@
                 "zh_TW": "永歌之塵",
                 "zh_CN": "永歌之尘"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/404?namespace=static-12.0.5_66741-us"
-            }
+            "id": 404
         },
         {
-            "id": 417,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/417?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Duskshrouded Stone",
                 "es_MX": "Piedra ocasovelada",
@@ -281,12 +283,12 @@
                 "zh_TW": "暮罩石",
                 "zh_CN": "暮胧石"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/417?namespace=static-12.0.5_66741-us"
-            }
+            "id": 417
         },
         {
-            "id": 425,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/425?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Silvermoon Weapon Wrap",
                 "es_MX": "Cubierta de arma de Lunargenta",
@@ -301,12 +303,12 @@
                 "zh_TW": "銀月武器裹布",
                 "zh_CN": "银月城武器裹皮"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/425?namespace=static-12.0.5_66741-us"
-            }
+            "id": 425
         },
         {
-            "id": 432,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/432?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Peacebloom",
                 "es_MX": "Flor de paz",
@@ -321,12 +323,12 @@
                 "zh_TW": "寧神花",
                 "zh_CN": "宁神花"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/432?namespace=static-12.0.5_66741-us"
-            }
+            "id": 432
         },
         {
-            "id": 466,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/466?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Gloaming Alloy",
                 "es_MX": "Aleación crepuscular",
@@ -341,12 +343,12 @@
                 "zh_TW": "薄暮合金",
                 "zh_CN": "薄暮合金"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/466?namespace=static-12.0.5_66741-us"
-            }
+            "id": 466
         },
         {
-            "id": 467,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/467?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Sterling Alloy",
                 "es_MX": "Aleación de plata fina",
@@ -361,12 +363,12 @@
                 "zh_TW": "純銀合金",
                 "zh_CN": "纯银合金"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/467?namespace=static-12.0.5_66741-us"
-            }
+            "id": 467
         },
         {
-            "id": 469,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/469?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Empower",
                 "es_MX": "Potenciar",
@@ -381,12 +383,12 @@
                 "zh_TW": "強化",
                 "zh_CN": "强化"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/469?namespace=static-12.0.5_66741-us"
-            }
+            "id": 469
         },
         {
-            "id": 470,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/470?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Empower",
                 "es_MX": "Potenciar",
@@ -401,12 +403,12 @@
                 "zh_TW": "強化",
                 "zh_CN": "强化"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/470?namespace=static-12.0.5_66741-us"
-            }
+            "id": 470
         },
         {
-            "id": 471,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/471?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Competitor's Heraldry",
                 "es_MX": "Heráldica de competidor",
@@ -421,9 +423,7 @@
                 "zh_TW": "競技者徽章",
                 "zh_CN": "竞争者的饰章"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/reagent-slot-type/471?namespace=static-12.0.5_66741-us"
-            }
+            "id": 471
         }
     ]
 }

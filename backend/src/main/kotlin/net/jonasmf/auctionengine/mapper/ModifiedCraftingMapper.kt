@@ -5,20 +5,21 @@ import net.jonasmf.auctionengine.dbo.rds.localeSourceKey
 import net.jonasmf.auctionengine.dbo.rds.profession.ModifiedCraftingCategoryDBO
 import net.jonasmf.auctionengine.domain.profession.ModifiedCraftingCategory
 import net.jonasmf.auctionengine.domain.profession.ModifiedCraftingSlot
+import net.jonasmf.auctionengine.dto.orEmpty
 import net.jonasmf.auctionengine.dto.modifiedcrafting.ModifiedCraftingCategoryDTO
 import net.jonasmf.auctionengine.dto.modifiedcrafting.ReagentSlotTypeDTO
 
 fun ModifiedCraftingCategoryDTO.toDomain() =
     ModifiedCraftingCategory(
         id = id,
-        name = name,
+        name = name.orEmpty(),
     )
 
 fun ReagentSlotTypeDTO.toDomain() =
     ModifiedCraftingSlot(
         id = id,
-        description = description,
-        compatibleCategories = compatibleCategories.map { ModifiedCraftingCategory(it.id, it.name) },
+        description = description.orEmpty(),
+        compatibleCategories = compatibleCategories.map { ModifiedCraftingCategory(it.id, it.resolvedName()) },
     )
 
 fun ModifiedCraftingCategory.toDBO() =

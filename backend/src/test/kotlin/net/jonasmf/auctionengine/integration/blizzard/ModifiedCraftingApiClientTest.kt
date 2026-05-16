@@ -28,6 +28,106 @@ class ModifiedCraftingApiClientTest {
     }
 
     @Test
+    fun `getAllCategories decodes category index when a reference has null name`() {
+        val client = ModifiedCraftingApiClient(createSupport(buildWebClient { handleRequest(it) }))
+
+        val categories = client.getAllCategories(Region.Europe)
+
+        assertTrue(categories.isNotEmpty())
+        assertTrue(categories.any { it.id == 29 })
+        assertEquals("Set Item Level", categories.first { it.id == 29 }.name.en_US)
+    }
+
+    @Test
+    fun `getAllCategories maps category detail when name is null`() {
+        val client =
+            ModifiedCraftingApiClient(
+                createSupport(
+                    buildWebClient { request ->
+                        val path = request.url().path
+                        if (path.endsWith("/modified-crafting/category/29")) {
+                            okJson(
+                                """
+                                {
+                                  "_links": {
+                                    "self": {
+                                      "href": "https://eu.api.blizzard.com/data/wow/modified-crafting/category/29?namespace=static-eu"
+                                    }
+                                  },
+                                  "id": 29,
+                                  "name": null
+                                }
+                                """.trimIndent(),
+                            )
+                        } else {
+                            handleRequest(request)
+                        }
+                    },
+                ),
+            )
+
+        val categories = client.getAllCategories(Region.Europe)
+        val category = categories.first { it.id == 29 }
+
+        assertEquals(29, category.id)
+        assertEquals("", category.name.en_US)
+    }
+
+    @Test
+    fun `getAllCategories maps category detail when name is omitted`() {
+        val client =
+            ModifiedCraftingApiClient(
+                createSupport(
+                    buildWebClient { request ->
+                        val path = request.url().path
+                        if (path.endsWith("/modified-crafting/category/502")) {
+                            okJson(
+                                """
+                                {
+                                  "_links": {
+                                    "self": {
+                                      "href": "https://eu.api.blizzard.com/data/wow/modified-crafting/category/502?namespace=static-eu"
+                                    }
+                                  },
+                                  "id": 502
+                                }
+                                """.trimIndent(),
+                            )
+                        } else if (path.endsWith("/modified-crafting/category/index")) {
+                            okJson(
+                                """
+                                {
+                                  "_links": {
+                                    "self": {
+                                      "href": "https://eu.api.blizzard.com/data/wow/modified-crafting/category/index?namespace=static-eu"
+                                    }
+                                  },
+                                  "categories": [
+                                    {
+                                      "id": 502,
+                                      "key": {
+                                        "href": "https://eu.api.blizzard.com/data/wow/modified-crafting/category/502?namespace=static-eu"
+                                      }
+                                    }
+                                  ]
+                                }
+                                """.trimIndent(),
+                            )
+                        } else {
+                            handleRequest(request)
+                        }
+                    },
+                ),
+            )
+
+        val categories = client.getAllCategories(Region.Europe)
+        val category = categories.single()
+
+        assertEquals(502, category.id)
+        assertEquals("", category.name.en_US)
+    }
+
+    @Test
     fun `getAllSlotTypes returns mapped slot types with compatible categories`() {
         val client = ModifiedCraftingApiClient(createSupport(buildWebClient { handleRequest(it) }))
 

@@ -69,7 +69,7 @@ fun ReferenceDTO.toItemSubclassDomain(classId: Int) =
     ItemSubclass(
         classId = classId,
         subclassId = id,
-        displayName = name,
+        displayName = resolvedName(),
         hideSubclassInTooltips = null,
     )
 
@@ -82,7 +82,7 @@ fun ItemAppearanceReferenceDTO.toDomain() =
 fun ReferenceDTO.toItemSummaryDomain() =
     ItemSummary(
         id = id,
-        name = name,
+        name = resolvedName(),
         href = key.href,
     )
 

@@ -1,32 +1,21 @@
 {
     "_links": {
         "self": {
-            "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/index?namespace=static-12.0.5_66741-us"
+            "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/?namespace=static-12.0.5_66741-us"
         }
     },
     "categories": [
         {
-            "id": 29,
-            "name": {
-                "en_US": "Set Item Level",
-                "es_MX": "Establecer nivel de objeto",
-                "pt_BR": "Definir Nível de item",
-                "de_DE": "Gegenstandsstufe festlegen",
-                "en_GB": "Set Item Level",
-                "es_ES": "Establecer nivel de objeto",
-                "fr_FR": "Changement de niveau d’objet",
-                "it_IT": "Impostazione Livello Oggetto",
-                "ru_RU": "Установить уровень предмета",
-                "ko_KR": "아이템 레벨 설정",
-                "zh_TW": "設定物品等級",
-                "zh_CN": "设置物品等级"
-            },
             "key": {
                 "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/29?namespace=static-12.0.5_66741-us"
-            }
+            },
+            "name": null,
+            "id": 29
         },
         {
-            "id": 45,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/45?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Set Item Level",
                 "es_MX": "Establecer nivel de objeto",
@@ -41,12 +30,12 @@
                 "zh_TW": "設定物品等級",
                 "zh_CN": "设置物品等级"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/45?namespace=static-12.0.5_66741-us"
-            }
+            "id": 45
         },
         {
-            "id": 50,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/50?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Set Item Level",
                 "es_MX": "Establecer nivel de objeto",
@@ -61,12 +50,12 @@
                 "zh_TW": "設定物品等級",
                 "zh_CN": "设置物品等级"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/50?namespace=static-12.0.5_66741-us"
-            }
+            "id": 50
         },
         {
-            "id": 55,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/55?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Set Item Level",
                 "es_MX": "Establecer nivel de objeto",
@@ -81,12 +70,12 @@
                 "zh_TW": "設定物品等級",
                 "zh_CN": "设置物品等级"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/55?namespace=static-12.0.5_66741-us"
-            }
+            "id": 55
         },
         {
-            "id": 83,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/83?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Set Item Level",
                 "es_MX": "Establecer nivel de objeto",
@@ -101,12 +90,12 @@
                 "zh_TW": "設定物品等級",
                 "zh_CN": "设置物品等级"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/83?namespace=static-12.0.5_66741-us"
-            }
+            "id": 83
         },
         {
-            "id": 741,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/741?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Peacebloom",
                 "es_MX": "Flor de paz",
@@ -121,12 +110,12 @@
                 "zh_TW": "寧神花",
                 "zh_CN": "宁神花"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/741?namespace=static-12.0.5_66741-us"
-            }
+            "id": 741
         },
         {
-            "id": 749,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/749?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Refulgent Copper Ingot",
                 "es_MX": "Lingote de cobre refulgente",
@@ -141,12 +130,12 @@
                 "zh_TW": "輝煌銅合金",
                 "zh_CN": "耀辉铜锭"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/749?namespace=static-12.0.5_66741-us"
-            }
+            "id": 749
         },
         {
-            "id": 750,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/750?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Gloaming Alloy",
                 "es_MX": "Aleación crepuscular",
@@ -161,12 +150,12 @@
                 "zh_TW": "薄暮合金",
                 "zh_CN": "薄暮合金"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/750?namespace=static-12.0.5_66741-us"
-            }
+            "id": 750
         },
         {
-            "id": 751,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/751?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Sterling Alloy",
                 "es_MX": "Aleación de plata fina",
@@ -181,12 +170,12 @@
                 "zh_TW": "純銀合金",
                 "zh_CN": "纯银合金"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/751?namespace=static-12.0.5_66741-us"
-            }
+            "id": 751
         },
         {
-            "id": 769,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/769?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Arcanoweave Lining",
                 "es_MX": "Revestimiento de tejido arcano",
@@ -201,12 +190,12 @@
                 "zh_TW": "奧紋內襯",
                 "zh_CN": "奥纹内衬"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/769?namespace=static-12.0.5_66741-us"
-            }
+            "id": 769
         },
         {
-            "id": 770,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/770?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Sunfire Lining",
                 "es_MX": "Revestimiento de fuego solar",
@@ -221,12 +210,12 @@
                 "zh_TW": "日炎內襯",
                 "zh_CN": "阳炎内衬"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/770?namespace=static-12.0.5_66741-us"
-            }
+            "id": 770
         },
         {
-            "id": 775,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/775?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Radiant Shard",
                 "es_MX": "Fragmento radiante",
@@ -241,12 +230,12 @@
                 "zh_TW": "璀璨裂片",
                 "zh_CN": "光耀碎片"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/775?namespace=static-12.0.5_66741-us"
-            }
+            "id": 775
         },
         {
-            "id": 776,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/776?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Eversinging Dust",
                 "es_MX": "Polvo cantoeterno",
@@ -261,12 +250,12 @@
                 "zh_TW": "永歌之塵",
                 "zh_CN": "永歌之尘"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/776?namespace=static-12.0.5_66741-us"
-            }
+            "id": 776
         },
         {
-            "id": 777,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/777?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Dawn Crystal",
                 "es_MX": "Cristal del alba",
@@ -281,12 +270,12 @@
                 "zh_TW": "黎明水晶",
                 "zh_CN": "黎明水晶"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/777?namespace=static-12.0.5_66741-us"
-            }
+            "id": 777
         },
         {
-            "id": 791,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/791?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Duskshrouded Stone",
                 "es_MX": "Piedra ocasovelada",
@@ -301,12 +290,12 @@
                 "zh_TW": "暮罩石",
                 "zh_CN": "暮胧石"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/791?namespace=static-12.0.5_66741-us"
-            }
+            "id": 791
         },
         {
-            "id": 797,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/797?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Silvermoon Weapon Wrap",
                 "es_MX": "Cubierta de arma de Lunargenta",
@@ -321,12 +310,12 @@
                 "zh_TW": "銀月武器裹布",
                 "zh_CN": "银月城武器裹皮"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/797?namespace=static-12.0.5_66741-us"
-            }
+            "id": 797
         },
         {
-            "id": 805,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/805?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Darkmoon Sigil: Blood",
                 "es_MX": "Sigilo Luna Negra: Sangre",
@@ -341,12 +330,12 @@
                 "zh_TW": "暗月符印：鮮血",
                 "zh_CN": "暗月徽记：鲜血"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/805?namespace=static-12.0.5_66741-us"
-            }
+            "id": 805
         },
         {
-            "id": 806,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/806?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Darkmoon Sigil: Hunt",
                 "es_MX": "Sigilo Luna Negra: Caza",
@@ -361,12 +350,12 @@
                 "zh_TW": "暗月符印：狩獵",
                 "zh_CN": "暗月徽记：狩猎"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/806?namespace=static-12.0.5_66741-us"
-            }
+            "id": 806
         },
         {
-            "id": 807,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/807?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Darkmoon Sigil: Rot",
                 "es_MX": "Sigilo Luna Negra: Podredumbre",
@@ -381,12 +370,12 @@
                 "zh_TW": "暗月符印：腐爛",
                 "zh_CN": "暗月徽记：腐烂"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/807?namespace=static-12.0.5_66741-us"
-            }
+            "id": 807
         },
         {
-            "id": 808,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/808?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Darkmoon Sigil: Void",
                 "es_MX": "Sigilo Luna Negra: Vacío",
@@ -401,12 +390,12 @@
                 "zh_TW": "暗月符印：虛無",
                 "zh_CN": "暗月徽记：虚空"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/808?namespace=static-12.0.5_66741-us"
-            }
+            "id": 808
         },
         {
-            "id": 809,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/809?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Thalassian Missive of the Quickblade",
                 "es_MX": "Misiva thalassiana de la hoja rauda",
@@ -421,12 +410,12 @@
                 "zh_TW": "薩拉斯速刃書狀",
                 "zh_CN": "快刀之萨拉斯公函"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/809?namespace=static-12.0.5_66741-us"
-            }
+            "id": 809
         },
         {
-            "id": 810,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/810?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Thalassian Missive of the Peerless",
                 "es_MX": "Misiva thalassiana del incomparable",
@@ -441,12 +430,12 @@
                 "zh_TW": "薩拉斯無雙書狀",
                 "zh_CN": "无双之萨拉斯公函"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/810?namespace=static-12.0.5_66741-us"
-            }
+            "id": 810
         },
         {
-            "id": 811,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/811?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Thalassian Missive of the Harmonious",
                 "es_MX": "Misiva thalassiana del armónico",
@@ -461,12 +450,12 @@
                 "zh_TW": "薩拉斯和諧書狀",
                 "zh_CN": "谐律之萨拉斯公函"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/811?namespace=static-12.0.5_66741-us"
-            }
+            "id": 811
         },
         {
-            "id": 812,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/812?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Thalassian Missive of the Fireflash",
                 "es_MX": "Misiva thalassiana del fuego rápido",
@@ -481,12 +470,12 @@
                 "zh_TW": "薩拉斯炎光書狀",
                 "zh_CN": "燎火之萨拉斯公函"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/812?namespace=static-12.0.5_66741-us"
-            }
+            "id": 812
         },
         {
-            "id": 813,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/813?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Thalassian Missive of the Feverflare",
                 "es_MX": "Misiva thalassiana de la llama febril",
@@ -501,12 +490,12 @@
                 "zh_TW": "薩拉斯閃焰書狀",
                 "zh_CN": "灼光之萨拉斯公函"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/813?namespace=static-12.0.5_66741-us"
-            }
+            "id": 813
         },
         {
-            "id": 814,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/814?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Thalassian Missive of the Aurora",
                 "es_MX": "Misiva thalassiana de la aurora",
@@ -521,12 +510,12 @@
                 "zh_TW": "薩拉斯極光書狀",
                 "zh_CN": "曙光之萨拉斯公函"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/814?namespace=static-12.0.5_66741-us"
-            }
+            "id": 814
         },
         {
-            "id": 818,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/818?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Thalassian Missive of Crafting Speed",
                 "es_MX": "Misiva thalassiana de velocidad de fabricación",
@@ -541,12 +530,12 @@
                 "zh_TW": "薩拉斯製作速度書狀",
                 "zh_CN": "制作速度之萨拉斯公函"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/818?namespace=static-12.0.5_66741-us"
-            }
+            "id": 818
         },
         {
-            "id": 819,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/819?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Thalassian Missive of Multicraft",
                 "es_MX": "Misiva thalassiana de fabricación múltiple",
@@ -561,12 +550,12 @@
                 "zh_TW": "薩拉斯複數製造書狀",
                 "zh_CN": "产能之萨拉斯公函"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/819?namespace=static-12.0.5_66741-us"
-            }
+            "id": 819
         },
         {
-            "id": 820,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/820?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Thalassian Missive of Resourcefulness",
                 "es_MX": "Misiva thalassiana de inventiva",
@@ -581,12 +570,12 @@
                 "zh_TW": "薩拉斯精明書狀",
                 "zh_CN": "充裕之萨拉斯公函"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/820?namespace=static-12.0.5_66741-us"
-            }
+            "id": 820
         },
         {
-            "id": 821,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/821?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Thalassian Missive of Ingenuity",
                 "es_MX": "Misiva thalassiana de ingenio",
@@ -601,12 +590,12 @@
                 "zh_TW": "薩拉斯精妙書狀",
                 "zh_CN": "奇思之萨拉斯公函"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/821?namespace=static-12.0.5_66741-us"
-            }
+            "id": 821
         },
         {
-            "id": 826,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/826?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Apprentice's Scribbles",
                 "es_MX": "Garabatos de aprendiz",
@@ -621,12 +610,12 @@
                 "zh_TW": "學徒速記",
                 "zh_CN": "学徒的涂鸦"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/826?namespace=static-12.0.5_66741-us"
-            }
+            "id": 826
         },
         {
-            "id": 827,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/827?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Global Finishing Reagent 02",
                 "es_MX": "Componente de retoque global 02",
@@ -641,12 +630,12 @@
                 "zh_TW": "通用最後加工材料02",
                 "zh_CN": "全局成品材料02"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/827?namespace=static-12.0.5_66741-us"
-            }
+            "id": 827
         },
         {
-            "id": 828,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/828?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Global Finishing Reagent 03",
                 "es_MX": "Componente de retoque global 03",
@@ -661,12 +650,12 @@
                 "zh_TW": "通用最後加工材料03",
                 "zh_CN": "全局成品材料03"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/828?namespace=static-12.0.5_66741-us"
-            }
+            "id": 828
         },
         {
-            "id": 829,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/829?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Artisan's Consortium Gold Star",
                 "es_MX": "Estrella de oro de la Sociedad de Artesanos",
@@ -681,12 +670,12 @@
                 "zh_TW": "工匠聯盟黃金星星",
                 "zh_CN": "工匠商盟金星奖章"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/829?namespace=static-12.0.5_66741-us"
-            }
+            "id": 829
         },
         {
-            "id": 830,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/830?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Devouring Banding",
                 "es_MX": "Banda devoradora",
@@ -701,12 +690,12 @@
                 "zh_TW": "吞噬飾環",
                 "zh_CN": "吞噬绑带"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/830?namespace=static-12.0.5_66741-us"
-            }
+            "id": 830
         },
         {
-            "id": 831,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/831?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Blessed Pango Charm",
                 "es_MX": "Amuleto de pango bendecido",
@@ -721,12 +710,12 @@
                 "zh_TW": "受祝福的穿山甲符咒",
                 "zh_CN": "圣佑穿山甲护符"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/831?namespace=static-12.0.5_66741-us"
-            }
+            "id": 831
         },
         {
-            "id": 832,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/832?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Primal Spore Binding",
                 "es_MX": "Lazo de esporas primigenias",
@@ -741,12 +730,12 @@
                 "zh_TW": "原始孢子之縛",
                 "zh_CN": "原始孢子缚带"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/832?namespace=static-12.0.5_66741-us"
-            }
+            "id": 832
         },
         {
-            "id": 833,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/833?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Multicraft Matrix",
                 "es_MX": "Matriz de fabricación múltiple",
@@ -761,12 +750,12 @@
                 "zh_TW": "複數製造矩陣",
                 "zh_CN": "产能矩阵"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/833?namespace=static-12.0.5_66741-us"
-            }
+            "id": 833
         },
         {
-            "id": 835,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/835?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Resourceful Rebar",
                 "es_MX": "Barra inventiva",
@@ -781,12 +770,12 @@
                 "zh_TW": "精明鋼筋",
                 "zh_CN": "充裕钢筋"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/835?namespace=static-12.0.5_66741-us"
-            }
+            "id": 835
         },
         {
-            "id": 838,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/838?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Ingenuious Identity",
                 "es_MX": "Identidad ingeniosa",
@@ -801,12 +790,12 @@
                 "zh_TW": "精妙身分",
                 "zh_CN": "奇思标识"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/838?namespace=static-12.0.5_66741-us"
-            }
+            "id": 838
         },
         {
-            "id": 854,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/854?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Lucky Keychain",
                 "es_MX": "Llavero de la suerte",
@@ -821,12 +810,12 @@
                 "zh_TW": "幸運鑰匙圈",
                 "zh_CN": "幸运钥匙串"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/854?namespace=static-12.0.5_66741-us"
-            }
+            "id": 854
         },
         {
-            "id": 861,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/861?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Stabilizing Gemstone Bandolier",
                 "es_MX": "Bandolera de gemas de estabilización",
@@ -841,12 +830,12 @@
                 "zh_TW": "穩定寶石彈藥包",
                 "zh_CN": "稳定式宝石弹药带"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/861?namespace=static-12.0.5_66741-us"
-            }
+            "id": 861
         },
         {
-            "id": 878,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/878?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Galactic Combatant's Heraldry",
                 "es_MX": "Heráldica de Combatiente galáctico",
@@ -861,12 +850,12 @@
                 "zh_TW": "銀河戰鬥者徽章",
                 "zh_CN": "星河争斗者的饰章"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/878?namespace=static-12.0.5_66741-us"
-            }
+            "id": 878
         },
         {
-            "id": 879,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/879?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Galactic Aspirant's Heraldry",
                 "es_MX": "Heráldica de Aspirante galáctico",
@@ -881,12 +870,12 @@
                 "zh_TW": "銀河志士徽章",
                 "zh_CN": "星河候选者的饰章"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/879?namespace=static-12.0.5_66741-us"
-            }
+            "id": 879
         },
         {
-            "id": 880,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/880?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "Galactic Gladiator's Heraldry",
                 "es_MX": "Heráldica de Gladiador galáctico",
@@ -901,19 +890,17 @@
                 "zh_TW": "銀河鬥士徽章",
                 "zh_CN": "星河角斗士的饰章"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/880?namespace=static-12.0.5_66741-us"
-            }
+            "id": 880
         },
         {
-            "id": 902,
+            "key": {
+                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/902?namespace=static-12.0.5_66741-us"
+            },
             "name": {
                 "en_US": "12.0 Optional Reagent - Outdoor Upgrade Dungeon - All",
                 "en_GB": "12.0 Optional Reagent - Outdoor Upgrade Dungeon - All"
             },
-            "key": {
-                "href": "https://us.api.blizzard.com/data/wow/modified-crafting/category/902?namespace=static-12.0.5_66741-us"
-            }
+            "id": 902
         }
     ]
 }
