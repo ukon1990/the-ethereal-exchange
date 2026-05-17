@@ -150,6 +150,15 @@
           },
           "defaultConfiguration": "development"
         },
+        "extract-i18n": {
+          "builder": "@angular/build:extract-i18n",
+          "options": {
+            "buildTarget": "EE:build:development",
+            "format": "xlf",
+            "outputPath": "src/locale",
+            "outFile": "messages.xlf"
+          }
+        },
         "test": {
           "builder": "@ethereal/angular-unit-test-alias:unit-test",
           "options": {

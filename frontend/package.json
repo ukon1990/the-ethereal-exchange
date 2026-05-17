@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "generate:api": "openapi-generator-cli generate -g typescript-angular -i ../openapi/openapi.yml -o src/app/api/generated --additional-properties=ngVersion=21.2.0,providedInRoot=true,serviceSuffix=ApiService",
+    "extract-i18n": "ng extract-i18n EE",
     "prebuild": "bun run generate:api",
     "build": "ng build",
     "format": "prettier --write .",

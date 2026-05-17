@@ -10,6 +10,30 @@
         <source>Search items, reagents, or recipes...</source>
         <target>搜索物品、材料或配方...</target>
       </trans-unit>
+      <trans-unit id="search.loadItemError" datatype="html">
+        <source>Could not load item details. Please try again later.</source>
+        <target>无法加载物品详情。请稍后重试。</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/services/base-search.service.ts</context>
+          <context context-type="linenumber">114</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="search.loadResultsError" datatype="html">
+        <source>Could not load search results. Please try again later.</source>
+        <target>无法加载搜索结果。请稍后重试。</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/services/base-search.service.ts</context>
+          <context context-type="linenumber">144</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="search.loadFiltersError" datatype="html">
+        <source>Could not load filter definitions. Please try again later.</source>
+        <target>无法加载筛选器定义。请稍后重试。</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/services/base-search.service.ts</context>
+          <context context-type="linenumber">199</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="quality.common" datatype="html">
         <source>Common</source>
         <target>普通</target>
@@ -302,22 +326,6 @@
           <context context-type="linenumber">58</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="common.loading" datatype="html">
-        <source>Loading...</source>
-        <target>正在加载...</target>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/core/services/crafting-browser.service.ts</context>
-          <context context-type="linenumber">93</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/core/services/market-browser.service.ts</context>
-          <context context-type="linenumber">166</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/core/services/market-browser.service.ts</context>
-          <context context-type="linenumber">178</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="crafting.pagination.empty" datatype="html">
         <source>No recipes available.</source>
         <target>没有可用配方。</target>
@@ -342,58 +350,6 @@
           <context context-type="linenumber">248</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="profession.alchemy" datatype="html">
-        <source>Alchemy</source>
-        <target>Alchemy</target>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/core/services/market-browser.service.ts</context>
-          <context context-type="linenumber">86</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="profession.blacksmithing" datatype="html">
-        <source>Blacksmithing</source>
-        <target>Blacksmithing</target>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/core/services/market-browser.service.ts</context>
-          <context context-type="linenumber">89</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/core/services/market-browser.service.ts</context>
-          <context context-type="linenumber">113</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="profession.enchanting" datatype="html">
-        <source>Enchanting</source>
-        <target>Enchanting</target>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/core/services/market-browser.service.ts</context>
-          <context context-type="linenumber">94</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="profession.jewelcrafting" datatype="html">
-        <source>Jewelcrafting</source>
-        <target>Jewelcrafting</target>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/core/services/market-browser.service.ts</context>
-          <context context-type="linenumber">99</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="profession.inscription" datatype="html">
-        <source>Inscription</source>
-        <target>Inscription</target>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/core/services/market-browser.service.ts</context>
-          <context context-type="linenumber">104</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="market.character.skill" datatype="html">
-        <source>Skill Level 300/300</source>
-        <target>Skill Level 300/300</target>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/core/services/market-browser.service.ts</context>
-          <context context-type="linenumber">114</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="market.loadingItems" datatype="html">
         <source>Loading market items...</source>
         <target>正在加载市场物品...</target>
@@ -416,14 +372,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/market-browser/market-browser.page.ts</context>
           <context context-type="linenumber">122,123</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="market.pagination.summary" datatype="html">
-        <source>Showing <x id="PH" equiv-text="startLabel"/>-<x id="PH_1" equiv-text="endLabel"/> of <x id="PH_2" equiv-text="totalItemsLabel"/> items</source>
-        <target>显示 <x id="PH" equiv-text="startLabel"/>-<x id="PH_1" equiv-text="endLabel"/> / <x id="PH_2" equiv-text="totalItemsLabel"/> 个物品</target>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/core/services/market-browser.service.ts</context>
-          <context context-type="linenumber">381</context>
         </context-group>
       </trans-unit>
       <trans-unit id="tooltip.currentBuyout" datatype="html">
@@ -771,35 +719,23 @@
         <target>新密码</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/login/login.page.ts</context>
-          <context context-type="linenumber">41</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/login/login.page.ts</context>
-          <context context-type="linenumber">73</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/profile/profile.page.html</context>
-          <context context-type="linenumber">55,57</context>
+          <context context-type="linenumber">40</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/profile/profile.page.ts</context>
-          <context context-type="linenumber">54</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/profile/profile.page.ts</context>
-          <context context-type="linenumber">130</context>
+          <context context-type="linenumber">46</context>
         </context-group>
       </trans-unit>
       <trans-unit id="login.confirmNewPassword" datatype="html">
         <source>Confirm new password</source>
-        <target>Confirm new password</target>
+        <target>确认新密码</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/login/login.page.ts</context>
-          <context context-type="linenumber">47</context>
+          <context context-type="linenumber">42</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/profile/profile.page.html</context>
-          <context context-type="linenumber">75,77</context>
+          <context context-type="sourcefile">src/app/features/profile/profile.page.ts</context>
+          <context context-type="linenumber">47</context>
         </context-group>
       </trans-unit>
       <trans-unit id="login.confirmPassword" datatype="html">
@@ -1471,19 +1407,11 @@
         </context-group>
       </trans-unit>
       <trans-unit id="profile.currentPassword" datatype="html">
-        <source> Current password </source>
-        <target>Current password</target>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/profile/profile.page.html</context>
-          <context context-type="linenumber">36,38</context>
-        </context-group>
+        <source>Current password</source>
+        <target>当前密码</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/profile/profile.page.ts</context>
-          <context context-type="linenumber">48</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/profile/profile.page.ts</context>
-          <context context-type="linenumber">128</context>
+          <context context-type="linenumber">45</context>
         </context-group>
       </trans-unit>
       <trans-unit id="profile.updatePassword" datatype="html">

@@ -41,17 +41,19 @@ export class ProfilePage {
   protected readonly changingPassword = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly notice = signal<string | null>(null);
+
+  protected readonly currentPasswordLabel = $localize`:@@profile.currentPassword:Current password`;
+  protected readonly newPasswordLabel = $localize`:@@login.newPassword:New password`;
+  protected readonly confirmNewPasswordLabel = $localize`:@@login.confirmNewPassword:Confirm new password`;
+
   protected readonly currentPasswordError = computed(() =>
     this.currentPasswordTouched()
-      ? validateRequiredPassword(
-          this.currentPassword(),
-          $localize`:@@profile.currentPassword:Current password`,
-        )
+      ? validateRequiredPassword(this.currentPassword(), this.currentPasswordLabel)
       : null,
   );
   protected readonly newPasswordError = computed(() =>
     this.newPasswordTouched()
-      ? validatePasswordRules(this.newPassword(), $localize`:@@login.newPassword:New password`)
+      ? validatePasswordRules(this.newPassword(), this.newPasswordLabel)
       : null,
   );
   protected readonly confirmPasswordError = computed(() =>
@@ -123,11 +125,8 @@ export class ProfilePage {
 
   private validatePasswordChange(): string | null {
     return (
-      validateRequiredPassword(
-        this.currentPassword(),
-        $localize`:@@profile.currentPassword:Current password`,
-      ) ??
-      validatePasswordRules(this.newPassword(), $localize`:@@login.newPassword:New password`) ??
+      validateRequiredPassword(this.currentPassword(), this.currentPasswordLabel) ??
+      validatePasswordRules(this.newPassword(), this.newPasswordLabel) ??
       validatePasswordMatch(
         this.newPassword(),
         this.confirmPassword(),

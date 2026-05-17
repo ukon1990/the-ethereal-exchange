@@ -36,16 +36,17 @@ export class LoginPage {
   protected readonly loading = signal(false);
   protected readonly notice = signal<string | null>(null);
 
+  private readonly passwordLabelText = $localize`:@@login.password:Password`;
+  private readonly newPasswordLabel = $localize`:@@login.newPassword:New password`;
+  private readonly confirmPasswordLabelText = $localize`:@@login.confirmPassword:Confirm password`;
+  private readonly confirmNewPasswordLabel = $localize`:@@login.confirmNewPassword:Confirm new password`;
+
   protected passwordLabel(): string {
-    return this.mode() === 'reset'
-      ? $localize`:@@login.newPassword:New password`
-      : $localize`:@@login.password:Password`;
+    return this.mode() === 'reset' ? this.newPasswordLabel : this.passwordLabelText;
   }
 
   protected confirmPasswordLabel(): string {
-    return this.mode() === 'reset'
-      ? $localize`:@@login.confirmNewPassword:Confirm new password`
-      : $localize`:@@login.confirmPassword:Confirm password`;
+    return this.mode() === 'reset' ? this.confirmNewPasswordLabel : this.confirmPasswordLabelText;
   }
 
   private getMessage(message: string) {
@@ -73,7 +74,7 @@ export class LoginPage {
       if (!value()) {
         return undefined;
       }
-      const message = validatePasswordRules(value(), $localize`:@@login.newPassword:New password`);
+      const message = validatePasswordRules(value(), this.passwordLabel());
       return message ? { kind: 'password_rules', message } : undefined;
     });
 
